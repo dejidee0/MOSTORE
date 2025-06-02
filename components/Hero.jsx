@@ -6,7 +6,7 @@ import Image from "next/image"
 
 export default function Hero() {
   return (
-    <section className="relative bg-gradient-to-r from-gray-900 to-gray-700 text-white py-20 px-4">
+    <section className="relative bg-gradient-to-r from-gray-900 to-gray-700 text-white py-20 px-4 w-full">
       <div className="container mx-auto">
         <div className="grid md:grid-cols-2 gap-12 items-center">
           <motion.div
@@ -16,14 +16,14 @@ export default function Hero() {
             className="space-y-6"
           >
             <h1 className="text-4xl md:text-6xl font-bold leading-tight">
-              Premium Home
-              <span className="text-orange-500"> Appliances</span>
+              NEWEST 
+              <span className="text-red-700  italic"> Deal</span>
             </h1>
             <p className="text-xl text-gray-300 leading-relaxed">
-              Discover our collection of high-quality appliances designed to make your life easier and more comfortable.
+Biggest  offer of the week
             </p>
             <Button size="lg" className="bg-orange-500 hover:bg-orange-600 text-white px-8 py-3 text-lg font-semibold">
-              SHOP NOW
+              SHOP 
             </Button>
           </motion.div>
 
@@ -34,7 +34,7 @@ export default function Hero() {
             className="relative"
           >
             <Image
-              src="/placeholder.svg?height=400&width=500"
+              src="/one.jpg"
               alt="Premium Appliances"
               width={500}
               height={400}

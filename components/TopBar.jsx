@@ -2,7 +2,7 @@ import { Phone, Mail, Facebook, Twitter, Instagram, Globe, DollarSign } from "lu
 
 export default function TopBar() {
   return (
-    <div className="bg-gray-800 text-white py-2 px-4">
+    <div className="bg-orange-500 text-white py-2 px-4  w-full">
       <div className="container mx-auto flex justify-between items-center text-sm">
         <div className="flex items-center space-x-6">
           <div className="flex items-center space-x-2">

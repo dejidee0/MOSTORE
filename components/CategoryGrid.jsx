@@ -22,7 +22,7 @@ export default function CategoryGrid() {
           transition={{ duration: 0.6 }}
           className="text-center mb-12"
         >
-          <h2 className="text-3xl font-bold text-gray-800 mb-4">Shop by Category</h2>
+          <h2 className="text-3xl font-bold text-gray-800 mb-4">Popular Categories</h2>
           <p className="text-gray-600 text-lg">Find exactly what you're looking for</p>
         </motion.div>
 

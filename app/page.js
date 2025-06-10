@@ -10,14 +10,12 @@ import ProductGrid from "@/components/ProductGrid";
 import BlogSection from "@/components/BlogSection";
 import NewsletterForm from "@/components/NewsletterForm";
 
-
 const HomePage = () => {
   return (
-    <div className="min-h-screen bg-gray-50 w-full  overflow-hidden">
+    <div className="min-h-screen bg-gray-50 w-full  overflow-hidden font-raleway">
       <TopBar />
       <NavBar />
       <CategoryMenu />
-
       <main>
         <Hero />
         <PromoBanner />

@@ -1,3 +1,9 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
+@theme {
+  --color-primary: #ff6600;
+}
+@theme {
+  --font-raleway: "var(--font-raleway)", "sans-serif";
+}

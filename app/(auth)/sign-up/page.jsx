@@ -1,5 +1,4 @@
 "use client";
-
 import Image from "next/image";
 import React from "react";
 
@@ -125,7 +124,7 @@ const SignUpPage = () => {
               Create Account
             </button>
 
-            <div className="text-center text-sm text-gray-500">or</div>
+              <div className="text-center text-sm text-gray-500">or</div>
 
             <button
               type="button"

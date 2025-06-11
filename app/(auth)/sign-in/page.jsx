@@ -6,7 +6,6 @@ import React from "react";
 const SignInPage = () => {
   return (
     <div className="min-h-screen flex flex-col justify-center md:flex-row font-raleway bg-white">
-      {/* Left Side Image */}
       <div
         className="hidden md:flex md:w-1/2 bg-cover bg-center"
         style={{ backgroundImage: "url('/auth.png')" }}
@@ -15,7 +14,6 @@ const SignInPage = () => {
       {/* Right Side Form */}
       <div className="flex w-full md:w-1/2 items-center justify-center p-6 sm:p-10">
         <div className="w-full max-w-md bg-white shadow-xl rounded-lg p-8 md:p-10 space-y-6">
-          {/* Logo (Mobile only) */}
           <div className="md:hidden flex justify-center">
             <Image
               src="/assets/Mostore Logo Icon.png"
@@ -26,7 +24,6 @@ const SignInPage = () => {
             />
           </div>
 
-          {/* Header */}
           <div className="text-center">
             <h2 className="text-3xl font-semibold text-gray-800">
               Welcome Back

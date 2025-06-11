@@ -1,4 +1,5 @@
 import { Geist, Geist_Mono, Raleway } from "next/font/google";
+import { ClerkProvider } from "@clerk/nextjs";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -25,8 +26,12 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en">
-      <body className={`${raleway.variable} font-raleway`}>{children}</body>
-    </html>
+    <ClerkProvider>
+      <html lang="en">
+        <body className={`${raleway.variable} font-raleway } antialiased`}>
+          {children}
+        </body>
+      </html>
+    </ClerkProvider>
   );
 }

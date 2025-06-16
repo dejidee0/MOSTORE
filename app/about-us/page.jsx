@@ -47,10 +47,10 @@ const About = () => {
         {/* Image Section */}
         <div className="w-full md:w-1/2">
           <Image
-            src="/about.png"
+            src="/about.jpg"
             alt="About Us"
-            width={600}
-            height={400}
+            width={500}
+            height={300}
             className="w-full h-auto rounded-xl shadow-lg"
             priority
           />

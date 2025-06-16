@@ -61,7 +61,7 @@ const SignInPage = () => {
               </label>
               <input
                 id="email"
-                 name="email"
+                name="email"
                 type="email"
                 value={form.email}
                 onChange={handleChange}
@@ -81,7 +81,7 @@ const SignInPage = () => {
               <input
                 id="password"
                 type="password"
-                name="Password" 
+                name="Password"
                 value={form.Password}
                 onChange={handleChange}
                 required

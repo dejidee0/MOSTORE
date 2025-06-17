@@ -33,7 +33,7 @@ const Page = () => {
 
   return (
     <div className="min-h-screen bg-white p-4 flex flex-col lg:flex-row gap-6">
-      {/* Orders Table */}
+      {/* Orders Table (Desktop) */}
       <div className="flex-1 overflow-auto">
         <div className="flex justify-between items-center mb-4 gap-2 flex-wrap">
           <div className="flex gap-2">
@@ -49,11 +49,11 @@ const Page = () => {
           </button>
         </div>
 
-        <table className="w-full min-w-[700px]">
+        {/* Desktop Table */}
+        <table className="w-full min-w-[700px] hidden lg:table">
           <thead>
             <tr className="text-left border-b text-sm text-gray-600">
               <th className="py-2">
-                {" "}
                 <input type="checkbox" /> Order
               </th>
               <th>Customer</th>
@@ -110,8 +110,58 @@ const Page = () => {
             ))}
           </tbody>
         </table>
+
+        {/* Mobile View */}
+        <div className="space-y-4 lg:hidden">
+          {orders.map((order) => (
+            <div
+              key={order.id}
+              onClick={() => setSelectedOrder(order)}
+              className={`p-4 rounded-lg border ${
+                selectedOrder?.id === order.id ? "bg-gray-100" : "bg-white"
+              } shadow-sm cursor-pointer transition`}
+            >
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-3">
+                  {order.avatar ? (
+                    <Image
+                      src={order.avatar}
+                      width={32}
+                      height={32}
+                      className="rounded-full"
+                      alt="avatar"
+                    />
+                  ) : (
+                    <div className="w-8 h-8 rounded-full bg-gray-400 text-white text-xs flex items-center justify-center">
+                      {order.name
+                        .split(" ")
+                        .map((n) => n[0])
+                        .join("")}
+                    </div>
+                  )}
+                  <div>
+                    <p className="text-sm font-semibold">{order.name}</p>
+                    <p className="text-xs text-gray-500">{order.date}</p>
+                  </div>
+                </div>
+                <span
+                  className={`text-xs px-2 py-1 rounded font-semibold whitespace-nowrap ${
+                    statusColors[order.status]
+                  }`}
+                >
+                  {order.status}
+                </span>
+              </div>
+              <div className="text-sm flex justify-between pt-1">
+                <p>Total:</p>
+                <p>{order.total}</p>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
 
+      {/* Order Summary */}
       <motion.div
         key={selectedOrder?.id}
         initial={{ x: 100, opacity: 0 }}

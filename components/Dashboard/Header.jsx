@@ -1,116 +1,166 @@
 "use client";
 
-import { useState, useRef } from "react";
-import {
-  HiBell,
-  HiOutlinePencilAlt,
-  HiOutlineQuestionMarkCircle,
-} from "react-icons/hi";
-import { FaAngleDown, FaPen, FaRegQuestionCircle } from "react-icons/fa";
+import { useState, useRef, useEffect } from "react";
 import { FiSearch } from "react-icons/fi";
-import editIcon from "../../public/assets/Edit Icon.png";
-import notificationIcon from "../../public/assets/Notification Icon.png";
-
+import {
+  FaAngleDown,
+  FaRegQuestionCircle,
+  FaBell,
+  FaEdit,
+} from "react-icons/fa";
 import Image from "next/image";
 
 export default function Header({ toggleSidebar }) {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
 
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
   return (
-    <header className="flex flex-wrap items-center justify-between bg-white shadow px-8 py-3 h-auto lg:h-16 relative z-20">
-      {/* Hamburger */}
-      <button
-        className="lg:hidden text-gray-700 focus:outline-none mr-2"
-        onClick={toggleSidebar}
-        aria-label="Toggle sidebar"
-      >
-        <svg
-          className="w-6 h-6"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth={2}
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="M4 6h16M4 12h16M4 18h16"
-          />
-        </svg>
-      </button>
-
-      {/* Search bar */}
-      <div className="flex-grow max-w-md w-full mx-auto hidden md:flex items-center bg-gray-200 rounded-6xl px-4 py-3 shadow-sm">
-        <FiSearch className="text-gray-400 w-5 h-5 mr-2" />
-        <input
-          type="text"
-          placeholder="Search anything..."
-          className="bg-transparent outline-none text-sm w-full"
-        />
-      </div>
-
-      {/* Right controls */}
-      <div className="flex items-center gap-6 px-2 md:px-0 mt-3 lg:mt-0 flex-shrink-0 relative">
-        <div className="relative" ref={dropdownRef}>
+    <header className="sticky top-0 w-full bg-white shadow-sm z-50">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between h-16 md:h-20">
+          {/* Mobile menu button */}
           <button
-            onClick={() => setDropdownOpen((prev) => !prev)}
-            className="flex items-center gap-2 group focus:outline-none"
+            onClick={toggleSidebar}
+            className="md:hidden p-1 rounded-md text-gray-700 hover:text-primary focus:outline-none"
+            aria-label="Toggle sidebar"
           >
-            <img
-              src="/logo.png"
-              alt="Profile"
-              className="h-8 w-8 rounded-full object-cover"
-            />
-            <span className="text-sm font-medium text-black-700 group-hover:text-primary truncate">
-              Salisu Oluwaseun
-            </span>
-            <FaAngleDown className="text-black" />
+            <svg
+              className="w-6 h-6"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M4 6h16M4 12h16M4 18h16"
+              />
+            </svg>
           </button>
 
-          {/* Dropdown Menu */}
-          {dropdownOpen && (
-            <div className="absolute right-0 mt-2 w-40 bg-white border border-gray-200 rounded-md shadow-md py-2 z-50">
-              <button className="w-full px-4 py-2 text-sm text-left hover:bg-gray-100">
-                Settings
-              </button>
-              <button className="w-full px-4 py-2 text-sm text-left hover:bg-gray-100">
-                Logout
-              </button>
+          {/* Search bar - hidden on mobile */}
+          <div className="hidden md:flex flex-1 max-w-md mx-4 lg:mx-6">
+            <div className="relative w-full">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <FiSearch className="h-5 w-5 text-gray-400" />
+              </div>
+              <input
+                type="text"
+                placeholder="Search anything..."
+                className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm transition-all"
+              />
             </div>
-          )}
+          </div>
+
+          {/* Right controls */}
+          <div className="flex items-center space-x-4 sm:space-x-6">
+            {/* Help button - icon only on mobile */}
+            <button
+              className="p-1.5 rounded-full text-gray-600 hover:text-primary hover:bg-gray-100 transition-colors"
+              title="Help"
+            >
+              <span className="sr-only">Help</span>
+              <FaRegQuestionCircle className="h-5 w-5" />
+              <span className="hidden md:inline ml-2 text-sm font-medium">
+                Help
+              </span>
+            </button>
+
+            {/* Edit button */}
+            <button
+              className="p-1.5 rounded-full text-gray-600 hover:text-primary hover:bg-gray-100 transition-colors"
+              title="Edit"
+            >
+              <span className="sr-only">Edit</span>
+              <FaEdit className="h-5 w-5" />
+            </button>
+
+            {/* Notifications */}
+            <button className="p-1.5 relative rounded-full text-gray-600 hover:text-primary hover:bg-gray-100 transition-colors">
+              <span className="sr-only">Notifications</span>
+              <FaBell className="h-5 w-5" />
+              <span className="absolute top-0 right-0 bg-red-500 text-white text-xs font-bold rounded-full w-4 h-4 flex items-center justify-center">
+                3
+              </span>
+            </button>
+
+            {/* Profile dropdown */}
+            <div className="relative" ref={dropdownRef}>
+              <button
+                onClick={() => setDropdownOpen(!dropdownOpen)}
+                className="flex items-center space-x-2 max-w-xs rounded-full focus:outline-none group"
+              >
+                <div className="relative h-8 w-8 rounded-full overflow-hidden border-2 border-transparent group-hover:border-primary transition-colors">
+                  <Image
+                    src="/about.jpg"
+                    alt="Profile"
+                    layout="fill"
+                    objectFit="cover"
+                  />
+                </div>
+                <span className="hidden md:inline text-sm font-medium text-gray-700 group-hover:text-primary truncate max-w-[120px]">
+                  Salisu Oluwaseun
+                </span>
+                <FaAngleDown
+                  className={`text-gray-500 transition-transform ${
+                    dropdownOpen ? "transform rotate-180" : ""
+                  }`}
+                />
+              </button>
+
+              {dropdownOpen && (
+                <div className="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none">
+                  <div className="py-1">
+                    <a
+                      href="#"
+                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    >
+                      Your Profile
+                    </a>
+                    <a
+                      href="#"
+                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    >
+                      Settings
+                    </a>
+                    <a
+                      href="#"
+                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    >
+                      Logout
+                    </a>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
-        <button className="relative text-black hover:text-primary">
-          <Image
-            src={notificationIcon}
-            width={20}
-            height={20}
-            alt="Edit Icon"
-          />
 
-          <span className="absolute -top-1 -right-1 bg-red-600 text-white text-xs font-semibold rounded-full w-3 h-3 flex items-center justify-center shadow">
-            3
-          </span>
-        </button>
-        <button
-          className="text-gray-black flex hover:text-primary "
-          title="Edit"
-        >
-          <Image src={editIcon} width={20} height={20} alt="Edit Icon" />
-        </button>
-        {/* Help */}
-        <button className="text-black flex hover:text-primary" title="Help">
-          {/* <Image src={helpIcon} width={20} height={20} alt="Edit Icon" /> */}
-          <FaRegQuestionCircle />
-
-          <h1>Help</h1>
-        </button>
-
-        {/* Edit */}
-
-        {/* Notifications */}
-
-        {/* User Dropdown */}
+        {/* Mobile search - appears only on mobile */}
+        <div className="md:hidden pb-3 pt-1">
+          <div className="relative w-full">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center">
+              <FiSearch className="h-5 w-5 text-gray-400" />
+            </div>
+            <input
+              type="text"
+              placeholder="Search..."
+              className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm"
+            />
+          </div>
+        </div>
       </div>
     </header>
   );

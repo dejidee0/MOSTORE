@@ -33,75 +33,65 @@ export default function Footer() {
   ]
 
   return (
-    <footer className="bg-gray-900 text-white">
-      <div className="container mx-auto px-4 py-12">
-        <div className="grid md:grid-cols-2 lg:grid-cols-5 gap-8">
-          {/* Company Info */}
-          <div className="lg:col-span-2">
-            <h3 className="text-2xl font-bold text-orange-500 mb-4">MOSTORE</h3>
-            <p className="text-gray-300 mb-6 leading-relaxed">
-              Your trusted partner for premium home appliances. We bring you the latest technology and innovative
-              solutions to make your life more comfortable and efficient.
-            </p>
-
-            <div className="space-y-3">
-              <div className="flex items-center space-x-3">
-                <MapPin className="w-5 h-5 text-orange-500" />
-                <span className="text-gray-300">123 Commerce Street, City, State 12345</span>
+     <footer className="bg-gray-300  mt-10">
+        <div className="container mx-auto px-4 py-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div>
+              <div className="flex items-center gap-2 mb-4">
+                <div className="w-8 h-8 bg-orange-500 rounded flex items-center justify-center">
+                  <span className="text-white font-bold text-sm">M</span>
+                </div>
+                <span className="text-xl font-bold">MOSTORE</span>
               </div>
-              <div className="flex items-center space-x-3">
-                <Phone className="w-5 h-5 text-orange-500" />
-                <span className="text-gray-300">+1 (555) 123-4567</span>
-              </div>
-              <div className="flex items-center space-x-3">
-                <Mail className="w-5 h-5 text-orange-500" />
-                <span className="text-gray-300">support@mostore.com</span>
+              <p className="text-orange-500 text-sm leading-relaxed">
+                Welcome to our Store, where we pride ourselves on excellent customer service and our drive strive and grow business.
+              </p>
+              <div className="flex gap-2 mt-4">
+                <div className="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center">
+                  <span className="text-white text-xs">f</span>
+                </div>
+                <div className="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center">
+                  <span className="text-white text-xs">t</span>
+                </div>
+                <div className="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center">
+                  <span className="text-white text-xs">in</span>
+                </div>
+                <div className="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center">
+                  <span className="text-white text-xs">ig</span>
+                </div>
               </div>
             </div>
-          </div>
 
-          {/* Footer Links */}
-          {footerSections.map((section) => (
-            <div key={section.title}>
-              <h4 className="font-semibold mb-4">{section.title}</h4>
-              <ul className="space-y-2">
-                {section.links.map((link) => (
-                  <li key={link.name}>
-                    <Link href={link.href} className="text-gray-300 hover:text-orange-500 transition-colors">
-                      {link.name}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
-        </div>
-
-        {/* Bottom Section */}
-        <div className="border-t border-gray-800 mt-12 pt-8">
-          <div className="flex flex-col md:flex-row justify-between items-center">
-            <p className="text-gray-400 text-sm">© 2024 MOSTORE. All rights reserved.</p>
-
-            <div className="flex items-center space-x-6 mt-4 md:mt-0">
-              <div className="flex space-x-4">
-                <Facebook className="w-5 h-5 text-gray-400 hover:text-orange-500 cursor-pointer transition-colors" />
-                <Twitter className="w-5 h-5 text-gray-400 hover:text-orange-500 cursor-pointer transition-colors" />
-                <Instagram className="w-5 h-5 text-gray-400 hover:text-orange-500 cursor-pointer transition-colors" />
-                <Youtube className="w-5 h-5 text-gray-400 hover:text-orange-500 cursor-pointer transition-colors" />
+            <div>
+              <h4 className="font-semibold mb-4 text-orange-500">QUICK LINKS</h4>
+              <div className="space-y-2 text-sm text-black">
+                <div>Got Questions?</div>
+                <div>Monday - Friday: 9am-6pm</div>
+                <div>Saturday: 10am - 3pm</div>
+                <div>support@ourstore.com</div>
               </div>
+            </div>
 
-              <div className="flex space-x-4 text-sm">
-                <Link href="/privacy" className="text-gray-400 hover:text-orange-500 transition-colors">
-                  Privacy Policy
-                </Link>
-                <Link href="/terms" className="text-gray-400 hover:text-orange-500 transition-colors">
-                  Terms of Service
-                </Link>
+            <div>
+              <h4 className="font-semibold mb-4 text-orange-500 underline">JOIN OUR NEWSLETTER</h4>
+              <p className="text-black text-sm mb-4">
+                Get Email updates about our latest shop and special offers.
+              </p>
+              <div className="flex">
+                <input
+                  type="email"
+                  placeholder="Enter your email here"
+                  className="flex-1 px-4 py-2 rounded-l text-black bg-white"
+                />
+                <button className="bg-orange-500 px-4 py-2 text-white rounded-r">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                  </svg>
+                </button>
               </div>
             </div>
           </div>
         </div>
-      </div>
-    </footer>
+      </footer>
   )
 }

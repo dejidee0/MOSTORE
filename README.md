@@ -5,14 +5,7 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 First, run the development server:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+⚠️ This project uses pnpm. Do not use npm run or npm install. Always use pnpm.
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 

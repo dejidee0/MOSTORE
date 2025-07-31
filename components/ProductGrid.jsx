@@ -2,18 +2,18 @@
 
 import { motion } from "framer-motion"
 import ProductCard from "./ProductCard"
-
+import { getAllProducts } from "@/lib/data/products"
+import { useEffect, useState } from "react";
 export default function ProductGrid() {
-  // TODO: Fetch data from Supabase
-  const products = Array.from({ length: 12 }, (_, i) => ({
-    id: `product-${i + 1}`,
-    name: "VISIONE – 14JY DAYTONA Premium Appliance",
-    price: 299.99,
-    originalPrice: 374.99,
-    image: "/one.jpg",
-    rating: 4,
-    discount: 20,
-  }))
+const products = getAllProducts();
+const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  if (!isClient) return null; // prevent hydration mismatch
+
 
   return (
     <section className="py-16 px-4 bg-white">
@@ -25,7 +25,6 @@ export default function ProductGrid() {
           className="text-center mb-12"
         >
           <h2 className="text-3xl font-bold text-gray-800 mb-4">ALL Deals</h2>
-          <p className="text-gray-600 text-lg">Discover our most popular items</p>
         </motion.div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">

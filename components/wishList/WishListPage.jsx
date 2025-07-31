@@ -7,7 +7,7 @@ import React, { useEffect, useState } from 'react';
 import { Heart, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useWishlistStore } from '@/lib/stores/wishList-store'; 
-import WishlistItem from './WishlistItem';
+// import WishlistItem from './WishlistItem';
 
 export default function WishlistPage({ isOpen, onClose }) {
   const { wishlist } = useWishlistStore();

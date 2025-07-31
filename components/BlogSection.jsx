@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion"
 import BlogCard from "./BlogCard"
+import { MoveRight } from "lucide-react"
 
 
 export default function BlogSection() {
@@ -48,7 +49,12 @@ export default function BlogSection() {
           transition={{ duration: 0.6 }}
           className="text-center mb-12"
         >
-          <p className="text-gray-600 text-lg">Stay updated with tips, guides, and industry news</p>
+          <div className="flex flex-col items-center justify-center md:flex-row lg:flex-row">
+
+          <p className="text-orange-600 text-xl font-bold">OUR LATEST NEWS </p>
+          <p className="text-xs text-gray-400 mx-2">Don&apos;t miss out on  this week's deal</p>
+          <p className="flex  text-orange-500 text-xl font-bold">VIEW ALL <MoveRight/></p>
+          </div>
         </motion.div>
 
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">

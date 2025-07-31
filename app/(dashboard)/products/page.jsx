@@ -1,12 +1,23 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { FaSearch, FaPlus, FaBoxOpen } from "react-icons/fa";
+import ProductForm from "@/components/inputs/ProductsForm";
 
-const ProductDashboard = () => {
+ 
+ const ProductDashboard = () => {
+const [prodUpload, setProdUpload] = useState(false);
+  
+  
+  console.log(prodUpload);
+
+
   return (
-    <div className="p-6 md:p-10 w-full bg-gray-100 min-h-screen">
+    
+    <>
+    
+    <div className=" relative p-6 md:p-10 w-full bg-gray-100 min-h-screen">
       {/* Page Title */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
@@ -35,7 +46,7 @@ const ProductDashboard = () => {
         </div>
 
         {/* Add Product Button */}
-        <motion.button
+        <motion.button onClick={()=>setProdUpload(true)}
           whileTap={{ scale: 0.97 }}
           className="flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white px-5 py-2.5 rounded-md shadow transition-all"
         >
@@ -44,13 +55,15 @@ const ProductDashboard = () => {
         </motion.button>
       </div>
 
+     
+
       {/* Product Table */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.2, duration: 0.5 }}
         className="overflow-auto bg-white shadow rounded-lg"
-      >
+        >
         <table className="min-w-full text-sm">
           <thead className="bg-gray-50 border-b">
             <tr>
@@ -105,6 +118,10 @@ const ProductDashboard = () => {
         </table>
       </motion.div>
     </div>
+    {
+      <ProductForm isOpen={prodUpload} onClose={()=>setProdUpload(false)}/>
+    }
+     </>
   );
 };
 

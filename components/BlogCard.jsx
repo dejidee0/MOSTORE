@@ -6,7 +6,7 @@ import { Calendar, User } from "lucide-react"
 export default function BlogCard({ post }) {
   return (
     <article className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
-      <Link href={`/blog/${post.slug}`}>
+      <Link href="#">
         <Image
           src={post.image}
           alt={post.title}
@@ -28,7 +28,7 @@ export default function BlogCard({ post }) {
           </div>
         </div>
 
-        <Link href={`/blog/${post.slug}`}>
+        <Link href="#">
           <h3 className="text-xl font-semibold text-gray-800 mb-3 hover:text-orange-500 transition-colors line-clamp-2">
             {post.title}
           </h3>
@@ -37,7 +37,7 @@ export default function BlogCard({ post }) {
         <p className="text-gray-600 line-clamp-3 mb-4">{post.excerpt}</p>
 
         <Link
-          href={`/blog/${post.slug}`}
+          href="#"
           className="text-orange-500 font-medium hover:text-orange-600 transition-colors"
         >
           Read More →

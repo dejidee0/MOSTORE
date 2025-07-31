@@ -21,8 +21,8 @@ const Hero = () => {
       subtitle: "Deal",
       tagline: "Biggest offer of the week",
       appliances: [
-        { type: "washer", image: "/laptop.jpg", featured: true },
-        { type: "fridge", image: "/laptop.jpg", featured: false }
+        { type: "washer", image: "/printer.png", featured: true },
+        { type: "fridge", image: "/printer.png", featured: false }
       ]
     },
     {
@@ -31,8 +31,8 @@ const Hero = () => {
       subtitle: "Sale",
       tagline: "Best kitchen appliances",
       appliances: [
-        { type: "oven", image: "/laptop.jpg", featured: true },
-        { type: "dishwasher", image: "/laptop.jpg", featured: false }
+        { type: "oven", image: "/printer.png", featured: true },
+        { type: "dishwasher", image: "/printer.png", featured: false }
       ]
     },
     {

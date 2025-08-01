@@ -1,7 +1,7 @@
 import { Raleway } from "next/font/google";
 import { ClerkProvider } from "@clerk/nextjs";
 import "./globals.css";
-import Footer from "/components/Footer"
+import Footer from "/components/Footer";
 import TopBar from "@/components/TopBar";
 import NavbarWrapper from "@/components/NavbarWrapper";
 import { ToastProvider } from "@/lib/toast";
@@ -22,12 +22,10 @@ export default function RootLayout({ children }) {
     <ClerkProvider>
       <html lang="en">
         <body className={`${raleway.variable} font-raleway } antialiased`}>
-          <TopBar />
-          <NavbarWrapper showWishlist={true}/>
-          <ToastProvider>
-          {children}
-          </ToastProvider>
-          <Footer/>
+          {/* <TopBar /> */}
+          <NavbarWrapper showWishlist={true} />
+          <ToastProvider>{children}</ToastProvider>
+          <Footer />
         </body>
       </html>
     </ClerkProvider>

@@ -1,9 +1,8 @@
 "use client";
 
 import React from "react";
-import Footer from "@/components/Footer";
-import NavBar from "@/components/NavBar";
-import TopBar from "@/components/TopBar";
+import Footer from "@/components/shared/Footer";
+import NavBar from "@/components/shared/NavBar";
 import Link from "next/link";
 import Image from "next/image";
 import { FaStore, FaUsers, FaHandshake } from "react-icons/fa";
@@ -13,7 +12,6 @@ import { AiOutlineDollar } from "react-icons/ai";
 const About = () => {
   return (
     <div className="min-h-screen bg-white w-full overflow-hidden font-raleway flex flex-col">
-      <TopBar />
       <NavBar />
 
       {/* Breadcrumb */}

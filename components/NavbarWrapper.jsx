@@ -1,15 +1,13 @@
 // "use client";
 // import { useEffect, useMemo, useState } from 'react';
-// import NavBar from './NavBar'; 
+// import NavBar from './NavBar';
 // import WishlistPage from './wishList/WishListPage';
 
 // import { useWishlistStore } from '@/lib/stores/wishList-store';
 // import WishlistAlert from './wishList/WishListAlert';
 
-
-
 // export default function NavbarWrapper() {
-//   const [wishList, setWishList] = useState(false); 
+//   const [wishList, setWishList] = useState(false);
 //   const { showAlert, setShowAlert } = useWishlistStore(
 //     useMemo(
 //       () => (state) => ({
@@ -34,28 +32,25 @@
 
 // <NavBar onWishListClick={()=>setWishList(true)}  />;
 
- 
-//    <WishlistPage isOpen={wishList} onClose={setWishList(false)}/> 
+//    <WishlistPage isOpen={wishList} onClose={setWishList(false)}/>
 //   <WishlistAlert show={showAlert}/>
 //   {/* <WishlistPage isOpen={wishli} onClose={() => setWishlistOpen(false)} /> */}
 
-
 // </>
-// ) 
+// )
 
 // }
-
 
 // app/components/NavbarWrapper.jsx
 // app/components/NavbarWrapper.jsx
 "use client";
 
-import { useState, useEffect } from 'react';
-import { useStore } from 'zustand'; // ✅ import useStore directly
-import NavBar from './NavBar';
-import WishlistPage from './wishList/WishListPage';
-import WishlistAlert from './wishList/WishListAlert';
-import { useWishlistStore } from '@/lib/stores/wishList-store';
+import { useState, useEffect } from "react";
+import { useStore } from "zustand"; // ✅ import useStore directly
+import NavBar from "./shared/NavBar";
+import WishlistPage from "./wishList/WishListPage";
+import WishlistAlert from "./wishList/WishListAlert";
+import { useWishlistStore } from "@/lib/stores/wishList-store";
 
 export default function NavbarWrapper({ showWishlist = true }) {
   const [wishlistOpen, setWishlistOpen] = useState(false);
@@ -63,7 +58,10 @@ export default function NavbarWrapper({ showWishlist = true }) {
 
   // ✅ Use useStore instead of selector object to avoid snapshot error
   const showAlert = useStore(useWishlistStore, (state) => state.showAlert);
-  const setShowAlert = useStore(useWishlistStore, (state) => state.setShowAlert);
+  const setShowAlert = useStore(
+    useWishlistStore,
+    (state) => state.setShowAlert
+  );
 
   useEffect(() => {
     setIsClient(true);
@@ -90,10 +88,12 @@ export default function NavbarWrapper({ showWishlist = true }) {
     <>
       <NavBar onWishlistClick={() => setWishlistOpen(true)} />
       {showWishlist && (
-        <WishlistPage isOpen={wishlistOpen} onClose={() => setWishlistOpen(false)} />
+        <WishlistPage
+          isOpen={wishlistOpen}
+          onClose={() => setWishlistOpen(false)}
+        />
       )}
       <WishlistAlert show={showAlert} />
     </>
   );
 }
-

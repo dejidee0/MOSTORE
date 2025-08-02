@@ -1,17 +1,12 @@
 "use client";
 
 import React from "react";
-import Footer from "@/components/Footer";
-import NavBar from "@/components/NavBar";
-import TopBar from "@/components/TopBar";
+
 import Link from "next/link";
 
 const NotFound = () => {
   return (
-    <div className="min-h-screen bg-gray-50 w-full overflow-hidden font-raleway flex flex-col">
-      <TopBar />
-      <NavBar />
-
+    <div className="max-h-max bg-gray-50 w-full overflow-hidden font-raleway flex flex-col">
       <main className="flex flex-1 items-center justify-center px-4 py-16">
         <div className="text-center max-w-xl mx-auto space-y-6">
           <h1 className="text-5xl md:text-6xl font-bold text-gray-800">404</h1>
@@ -29,8 +24,6 @@ const NotFound = () => {
           </Link>
         </div>
       </main>
-
-      <Footer />
     </div>
   );
 };

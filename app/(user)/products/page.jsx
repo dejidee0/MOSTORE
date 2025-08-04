@@ -345,9 +345,9 @@ const ProductsPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}{" "}
-      <Suspense fallback={<div>Loading...</div>}>
+    <Suspense fallback={<div>Loading...</div>}>
+      <div className="min-h-screen bg-gray-50">
+        {/* Header */}{" "}
         <div className="bg-white shadow-sm border-b">
           <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
             <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
@@ -387,7 +387,6 @@ const ProductsPage = () => {
             </div>
           </div>
         </div>
-
         <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="flex flex-col lg:flex-row gap-8">
             {/* Mobile Filter Button */}
@@ -809,8 +808,8 @@ const ProductsPage = () => {
             </div>
           </div>
         </div>
-      </Suspense>
-    </div>
+      </div>
+    </Suspense>
   );
 };
 

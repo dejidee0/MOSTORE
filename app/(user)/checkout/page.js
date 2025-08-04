@@ -709,7 +709,7 @@ export default function CheckoutPage() {
                       </div>
                       <p className="text-xs text-green-700">
                         Your payment information is encrypted and secured by
-                        Paystack. We don't store your card details.
+                        Paystack. We don`&apos`t store your card details.
                       </p>
                     </div>
                   )}

@@ -1,7 +1,7 @@
 // app/api/payment/verify/[reference]/route.js - Updated with Supabase & Resend
 import { NextResponse } from "next/server";
 import { saveOrderToDatabase, updateOrderStatus } from "@/lib/database";
-import { sendPaymentConfirmationEmail, updateInventory } from "@/lib/email";
+import { sendPaymentConfirmationEmail } from "@/lib/email";
 
 const PAYSTACK_SECRET_KEY = process.env.PAYSTACK_SECRET_KEY;
 const PAYSTACK_BASE_URL = "https://api.paystack.co";
@@ -85,9 +85,6 @@ export async function GET(request, { params }) {
           currency: transaction.currency,
           orderData,
         });
-
-        // Update inventory
-        await updateInventory(orderData.items);
       }
 
       return NextResponse.json({

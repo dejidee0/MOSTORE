@@ -1,5 +1,6 @@
 import { useCart } from "@/lib/cart";
 import { useToast } from "@/lib/toast";
+import Link from "next/link";
 
 export const CartPage = () => {
   const { cart, removeItem, updateQuantity, clearCart } = useCart();

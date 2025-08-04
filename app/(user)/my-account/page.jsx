@@ -19,6 +19,8 @@ import { usePathname, useRouter } from "next/navigation";
 import Footer from "@/components/shared/Footer";
 import NavBar from "@/components/shared/NavBar";
 import useUserStore from "@/lib/stores/useUserStore"; // Adjust path as needed
+import OrderHistory from "@/components/orderHistory";
+import { supabase } from "@/lib/supabase-client";
 
 const Breadcrumbs = () => {
   const pathname = usePathname();
@@ -100,6 +102,7 @@ const MyProfile = () => {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [message, setMessage] = useState({ type: "", text: "" });
+  const [activeTab, setActiveTab] = useState("profile"); // Add this line
 
   // Form State
   const [profileForm, setProfileForm] = useState({
@@ -326,34 +329,26 @@ const MyProfile = () => {
                 </h3>
                 <ul className="space-y-2">
                   <li>
-                    <Link
-                      href="/my-profile"
-                      className="flex items-center py-2 px-3 text-orange-500 font-medium bg-orange-50 rounded-lg"
-                      onClick={() => setMobileMenuOpen(false)}
+                    <button
+                      onClick={() => {
+                        setActiveTab("profile");
+                        setMobileMenuOpen(false);
+                      }}
+                      className={`flex items-center py-2 px-3 w-full text-left rounded-lg transition-colors ${
+                        activeTab === "profile"
+                          ? "text-orange-500 font-medium bg-orange-50"
+                          : "text-gray-700 hover:text-orange-500 hover:bg-orange-50"
+                      }`}
                     >
-                      <span className="w-1 h-6 bg-orange-500 mr-3 rounded-full"></span>
+                      <span
+                        className={`w-1 h-6 mr-3 rounded-full ${
+                          activeTab === "profile"
+                            ? "bg-orange-500"
+                            : "bg-transparent"
+                        }`}
+                      ></span>
                       My Profile
-                    </Link>
-                  </li>
-                  <li>
-                    <Link
-                      href="/address-book"
-                      className="flex items-center py-2 px-3 text-gray-700 hover:text-orange-500 hover:bg-orange-50 transition-colors rounded-lg"
-                      onClick={() => setMobileMenuOpen(false)}
-                    >
-                      <span className="w-1 h-6 bg-transparent mr-3 rounded-full"></span>
-                      Address Book
-                    </Link>
-                  </li>
-                  <li>
-                    <Link
-                      href="/payment-options"
-                      className="flex items-center py-2 px-3 text-gray-700 hover:text-orange-500 hover:bg-orange-50 transition-colors rounded-lg"
-                      onClick={() => setMobileMenuOpen(false)}
-                    >
-                      <span className="w-1 h-6 bg-transparent mr-3 rounded-full"></span>
-                      My Payment Options
-                    </Link>
+                    </button>
                   </li>
                 </ul>
               </div>
@@ -363,24 +358,26 @@ const MyProfile = () => {
                 </h3>
                 <ul className="space-y-2">
                   <li>
-                    <Link
-                      href="/my-returns"
-                      className="flex items-center py-2 px-3 text-gray-700 hover:text-orange-500 hover:bg-orange-50 transition-colors rounded-lg"
-                      onClick={() => setMobileMenuOpen(false)}
+                    <button
+                      onClick={() => {
+                        setActiveTab("orders");
+                        setMobileMenuOpen(false);
+                      }}
+                      className={`flex items-center py-2 px-3 w-full text-left rounded-lg transition-colors ${
+                        activeTab === "orders"
+                          ? "text-orange-500 font-medium bg-orange-50"
+                          : "text-gray-700 hover:text-orange-500 hover:bg-orange-50"
+                      }`}
                     >
-                      <span className="w-1 h-6 bg-transparent mr-3 rounded-full"></span>
-                      My Returns
-                    </Link>
-                  </li>
-                  <li>
-                    <Link
-                      href="/my-cancellations"
-                      className="flex items-center py-2 px-3 text-gray-700 hover:text-orange-500 hover:bg-orange-50 transition-colors rounded-lg"
-                      onClick={() => setMobileMenuOpen(false)}
-                    >
-                      <span className="w-1 h-6 bg-transparent mr-3 rounded-full"></span>
-                      My Cancellations
-                    </Link>
+                      <span
+                        className={`w-1 h-6 mr-3 rounded-full ${
+                          activeTab === "orders"
+                            ? "bg-orange-500"
+                            : "bg-transparent"
+                        }`}
+                      ></span>
+                      View Order History
+                    </button>
                   </li>
                 </ul>
               </div>
@@ -390,14 +387,26 @@ const MyProfile = () => {
                 </h3>
                 <ul className="space-y-2">
                   <li>
-                    <Link
-                      href="/wishlist"
-                      className="flex items-center py-2 px-3 text-gray-700 hover:text-orange-500 hover:bg-orange-50 transition-colors rounded-lg"
-                      onClick={() => setMobileMenuOpen(false)}
+                    <button
+                      onClick={() => {
+                        setActiveTab("wishlist");
+                        setMobileMenuOpen(false);
+                      }}
+                      className={`flex items-center py-2 px-3 w-full text-left rounded-lg transition-colors ${
+                        activeTab === "wishlist"
+                          ? "text-orange-500 font-medium bg-orange-50"
+                          : "text-gray-700 hover:text-orange-500 hover:bg-orange-50"
+                      }`}
                     >
-                      <span className="w-1 h-6 bg-transparent mr-3 rounded-full"></span>
+                      <span
+                        className={`w-1 h-6 mr-3 rounded-full ${
+                          activeTab === "wishlist"
+                            ? "bg-orange-500"
+                            : "bg-transparent"
+                        }`}
+                      ></span>
                       View Wishlist
-                    </Link>
+                    </button>
                   </li>
                 </ul>
               </div>
@@ -410,234 +419,257 @@ const MyProfile = () => {
               transition={{ duration: 0.3 }}
               className="flex-1 bg-white shadow-sm rounded-xl p-5 sm:p-6 md:p-8"
             >
-              <div className="flex items-center justify-between mb-6">
-                <div>
-                  <h2 className="text-xl md:text-2xl font-semibold text-gray-800 mb-1">
-                    Edit Your Profile
-                  </h2>
-                  <p className="text-gray-500 text-sm md:text-base">
-                    Update your personal information
-                  </p>
-                </div>
-                <button
-                  onClick={resetForm}
-                  disabled={isSubmitting}
-                  className="flex items-center gap-2 px-3 py-2 text-sm text-gray-600 hover:text-gray-800 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  title="Reset form"
-                >
-                  <RotateCcw className="w-4 h-4" />
-                  Reset
-                </button>
-              </div>
-
-              {/* Status Message */}
-              {message.text && (
-                <motion.div
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className={`flex items-center gap-2 p-4 rounded-lg mb-6 ${
-                    message.type === "success"
-                      ? "bg-green-50 text-green-700 border border-green-200"
-                      : "bg-red-50 text-red-700 border border-red-200"
-                  }`}
-                >
-                  {message.type === "success" ? (
-                    <CheckCircle className="w-5 h-5" />
-                  ) : (
-                    <AlertCircle className="w-5 h-5" />
-                  )}
-                  <span>{message.text}</span>
-                </motion.div>
-              )}
-
-              {/* Profile Form */}
-              <form
-                onSubmit={handleProfileSubmit}
-                className="space-y-5 md:space-y-6"
-              >
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-                  <div>
-                    <label className="block text-sm md:text-base font-medium text-gray-700 mb-1 md:mb-2">
-                      First Name
-                    </label>
-                    <input
-                      type="text"
-                      name="firstName"
-                      value={profileForm.firstName}
-                      onChange={handleProfileChange}
-                      disabled={isSubmitting}
-                      className="w-full px-3 py-2 md:px-4 md:py-3 text-sm md:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all disabled:bg-gray-50 disabled:cursor-not-allowed"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm md:text-base font-medium text-gray-700 mb-1 md:mb-2">
-                      Last Name
-                    </label>
-                    <input
-                      type="text"
-                      name="lastName"
-                      value={profileForm.lastName}
-                      onChange={handleProfileChange}
-                      disabled={isSubmitting}
-                      className="w-full px-3 py-2 md:px-4 md:py-3 text-sm md:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all disabled:bg-gray-50 disabled:cursor-not-allowed"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm md:text-base font-medium text-gray-700 mb-1 md:mb-2">
-                      Email
-                    </label>
-                    <input
-                      type="email"
-                      name="email"
-                      value={profileForm.email}
-                      disabled={true}
-                      className="w-full px-3 py-2 md:px-4 md:py-3 text-sm md:text-base border border-gray-300 rounded-lg bg-gray-50 cursor-not-allowed text-gray-500"
-                      title="Email cannot be changed here. Contact support if needed."
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm md:text-base font-medium text-gray-700 mb-1 md:mb-2">
-                      Phone Number
-                    </label>
-                    <input
-                      type="tel"
-                      name="phone"
-                      value={profileForm.phone}
-                      onChange={handleProfileChange}
-                      disabled={isSubmitting}
-                      className="w-full px-3 py-2 md:px-4 md:py-3 text-sm md:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all disabled:bg-gray-50 disabled:cursor-not-allowed"
-                      placeholder="+234 XXX XXX XXXX"
-                    />
-                  </div>
-                </div>
-
-                <div className="flex justify-end">
-                  <button
-                    type="submit"
-                    disabled={isSubmitting}
-                    className="flex items-center gap-2 px-4 py-2 md:px-6 md:py-3 text-sm md:text-base bg-orange-500 hover:bg-orange-600 disabled:bg-gray-400 text-white rounded-lg transition-all shadow-sm hover:shadow-md disabled:cursor-not-allowed"
-                  >
-                    {isSubmitting ? (
-                      <>
-                        <LoadingSpinner size="sm" />
-                        Updating Profile...
-                      </>
-                    ) : (
-                      <>
-                        <Save className="w-4 h-4" />
-                        Update Profile
-                      </>
-                    )}
-                  </button>
-                </div>
-              </form>
-
-              {/* Password Change Form */}
-              <div className="border-t border-gray-200 pt-6 mt-8">
-                <h3 className="text-lg md:text-xl font-semibold text-gray-800 mb-4">
-                  Password Changes
-                </h3>
-                <form onSubmit={handlePasswordSubmit} className="space-y-4">
-                  <div>
-                    <label className="block text-sm md:text-base font-medium text-gray-700 mb-1 md:mb-2">
-                      Current Password
-                    </label>
-                    <div className="relative">
-                      <input
-                        type={showPasswords.current ? "text" : "password"}
-                        name="currentPassword"
-                        value={passwordForm.currentPassword}
-                        onChange={handlePasswordChange}
-                        disabled={isSubmitting}
-                        className="w-full px-3 py-2 md:px-4 md:py-3 text-sm md:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all disabled:bg-gray-50 disabled:cursor-not-allowed pr-10"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => togglePasswordVisibility("current")}
-                        className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
-                      >
-                        {showPasswords.current ? (
-                          <EyeOff className="w-4 h-4" />
-                        ) : (
-                          <Eye className="w-4 h-4" />
-                        )}
-                      </button>
+              {activeTab === "profile" && (
+                <>
+                  {/* Your existing profile form content goes here */}
+                  <div className="flex items-center justify-between mb-6">
+                    <div>
+                      <h2 className="text-xl md:text-2xl font-semibold text-gray-800 mb-1">
+                        Edit Your Profile
+                      </h2>
+                      <p className="text-gray-500 text-sm md:text-base">
+                        Update your personal information
+                      </p>
                     </div>
-                  </div>
-                  <div>
-                    <label className="block text-sm md:text-base font-medium text-gray-700 mb-1 md:mb-2">
-                      New Password
-                    </label>
-                    <div className="relative">
-                      <input
-                        type={showPasswords.new ? "text" : "password"}
-                        name="newPassword"
-                        value={passwordForm.newPassword}
-                        onChange={handlePasswordChange}
-                        disabled={isSubmitting}
-                        className="w-full px-3 py-2 md:px-4 md:py-3 text-sm md:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all disabled:bg-gray-50 disabled:cursor-not-allowed pr-10"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => togglePasswordVisibility("new")}
-                        className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
-                      >
-                        {showPasswords.new ? (
-                          <EyeOff className="w-4 h-4" />
-                        ) : (
-                          <Eye className="w-4 h-4" />
-                        )}
-                      </button>
-                    </div>
-                  </div>
-                  <div>
-                    <label className="block text-sm md:text-base font-medium text-gray-700 mb-1 md:mb-2">
-                      Confirm New Password
-                    </label>
-                    <div className="relative">
-                      <input
-                        type={showPasswords.confirm ? "text" : "password"}
-                        name="confirmPassword"
-                        value={passwordForm.confirmPassword}
-                        onChange={handlePasswordChange}
-                        disabled={isSubmitting}
-                        className="w-full px-3 py-2 md:px-4 md:py-3 text-sm md:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all disabled:bg-gray-50 disabled:cursor-not-allowed pr-10"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => togglePasswordVisibility("confirm")}
-                        className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
-                      >
-                        {showPasswords.confirm ? (
-                          <EyeOff className="w-4 h-4" />
-                        ) : (
-                          <Eye className="w-4 h-4" />
-                        )}
-                      </button>
-                    </div>
-                  </div>
-
-                  <div className="flex justify-end pt-4">
                     <button
-                      type="submit"
+                      onClick={resetForm}
                       disabled={isSubmitting}
-                      className="flex items-center gap-2 px-4 py-2 md:px-6 md:py-3 text-sm md:text-base bg-red-500 hover:bg-red-600 disabled:bg-gray-400 text-white rounded-lg transition-all shadow-sm hover:shadow-md disabled:cursor-not-allowed"
+                      className="flex items-center gap-2 px-3 py-2 text-sm text-gray-600 hover:text-gray-800 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      title="Reset form"
                     >
-                      {isSubmitting ? (
-                        <>
-                          <LoadingSpinner size="sm" />
-                          Updating Password...
-                        </>
-                      ) : (
-                        <>
-                          <Save className="w-4 h-4" />
-                          Change Password
-                        </>
-                      )}
+                      <RotateCcw className="w-4 h-4" />
+                      Reset
                     </button>
                   </div>
-                </form>
-              </div>
+
+                  {/* Status Message */}
+                  {message.text && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className={`flex items-center gap-2 p-4 rounded-lg mb-6 ${
+                        message.type === "success"
+                          ? "bg-green-50 text-green-700 border border-green-200"
+                          : "bg-red-50 text-red-700 border border-red-200"
+                      }`}
+                    >
+                      {message.type === "success" ? (
+                        <CheckCircle className="w-5 h-5" />
+                      ) : (
+                        <AlertCircle className="w-5 h-5" />
+                      )}
+                      <span>{message.text}</span>
+                    </motion.div>
+                  )}
+
+                  {/* Profile Form */}
+                  <form
+                    onSubmit={handleProfileSubmit}
+                    className="space-y-5 md:space-y-6"
+                  >
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+                      <div>
+                        <label className="block text-sm md:text-base font-medium text-gray-700 mb-1 md:mb-2">
+                          First Name
+                        </label>
+                        <input
+                          type="text"
+                          name="firstName"
+                          value={profileForm.firstName}
+                          onChange={handleProfileChange}
+                          disabled={isSubmitting}
+                          className="w-full px-3 py-2 md:px-4 md:py-3 text-sm md:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all disabled:bg-gray-50 disabled:cursor-not-allowed"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm md:text-base font-medium text-gray-700 mb-1 md:mb-2">
+                          Last Name
+                        </label>
+                        <input
+                          type="text"
+                          name="lastName"
+                          value={profileForm.lastName}
+                          onChange={handleProfileChange}
+                          disabled={isSubmitting}
+                          className="w-full px-3 py-2 md:px-4 md:py-3 text-sm md:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all disabled:bg-gray-50 disabled:cursor-not-allowed"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm md:text-base font-medium text-gray-700 mb-1 md:mb-2">
+                          Email
+                        </label>
+                        <input
+                          type="email"
+                          name="email"
+                          value={profileForm.email}
+                          disabled={true}
+                          className="w-full px-3 py-2 md:px-4 md:py-3 text-sm md:text-base border border-gray-300 rounded-lg bg-gray-50 cursor-not-allowed text-gray-500"
+                          title="Email cannot be changed here. Contact support if needed."
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm md:text-base font-medium text-gray-700 mb-1 md:mb-2">
+                          Phone Number
+                        </label>
+                        <input
+                          type="tel"
+                          name="phone"
+                          value={profileForm.phone}
+                          onChange={handleProfileChange}
+                          disabled={isSubmitting}
+                          className="w-full px-3 py-2 md:px-4 md:py-3 text-sm md:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all disabled:bg-gray-50 disabled:cursor-not-allowed"
+                          placeholder="+234 XXX XXX XXXX"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="flex justify-end">
+                      <button
+                        type="submit"
+                        disabled={isSubmitting}
+                        className="flex items-center gap-2 px-4 py-2 md:px-6 md:py-3 text-sm md:text-base bg-orange-500 hover:bg-orange-600 disabled:bg-gray-400 text-white rounded-lg transition-all shadow-sm hover:shadow-md disabled:cursor-not-allowed"
+                      >
+                        {isSubmitting ? (
+                          <>
+                            <LoadingSpinner size="sm" />
+                            Updating Profile...
+                          </>
+                        ) : (
+                          <>
+                            <Save className="w-4 h-4" />
+                            Update Profile
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </form>
+
+                  {/* Password Change Form */}
+                  <div className="border-t border-gray-200 pt-6 mt-8">
+                    <h3 className="text-lg md:text-xl font-semibold text-gray-800 mb-4">
+                      Password Changes
+                    </h3>
+                    <form onSubmit={handlePasswordSubmit} className="space-y-4">
+                      <div>
+                        <label className="block text-sm md:text-base font-medium text-gray-700 mb-1 md:mb-2">
+                          Current Password
+                        </label>
+                        <div className="relative">
+                          <input
+                            type={showPasswords.current ? "text" : "password"}
+                            name="currentPassword"
+                            value={passwordForm.currentPassword}
+                            onChange={handlePasswordChange}
+                            disabled={isSubmitting}
+                            className="w-full px-3 py-2 md:px-4 md:py-3 text-sm md:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all disabled:bg-gray-50 disabled:cursor-not-allowed pr-10"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => togglePasswordVisibility("current")}
+                            className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
+                          >
+                            {showPasswords.current ? (
+                              <EyeOff className="w-4 h-4" />
+                            ) : (
+                              <Eye className="w-4 h-4" />
+                            )}
+                          </button>
+                        </div>
+                      </div>
+                      <div>
+                        <label className="block text-sm md:text-base font-medium text-gray-700 mb-1 md:mb-2">
+                          New Password
+                        </label>
+                        <div className="relative">
+                          <input
+                            type={showPasswords.new ? "text" : "password"}
+                            name="newPassword"
+                            value={passwordForm.newPassword}
+                            onChange={handlePasswordChange}
+                            disabled={isSubmitting}
+                            className="w-full px-3 py-2 md:px-4 md:py-3 text-sm md:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all disabled:bg-gray-50 disabled:cursor-not-allowed pr-10"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => togglePasswordVisibility("new")}
+                            className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
+                          >
+                            {showPasswords.new ? (
+                              <EyeOff className="w-4 h-4" />
+                            ) : (
+                              <Eye className="w-4 h-4" />
+                            )}
+                          </button>
+                        </div>
+                      </div>
+                      <div>
+                        <label className="block text-sm md:text-base font-medium text-gray-700 mb-1 md:mb-2">
+                          Confirm New Password
+                        </label>
+                        <div className="relative">
+                          <input
+                            type={showPasswords.confirm ? "text" : "password"}
+                            name="confirmPassword"
+                            value={passwordForm.confirmPassword}
+                            onChange={handlePasswordChange}
+                            disabled={isSubmitting}
+                            className="w-full px-3 py-2 md:px-4 md:py-3 text-sm md:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all disabled:bg-gray-50 disabled:cursor-not-allowed pr-10"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => togglePasswordVisibility("confirm")}
+                            className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
+                          >
+                            {showPasswords.confirm ? (
+                              <EyeOff className="w-4 h-4" />
+                            ) : (
+                              <Eye className="w-4 h-4" />
+                            )}
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="flex justify-end pt-4">
+                        <button
+                          type="submit"
+                          disabled={isSubmitting}
+                          className="flex items-center gap-2 px-4 py-2 md:px-6 md:py-3 text-sm md:text-base bg-red-500 hover:bg-red-600 disabled:bg-gray-400 text-white rounded-lg transition-all shadow-sm hover:shadow-md disabled:cursor-not-allowed"
+                        >
+                          {isSubmitting ? (
+                            <>
+                              <LoadingSpinner size="sm" />
+                              Updating Password...
+                            </>
+                          ) : (
+                            <>
+                              <Save className="w-4 h-4" />
+                              Change Password
+                            </>
+                          )}
+                        </button>
+                      </div>
+                    </form>
+                  </div>
+                </>
+              )}
+
+              {activeTab === "orders" && (
+                <OrderHistory
+                  user={user}
+                  supabase={supabase} // You'll need to pass your supabase instance
+                />
+              )}
+
+              {activeTab === "wishlist" && (
+                <div className="text-center py-12">
+                  <h2 className="text-xl md:text-2xl font-semibold text-gray-800 mb-4">
+                    Wishlist
+                  </h2>
+                  <p className="text-gray-500">
+                    Wishlist functionality coming soon...
+                  </p>
+                </div>
+              )}
             </motion.div>
           </div>
         </div>

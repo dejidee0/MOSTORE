@@ -95,28 +95,6 @@ const SignInPage = () => {
     }
   };
 
-  const handleGoogleSignIn = async () => {
-    if (isSubmitting || loading) return;
-
-    setError("");
-    setIsSubmitting(true);
-
-    try {
-      const { data, error: signInError } = await signInWithOAuth("google");
-
-      if (signInError) {
-        setError(
-          signInError.message || "Google sign-in failed. Please try again."
-        );
-      }
-    } catch (err) {
-      console.error("Google sign in error:", err);
-      setError("Google sign-in failed. Please try again.");
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
   const handleForgotPassword = async () => {
     if (!form.email) {
       setError("Please enter your email address first.");

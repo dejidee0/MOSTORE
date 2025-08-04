@@ -4,33 +4,107 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useToast } from "@/lib/toast";
 import { useCart } from "@/lib/cart";
+import { supabase } from "@/lib/supabase-client";
+
 export default function ProductDetails() {
   const params = useParams();
   const [product, setProduct] = useState(null);
+  const [relatedProducts, setRelatedProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedImage, setSelectedImage] = useState(0);
   const [selectedColor, setSelectedColor] = useState(0);
-  const [selectedSize, setSelectedSize] = useState(2); 
-  const [quantity, setQuantity] = useState(2);
-const{addItem,itemCount}=useCart();
-const {addToast}=useToast();
+  const [selectedSize, setSelectedSize] = useState(0);
+  const [quantity, setQuantity] = useState(1);
+
+  const { addItem } = useCart();
+  const { addToast } = useToast();
+
   useEffect(() => {
     const fetchProduct = async () => {
       try {
         setLoading(true);
-        const response = await fetch(`/api/products/${params.id}`);
 
-        if (!response.ok) {
-          throw new Error("Product not found");
+        // Fetch product by ID or slug
+        const { data: productData, error: productError } = await supabase
+          .from("products")
+          .select(
+            `
+            *,
+            categories (
+              id,
+              name,
+              description
+            )
+          `
+          )
+          .eq("id", params.id)
+          .eq("is_active", true)
+          .single();
+
+        if (productError) {
+          // Try fetching by slug if ID doesn't work
+          const { data: productBySlug, error: slugError } = await supabase
+            .from("products")
+            .select(
+              `
+              *,
+              categories (
+                id,
+                name,
+                description
+              )
+            `
+            )
+            .eq("slug", params.id)
+            .eq("is_active", true)
+            .single();
+
+          if (slugError) {
+            throw new Error("Product not found");
+          }
+
+          setProduct(productBySlug);
+
+          // Fetch related products
+          if (
+            productBySlug.related_products &&
+            productBySlug.related_products.length > 0
+          ) {
+            await fetchRelatedProducts(productBySlug.related_products);
+          }
+        } else {
+          setProduct(productData);
+
+          // Fetch related products
+          if (
+            productData.related_products &&
+            productData.related_products.length > 0
+          ) {
+            await fetchRelatedProducts(productData.related_products);
+          }
         }
-
-        const productData = await response.json();
-        setProduct(productData);
       } catch (err) {
         setError(err.message || "Failed to load product");
       } finally {
         setLoading(false);
+      }
+    };
+
+    const fetchRelatedProducts = async (relatedProductIds) => {
+      try {
+        const { data: relatedData, error: relatedError } = await supabase
+          .from("products")
+          .select("*")
+          .in("id", relatedProductIds)
+          .eq("is_active", true)
+          .limit(5);
+
+        if (!relatedError && relatedData) {
+          setRelatedProducts(relatedData);
+        }
+      } catch (err) {
+        console.error("Error fetching related products:", err);
       }
     };
 
@@ -41,20 +115,23 @@ const {addToast}=useToast();
 
   const handleQuantityChange = (type) => {
     if (type === "increment") {
-      setQuantity((prev) => prev + 1);
+      setQuantity((prev) => Math.min(prev + 1, product.stock_quantity));
     } else if (type === "decrement" && quantity > 1) {
       setQuantity((prev) => prev - 1);
     }
   };
 
-  const StarRating = ({ rating, reviews }) => {
+  const StarRating = ({ rating, totalReviews }) => {
+    const stars = rating || 0;
+    const reviews = totalReviews || 0;
+
     return (
       <div className="flex items-center gap-1">
         {[...Array(5)].map((_, i) => (
           <svg
             key={i}
             className={`w-4 h-4 ${
-              i < rating ? "text-orange-400 fill-current" : "text-gray-300"
+              i < stars ? "text-orange-400 fill-current" : "text-gray-300"
             }`}
             viewBox="0 0 20 20"
           >
@@ -64,6 +141,21 @@ const {addToast}=useToast();
         <span className="text-gray-500 text-sm ml-2">({reviews} Reviews)</span>
       </div>
     );
+  };
+
+  const handleAddToCart = (product) => {
+    const cartItem = {
+      id: product.id,
+      name: product.name,
+      price: product.price,
+      image: product.images?.[0] || "/placeholder-image.jpg",
+      selectedColor: product.colors?.[selectedColor] || null,
+      selectedSize: product.sizes?.[selectedSize] || null,
+      quantity: quantity,
+    };
+
+    addItem(cartItem, quantity);
+    addToast(`${product.name} added to cart!`, "success");
   };
 
   if (loading) {
@@ -78,6 +170,12 @@ const {addToast}=useToast();
     return (
       <div className="text-center py-12">
         <p className="text-red-600 text-lg">Error: {error}</p>
+        <Link
+          href="/"
+          className="text-blue-500 hover:underline mt-4 inline-block"
+        >
+          Return to Home
+        </Link>
       </div>
     );
   }
@@ -86,20 +184,24 @@ const {addToast}=useToast();
     return (
       <div className="text-center py-12">
         <p className="text-gray-600 text-lg">Product not found</p>
+        <Link
+          href="/"
+          className="text-blue-500 hover:underline mt-4 inline-block"
+        >
+          Return to Home
+        </Link>
       </div>
     );
   }
 
-  const relatedProducts = product.relatedProductsData || [];
-
-  const handleAddToCart=(product)=>{
-    addItem(product,1);
-addToast(`${product.name} added to cart!`,'success');
-    console.log("Item added to cart", product.name);
-  }
+  const isInStock = product.stock_quantity > 0;
+  const hasImages = product.images && product.images.length > 0;
+  const hasColors = product.colors && product.colors.length > 0;
+  const hasSizes = product.sizes && product.sizes.length > 0;
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* Breadcrumb */}
       <div className="bg-white border-b">
         <div className="container mx-auto px-4 py-3">
           <nav className="text-sm text-gray-500">
@@ -107,14 +209,18 @@ addToast(`${product.name} added to cart!`,'success');
               Home
             </Link>
             <span className="mx-2">/</span>
-            <Link href="#"
-            // href="/electronics" 
-            
-            className="hover:text-gray-700">
-              Electronics
-            </Link>
-            <span className="mx-2">/</span>
-            <span className="text-gray-700">{product.name }</span>
+            {product.categories && (
+              <>
+                <Link
+                  href={`/category/${product.categories.id}`}
+                  className="hover:text-gray-700"
+                >
+                  {product.categories.name}
+                </Link>
+                <span className="mx-2">/</span>
+              </>
+            )}
+            <span className="text-gray-700">{product.name}</span>
           </nav>
         </div>
       </div>
@@ -122,33 +228,40 @@ addToast(`${product.name} added to cart!`,'success');
       {/* Product Details */}
       <div className="container mx-auto px-4 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* Product Images */}
           <div className="space-y-4">
             <div className="border border-gray-200 rounded-lg p-4 bg-white">
               <img
-                src={product.images[selectedImage]}
-                alt={product.images[selectedImage].alt_text}
+                src={
+                  hasImages
+                    ? product.images[selectedImage]
+                    : "/placeholder-image.jpg"
+                }
+                alt={product.name}
                 className="w-full h-96 object-contain"
               />
             </div>
-            <div className="flex gap-2">
-              {product.images.map((image, index) => (
-                <button
-                  key={index}
-                  onClick={() => setSelectedImage(index)}
-                  className={`border-2 rounded-lg p-2 ${
-                    selectedImage === index
-                      ? "border-orange-500"
-                      : "border-gray-200"
-                  }`}
-                >
-                  <img
-                    src={image}
-                    alt=""
-                    className="w-16 h-16 object-contain"
-                  />
-                </button>
-              ))}
-            </div>
+            {hasImages && product.images.length > 1 && (
+              <div className="flex gap-2">
+                {product.images.map((image, index) => (
+                  <button
+                    key={index}
+                    onClick={() => setSelectedImage(index)}
+                    className={`border-2 rounded-lg p-2 ${
+                      selectedImage === index
+                        ? "border-orange-500"
+                        : "border-gray-200"
+                    }`}
+                  >
+                    <img
+                      src={image}
+                      alt=""
+                      className="w-16 h-16 object-contain"
+                    />
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Product Info */}
@@ -157,56 +270,90 @@ addToast(`${product.name} added to cart!`,'success');
               <h1 className="text-2xl font-bold text-gray-800 mb-2">
                 {product.name}
               </h1>
-              <StarRating rating={product.rating} reviews={product.reviews} />
-              <span className="text-green-600 text-sm ml-4">In Stock</span>
+              <StarRating
+                rating={product.rating}
+                totalReviews={product.total_reviews}
+              />
+              <span
+                className={`text-sm ml-4 ${
+                  isInStock ? "text-green-600" : "text-red-600"
+                }`}
+              >
+                {isInStock
+                  ? `In Stock (${product.stock_quantity} available)`
+                  : "Out of Stock"}
+              </span>
+              {product.brand && (
+                <p className="text-gray-600 text-sm mt-1">
+                  Brand: {product.brand}
+                </p>
+              )}
             </div>
 
-            <div className="text-3xl font-bold text-gray-800">
-              ${product.price}
+            <div className="flex items-center gap-4">
+              <div className="text-3xl font-bold text-gray-800">
+                ${product.price}
+              </div>
+              {product.originalprice &&
+                product.originalprice > product.price && (
+                  <div className="text-lg text-gray-400 line-through">
+                    ${product.originalprice}
+                  </div>
+                )}
+              {product.discount && (
+                <span className="bg-red-100 text-red-800 text-sm px-2 py-1 rounded">
+                  {product.discount}% OFF
+                </span>
+              )}
             </div>
 
             <div className="text-gray-600 leading-relaxed">
-              {product.description}
+              {product.short_description || product.description}
             </div>
 
             {/* Colors */}
-            <div>
-              <h3 className="font-semibold text-gray-800 mb-3">Colours:</h3>
-              <div className="flex gap-2">
-                {product.colors.map((color, index) => (
-                  <button
-                    key={index}
-                    onClick={() => setSelectedColor(index)}
-                    className={`w-8 h-8 rounded-full border-2 ${
-                      selectedColor === index
-                        ? "border-gray-800"
-                        : "border-gray-300"
-                    }`}
-                    style={{ backgroundColor: color.value }}
-                  />
-                ))}
+            {hasColors && (
+              <div>
+                <h3 className="font-semibold text-gray-800 mb-3">Colors:</h3>
+                <div className="flex gap-2">
+                  {product.colors.map((color, index) => (
+                    <button
+                      key={index}
+                      onClick={() => setSelectedColor(index)}
+                      className={`px-3 py-2 border rounded capitalize ${
+                        selectedColor === index
+                          ? "bg-orange-500 text-white border-orange-500"
+                          : "border-gray-300 text-gray-700 hover:border-gray-400"
+                      }`}
+                    >
+                      {color}
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Sizes */}
-            <div>
-              <h3 className="font-semibold text-gray-800 mb-3">Size:</h3>
-              <div className="flex gap-2">
-                {product.sizes.map((size, index) => (
-                  <button
-                    key={index}
-                    onClick={() => setSelectedSize(index)}
-                    className={`px-3 py-2 border rounded ${
-                      selectedSize === index
-                        ? "bg-orange-500 text-white border-orange-500"
-                        : "border-gray-300 text-gray-700 hover:border-gray-400"
-                    }`}
-                  >
-                    {size}
-                  </button>
-                ))}
+            {hasSizes && (
+              <div>
+                <h3 className="font-semibold text-gray-800 mb-3">Size:</h3>
+                <div className="flex gap-2">
+                  {product.sizes.map((size, index) => (
+                    <button
+                      key={index}
+                      onClick={() => setSelectedSize(index)}
+                      className={`px-3 py-2 border rounded ${
+                        selectedSize === index
+                          ? "bg-orange-500 text-white border-orange-500"
+                          : "border-gray-300 text-gray-700 hover:border-gray-400"
+                      }`}
+                    >
+                      {size}
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Quantity and Buy Button */}
             <div className="flex items-center gap-4">
@@ -214,6 +361,7 @@ addToast(`${product.name} added to cart!`,'success');
                 <button
                   onClick={() => handleQuantityChange("decrement")}
                   className="px-3 py-2 text-gray-600 hover:bg-gray-100"
+                  disabled={quantity <= 1}
                 >
                   −
                 </button>
@@ -223,12 +371,21 @@ addToast(`${product.name} added to cart!`,'success');
                 <button
                   onClick={() => handleQuantityChange("increment")}
                   className="px-3 py-2 text-gray-600 hover:bg-gray-100"
+                  disabled={quantity >= product.stock_quantity}
                 >
                   +
                 </button>
               </div>
-              <button className="bg-orange-500 text-white px-8 py-3 rounded font-semibold hover:bg-orange-600 flex-1" onClick={()=>handleAddToCart(product)}>
-                Buy Now
+              <button
+                className={`px-8 py-3 rounded font-semibold flex-1 ${
+                  isInStock
+                    ? "bg-orange-500 text-white hover:bg-orange-600"
+                    : "bg-gray-400 text-white cursor-not-allowed"
+                }`}
+                onClick={() => isInStock && handleAddToCart(product)}
+                disabled={!isInStock}
+              >
+                {isInStock ? "Add to Cart" : "Out of Stock"}
               </button>
               <button className="border border-gray-300 p-3 rounded hover:bg-gray-100">
                 <svg
@@ -245,6 +402,27 @@ addToast(`${product.name} added to cart!`,'success');
                   />
                 </svg>
               </button>
+            </div>
+
+            {/* Product Details */}
+            <div className="border border-gray-200 rounded-lg p-4">
+              <h4 className="font-semibold text-gray-800 mb-2">
+                Product Details
+              </h4>
+              <div className="text-sm text-gray-600 space-y-1">
+                <p>
+                  <span className="font-medium">SKU:</span> {product.sku}
+                </p>
+                {product.brand && (
+                  <p>
+                    <span className="font-medium">Brand:</span> {product.brand}
+                  </p>
+                )}
+                <p>
+                  <span className="font-medium">Stock:</span>{" "}
+                  {product.stock_quantity} units
+                </p>
+              </div>
             </div>
 
             {/* Delivery Info */}
@@ -301,72 +479,57 @@ addToast(`${product.name} added to cart!`,'success');
         </div>
 
         {/* Related Items */}
-        <div className="mt-16">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
-              <div className="w-4 h-6 bg-orange-500 rounded"></div>
-              Related Item
-            </h2>
-            <button className="text-gray-600 hover:text-gray-800">
-              See All
-            </button>
-          </div>
+        {relatedProducts.length > 0 && (
+          <div className="mt-16">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
+                <div className="w-4 h-6 bg-orange-500 rounded"></div>
+                Related Items
+              </h2>
+            </div>
 
-          {relatedProducts.length > 0 ? (
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-              {relatedProducts.map((product) => (
-                <div
-                  key={product.id}
+              {relatedProducts.map((relatedProduct) => (
+                <Link
+                  key={relatedProduct.id}
+                  href={`/product/${relatedProduct.id}`}
                   className="bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-lg transition-shadow"
                 >
                   <div className="relative">
                     <img
-                      src={product.image}
-                      alt={product.name}
+                      src={
+                        relatedProduct.images?.[0] || "/placeholder-image.jpg"
+                      }
+                      alt={relatedProduct.name}
                       className="w-full h-40 object-cover"
                     />
-                    <span className="absolute top-2 left-2 bg-orange-500 text-white text-xs px-2 py-1 rounded">
-                      {product.discount}%
-                    </span>
+                    {relatedProduct.discount && (
+                      <span className="absolute top-2 left-2 bg-orange-500 text-white text-xs px-2 py-1 rounded">
+                        {relatedProduct.discount}%
+                      </span>
+                    )}
                   </div>
                   <div className="p-3 space-y-2">
                     <h3 className="font-medium text-gray-800 text-sm truncate">
-                      {product.name}
+                      {relatedProduct.name}
                     </h3>
                     <div className="flex items-center gap-2">
                       <span className="text-orange-500 font-bold">
-                        ${product.price}
+                        ${relatedProduct.price}
                       </span>
-                      <span className="text-gray-400 line-through text-sm">
-                        ${product.originalPrice}
-                      </span>
+                      {relatedProduct.originalprice &&
+                        relatedProduct.originalprice > relatedProduct.price && (
+                          <span className="text-gray-400 line-through text-sm">
+                            ${relatedProduct.originalprice}
+                          </span>
+                        )}
                     </div>
-                    <button className="w-full bg-orange-500 text-white py-2 rounded text-sm font-medium hover:bg-orange-600 flex items-center justify-center gap-2">
-                      <svg
-                        className="w-4 h-4"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-2.5 5M7 13l2.5 5m6 0v6a2 2 0 11-4 0v-6m4 0V9a2 2 0 10-4 0v4.01"
-                        />
-                      </svg>
-                      Add To Cart
-                    </button>
                   </div>
-                </div>
+                </Link>
               ))}
             </div>
-          ) : (
-            <div className="text-center py-8 text-gray-500">
-              No related products found.
-            </div>
-          )}
-        </div>
+          </div>
+        )}
       </div>
     </div>
   );

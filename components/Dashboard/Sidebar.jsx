@@ -50,7 +50,7 @@ export default function Sidebar({ isOpen, toggleSidebar }) {
         {/* Navigation */}
         <nav className="flex flex-col gap-2 p-4">
           {navLinks.map((label) => {
-            const route = `/${label.toLowerCase().replace(/ & | /g, "-")}`;
+            const route = `/dashboard/${label.toLowerCase().replace(/ & | /g, "-")}`;
             const isActive = pathname === route;
 
             return (

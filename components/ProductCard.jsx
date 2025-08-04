@@ -1,196 +1,201 @@
-// "use client"
+"use client";
 
-// import { motion } from "framer-motion"
-// import Image from "next/image"
-// // import { Heart,  Star } from "lucide-react"
-// import { Button } from "@/components/ui/button"
-// import { Eye } from "lucide-react"
-// import { Share2 } from "lucide-react"
-// import { MoveRight } from "lucide-react"
-// import { useRouter } from "next/navigation"
-// import WishlistButton from "./wishList/WishListButton"
-// import { useEffect, useState } from "react"
-// import { Star } from "lucide-react"
-// export default function ProductCard({ product }) {
-//   const router=useRouter();
-
-//   const [isClient, setIsClient] = useState(false);
-
-//   useEffect(() => {
-//     setIsClient(true);
-//   }, []);
-
-//   if (!isClient) return null; // prevent hydration mismatch
-
-//   return (
-//     <motion.div
-//       whileHover={{ scale: 1.03 }}
-//       transition={{ duration: 0.2 }}
-//       className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow p-4 h-full"
-//     >
-//       <div className="relative bg-white mb-4">
-//         <Image
-//           src={product.image || "/placeholder.svg"}
-//           alt={product.name}
-//           width={100}
-//           height={100}
-//           className=" w-[50%] object-cover mx-auto rounded backdrop-blur-2xl drop-shadow-2xl"
-//         />
-//         {product.discount && (
-//           <div className="absolute top-2 left-2  text-orange-500 px-2 py-1 rounded text-lg font-semibold">
-//             -{product.discount}%
-//           </div>
-//         )}
-//         <div className="absolute top-2 right-2 space-y-2 flex flex-row items-center">
-//           <Button size="sm" variant="secondary" className="w-8 h-8 p-0 text-orange-500">
-//             <Eye className="w-8 h-8" /> 
-//           </Button>
-//           100k
-//         </div>
-//       </div>
-
-//       <div className="p-4">
-//         <h3 className="font-semibold text-gray-800 mb-2 line-clamp-2">{product.name}</h3>
-
-//         <div className="flex items-center mb-2">
-//           {[...Array(5)].map((_, i) => (
-//             <Star
-//               key={i}
-//               className={`w-4 h-4 ${i < product.rating ? "text-yellow-400 fill-current" : "text-gray-300"}`}
-//             />
-//           ))}
-//           <span className="text-sm text-gray-600 ml-2">({product.rating})</span>
-//         </div>
-
-//         <div className="flex items-center justify-between mb-3">
-//           <div className="flex items-center space-x-2">
-//             {product.originalPrice && (
-//               <span className="text-sm text-gray-500 line-through">${product.originalPrice}</span>
-//             )}
-//             <span className="text-lg font-bold text-orange-500">${product.price}</span>
-//           </div>
-//         </div>
-// <div className="flex items-center  mt-auto  gap-2">
-
-//         <Button onClick={()=>router.push(`/products/${product.id}`)}  className=" bg-orange-500 hover:bg-orange-600 text-white font-extrabold text-lg  mr-4 pr-4 rounded-lg cursor-pointer">
-        
-//           SHOP <MoveRight className="font-extrabold"/>
-//         </Button>
-
-        
-
-// <div className=" bg-transparent   text-center items-center mr-2">
-//             {/* <Heart className="w-4 h-4 text-orange-500" /> */}
-//             <WishlistButton product={product}/>
-//           </div>
-        
-//         <Button size="sm" variant="secondary" className="w-8 h-8 p-1 bg-transparent border-2 border-orange-500 rounded-full text-center items-center">
-//             <Share2 className="w-4 h-4 text-orange-500" />
-//           </Button>
-        
-// </div>
-  
-//       </div>
-//     </motion.div>
-//   )
-// }
-
-"use client"
-
-import { motion } from "framer-motion"
-import Image from "next/image"
-import { Button } from "@/components/ui/button"
-import { Eye, Share2, MoveRight, Star } from "lucide-react"
-import { useRouter } from "next/navigation"
-import WishlistButton from "./wishList/WishListButton"
-import { useEffect, useState } from "react"
+import { motion } from "framer-motion";
+import Image from "next/image";
+import { Button } from "@/components/ui/button";
+import { Eye, Share2, MoveRight, Star, ShoppingCart } from "lucide-react";
+import { useRouter } from "next/navigation";
+import WishlistButton from "./wishList/WishListButton";
+import { useEffect, useState } from "react";
 
 export default function ProductCard({ product }) {
-  const router = useRouter()
-  const [isClient, setIsClient] = useState(false)
+  const router = useRouter();
+  const [isClient, setIsClient] = useState(false);
+  const [isImageLoaded, setIsImageLoaded] = useState(false);
 
   useEffect(() => {
-    setIsClient(true)
-  }, [])
+    setIsClient(true);
+  }, []);
 
-  if (!isClient) return null
+  if (!isClient) return null;
+
+  const formatViews = (views) => {
+    if (views >= 1000000) return `${(views / 1000000).toFixed(1)}M`;
+    if (views >= 1000) return `${(views / 1000).toFixed(1)}k`;
+    return views?.toString() || "0";
+  };
+
+  const discountedPrice = product.originalPrice
+    ? (product.originalPrice * (1 - (product.discount || 0) / 100)).toFixed(2)
+    : product.price;
 
   return (
     <motion.div
-      whileHover={{ scale: 1.03 }}
-      transition={{ duration: 0.2 }}
-      className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow p-4 flex flex-col h-full"
+      whileHover={{ y: -8 }}
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3, ease: "easeOut" }}
+      className="group bg-white rounded-2xl shadow-sm hover:shadow-2xl transition-all duration-300 overflow-hidden border border-gray-100 flex flex-col h-full"
     >
-      <div className="relative bg-white mb-4 ">
-        <Image
-          src={product.image || "/placeholder.svg"}
-          alt={product.name}
-          width={100}
-          height={100}
-          className="w-[50%] h-32 object-contain mx-auto hover:translate hover:transform-3d "
-        />
+      {/* Image Container - Increased height and reduced padding */}
+      <div className="relative bg-gradient-to-br from-gray-50 to-gray-100 p-3 overflow-hidden">
+        {/* Discount Badge */}
         {product.discount && (
-          <div className="absolute top-2 left-2 text-orange-500 px-2 py-1 rounded text-lg font-semibold">
+          <motion.div
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            className="absolute top-3 left-3 bg-gradient-to-r from-red-500 to-orange-500 text-white px-3 py-1 rounded-full text-sm font-bold shadow-lg z-10"
+          >
             -{product.discount}%
-          </div>
+          </motion.div>
         )}
-        <div className="absolute top-2 right-2 flex items-center gap-1">
-          <Button size="sm" variant="secondary" className="w-8 h-8 p-0 text-orange-500">
-            <Eye className="w-5 h-5" />
-          </Button>
-          <span className="text-xs text-gray-500">100k</span>
+
+        {/* Product Image - Increased height from h-56 to h-72 */}
+        <div className="relative h-72 flex items-center justify-center">
+          <motion.div
+            whileHover={{ scale: 1.05, rotate: 1 }}
+            transition={{ duration: 0.3 }}
+            className="relative w-full h-full"
+          >
+            <Image
+              src={product.images?.[0] || product.image || "/placeholder.svg"}
+              alt={product.name}
+              fill
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+              className={`object-contain drop-shadow-xl transition-opacity duration-300 ${
+                isImageLoaded ? "opacity-100" : "opacity-0"
+              }`}
+              onLoad={() => setIsImageLoaded(true)}
+            />
+            {!isImageLoaded && (
+              <div className="absolute inset-0 bg-gray-200 animate-pulse rounded-lg" />
+            )}
+          </motion.div>
         </div>
+
+        {/* Hover Overlay */}
+        <div className="absolute inset-0 bg-black/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
       </div>
 
-      <div className="flex flex-col flex-grow">
-        {/* Title */}
-        <h3 className="font-semibold text-gray-800 mb-1 line-clamp-2 h-[48px]">
+      {/* Content Container - Reduced padding to balance with larger image */}
+      <div className="p-4 flex flex-col flex-grow">
+        {/* Product Category */}
+        {product.categories?.name && (
+          <span className="text-xs font-medium text-orange-500 uppercase tracking-wide mb-2">
+            {product.categories.name}
+          </span>
+        )}
+
+        {/* Product Title */}
+        <h3 className="font-bold text-gray-800 mb-3 line-clamp-2 text-lg leading-tight min-h-[56px]">
           {product.name}
         </h3>
 
-        {/* Ratings */}
-        <div className="flex items-center mb-2 h-[24px]">
-          {[...Array(5)].map((_, i) => (
-            <Star
-              key={i}
-              className={`w-4 h-4 ${i < product.rating ? "text-yellow-400 fill-current" : "text-gray-300"}`}
-            />
-          ))}
-          <span className="text-sm text-gray-600 ml-2">({product.rating})</span>
+        {/* Rating */}
+        <div className="flex items-center mb-4">
+          <div className="flex items-center">
+            {[...Array(5)].map((_, i) => (
+              <Star
+                key={i}
+                className={`w-4 h-4 ${
+                  i < (product.rating || 4)
+                    ? "text-yellow-400 fill-yellow-400"
+                    : "text-gray-300"
+                }`}
+              />
+            ))}
+          </div>
+          <span className="text-sm text-gray-600 ml-2 font-medium">
+            ({product.rating || 4.0})
+          </span>
+          {product.reviewCount && (
+            <span className="text-xs text-gray-500 ml-1">
+              • {product.reviewCount} reviews
+            </span>
+          )}
         </div>
 
-        {/* Price */}
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center space-x-2">
-            {product.originalPrice && (
-              <span className="text-sm text-gray-500 line-through">${product.originalPrice}</span>
+        {/* Price Section */}
+        <div className="mb-4">
+          <div className="flex items-baseline gap-2">
+            {product.originalPrice && product.discount ? (
+              <>
+                <span className="text-xl font-bold text-orange-500">
+                  ${discountedPrice}
+                </span>
+                <span className="text-sm text-gray-500 line-through">
+                  ${product.originalPrice}
+                </span>
+              </>
+            ) : (
+              <span className="text-xl font-bold text-orange-500">
+                ${product.price}
+              </span>
             )}
-            <span className="text-lg font-bold text-orange-500">${product.price}</span>
           </div>
         </div>
 
-        {/* Bottom Buttons */}
-        <div className="mt-auto flex items-center gap-2">
+        {/* Action Buttons */}
+        <div className="mt-auto flex items-center gap-3">
+          {/* Shop Button */}
           <Button
             onClick={() => router.push(`/products/${product.id}`)}
-            className="bg-orange-500 hover:bg-orange-600 text-white font-extrabold text-sm px-4 py-2 rounded-lg cursor-pointer"
+            className="flex-1 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-bold py-2.5 px-4 rounded-xl transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl"
           >
-            SHOP <MoveRight className="ml-2 w-4 h-4" />
+            <ShoppingCart className="w-4 h-4 mr-2" />
+            SHOP NOW
+            <MoveRight className="w-4 h-4 ml-2" />
           </Button>
 
-          <div className="bg-transparent">
+          {/* Wishlist Button */}
+          <div className="flex-shrink-0">
             <WishlistButton product={product} />
           </div>
 
+          {/* Share Button */}
           <Button
             size="sm"
-            variant="secondary"
-            className="w-8 h-8 p-1 bg-transparent border-2 border-orange-500 rounded-full cursor-pointer"
+            variant="outline"
+            className="w-10 h-10 p-0 border-2 border-orange-200 hover:border-orange-500 hover:bg-orange-50 rounded-xl transition-all duration-300 group"
+            onClick={() => {
+              if (navigator.share) {
+                navigator.share({
+                  title: product.name,
+                  text: `Check out ${product.name}`,
+                  url: window.location.origin + `/products/${product.id}`,
+                });
+              }
+            }}
           >
-            <Share2 className="w-4 h-4 text-orange-500" />
+            <Share2 className="w-4 h-4 text-orange-500 group-hover:scale-110 transition-transform duration-200" />
           </Button>
         </div>
+
+        {/* Stock Status */}
+        {product.stock !== undefined && (
+          <div className="mt-3 pt-3 border-t border-gray-100">
+            {product.stock > 0 ? (
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-green-600 font-medium">
+                  ✓ In Stock
+                </span>
+                {product.stock < 10 && (
+                  <span className="text-xs text-orange-500 font-medium">
+                    Only {product.stock} left!
+                  </span>
+                )}
+              </div>
+            ) : (
+              <span className="text-xs text-red-500 font-medium">
+                Out of Stock
+              </span>
+            )}
+          </div>
+        )}
       </div>
+
+      {/* Subtle animations for visual appeal */}
+      <div className="absolute inset-0 bg-gradient-to-r from-orange-500/0 via-orange-500/0 to-orange-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
     </motion.div>
-  )
+  );
 }

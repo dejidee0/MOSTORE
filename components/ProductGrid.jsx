@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import ProductCard from "./ProductCard";
+import { ProductCard } from "./ProductCard";
 import { getFeaturedProducts } from "@/lib/data/products";
 import { useEffect, useState } from "react";
 

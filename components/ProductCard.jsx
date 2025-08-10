@@ -1,29 +1,9 @@
-"use client";
-
+import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import Image from "next/image";
-import { Button } from "@/components/ui/button";
-import { Eye, Share2, MoveRight, Star, ShoppingCart } from "lucide-react";
-import { useRouter } from "next/navigation";
-import WishlistButton from "./wishList/WishListButton";
-import { useEffect, useState } from "react";
+import { Star, ShoppingCart, Share2, MoveRight, Heart } from "lucide-react";
 
-export default function ProductCard({ product }) {
-  const router = useRouter();
-  const [isClient, setIsClient] = useState(false);
+export const ProductCard = ({ product }) => {
   const [isImageLoaded, setIsImageLoaded] = useState(false);
-
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
-
-  if (!isClient) return null;
-
-  const formatViews = (views) => {
-    if (views >= 1000000) return `${(views / 1000000).toFixed(1)}M`;
-    if (views >= 1000) return `${(views / 1000).toFixed(1)}k`;
-    return views?.toString() || "0";
-  };
 
   const discountedPrice = product.originalPrice
     ? (product.originalPrice * (1 - (product.discount || 0) / 100)).toFixed(2)
@@ -37,7 +17,7 @@ export default function ProductCard({ product }) {
       transition={{ duration: 0.3, ease: "easeOut" }}
       className="group bg-white rounded-2xl shadow-sm hover:shadow-2xl transition-all duration-300 overflow-hidden border border-gray-100 flex flex-col h-full"
     >
-      {/* Image Container - Increased height and reduced padding */}
+      {/* Image Container */}
       <div className="relative bg-gradient-to-br from-gray-50 to-gray-100 p-3 overflow-hidden">
         {/* Discount Badge */}
         {product.discount && (
@@ -50,19 +30,17 @@ export default function ProductCard({ product }) {
           </motion.div>
         )}
 
-        {/* Product Image - Increased height from h-56 to h-72 */}
+        {/* Product Image */}
         <div className="relative h-72 flex items-center justify-center">
           <motion.div
             whileHover={{ scale: 1.05, rotate: 1 }}
             transition={{ duration: 0.3 }}
             className="relative w-full h-full"
           >
-            <Image
-              src={product.images?.[0] || product.image || "/placeholder.svg"}
+            <img
+              src={product.image}
               alt={product.name}
-              fill
-              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-              className={`object-contain drop-shadow-xl transition-opacity duration-300 ${
+              className={`w-full h-full object-contain drop-shadow-xl transition-opacity duration-300 ${
                 isImageLoaded ? "opacity-100" : "opacity-0"
               }`}
               onLoad={() => setIsImageLoaded(true)}
@@ -77,12 +55,12 @@ export default function ProductCard({ product }) {
         <div className="absolute inset-0 bg-black/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
       </div>
 
-      {/* Content Container - Reduced padding to balance with larger image */}
+      {/* Content Container */}
       <div className="p-4 flex flex-col flex-grow">
         {/* Product Category */}
-        {product.categories?.name && (
+        {product.category && (
           <span className="text-xs font-medium text-orange-500 uppercase tracking-wide mb-2">
-            {product.categories.name}
+            {product.category}
           </span>
         )}
 
@@ -137,38 +115,19 @@ export default function ProductCard({ product }) {
 
         {/* Action Buttons */}
         <div className="mt-auto flex items-center gap-3">
-          {/* Shop Button */}
-          <Button
-            onClick={() => router.push(`/products/${product.id}`)}
-            className="flex-1 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-bold py-2.5 px-4 rounded-xl transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl"
-          >
+          <button className="flex-1 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-bold py-2.5 px-4 rounded-xl transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl flex items-center justify-center">
             <ShoppingCart className="w-4 h-4 mr-2" />
             SHOP NOW
             <MoveRight className="w-4 h-4 ml-2" />
-          </Button>
+          </button>
 
-          {/* Wishlist Button */}
-          <div className="flex-shrink-0">
-            <WishlistButton product={product} />
-          </div>
+          <button className="w-10 h-10 p-0 border-2 border-orange-200 hover:border-orange-500 hover:bg-orange-50 rounded-xl transition-all duration-300 group flex items-center justify-center">
+            <Heart className="w-4 h-4 text-orange-500 group-hover:scale-110 transition-transform duration-200" />
+          </button>
 
-          {/* Share Button */}
-          <Button
-            size="sm"
-            variant="outline"
-            className="w-10 h-10 p-0 border-2 border-orange-200 hover:border-orange-500 hover:bg-orange-50 rounded-xl transition-all duration-300 group"
-            onClick={() => {
-              if (navigator.share) {
-                navigator.share({
-                  title: product.name,
-                  text: `Check out ${product.name}`,
-                  url: window.location.origin + `/products/${product.id}`,
-                });
-              }
-            }}
-          >
+          <button className="w-10 h-10 p-0 border-2 border-orange-200 hover:border-orange-500 hover:bg-orange-50 rounded-xl transition-all duration-300 group flex items-center justify-center">
             <Share2 className="w-4 h-4 text-orange-500 group-hover:scale-110 transition-transform duration-200" />
-          </Button>
+          </button>
         </div>
 
         {/* Stock Status */}
@@ -194,8 +153,9 @@ export default function ProductCard({ product }) {
         )}
       </div>
 
-      {/* Subtle animations for visual appeal */}
       <div className="absolute inset-0 bg-gradient-to-r from-orange-500/0 via-orange-500/0 to-orange-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
     </motion.div>
   );
-}
+};
+
+// Mock data

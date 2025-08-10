@@ -25,6 +25,10 @@ import {
 import ProductGrid from "@/components/ProductGrid";
 import Hero from "@/components/Hero";
 import { getAllCategories } from "@/lib/data/products";
+import ScrollingBanner from "@/components/shared/Hero/ScrollingBanner";
+import ProductShowcaseSection from "@/components/shared/Hero/ProductShowCase";
+import ProductSections from "@/components/shared/Hero/ProductSections";
+import BlogSection from "@/components/BlogSection";
 
 const HomePage = () => {
   const router = useRouter();
@@ -144,49 +148,92 @@ const HomePage = () => {
     router.push(`/products?category=${categoryId}`);
   };
 
-  const heroSlides = [
-    {
-      title: "Electronics",
-      subtitle: "Tech Innovation",
-      description:
-        "Latest smartphones, tablets, computers and cutting-edge technology",
-      image:
-        "https://images.unsplash.com/photo-1498049794561-7780e7231661?w=600&h=400&fit=crop",
-      cta: "Shop Electronics",
-    },
-    {
-      title: "Vehicles",
-      subtitle: "Premium Mobility",
-      description:
-        "Luxury automobiles, motorcycles and electric transportation",
-      image:
-        "https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=600&h=400&fit=crop",
-      cta: "Explore Vehicles",
-    },
-    {
-      title: "Home Appliances",
-      subtitle: "Smart Living",
-      description: "TVs, speakers, cameras and premium home essentials",
-      image:
-        "https://images.unsplash.com/photo-1586953208448-b95a79798f07?w=600&h=400&fit=crop",
-      cta: "View Appliances",
-    },
-  ];
-
-  const stats = [
-    { icon: Users, number: "50K+", label: "Happy Customers" },
-    { icon: Package, number: "10K+", label: "Products" },
-    { icon: Truck, number: "99%", label: "On-Time Delivery" },
-    { icon: Award, number: "4.9", label: "Rating" },
-  ];
-
   return (
     <div className="min-h-screen bg-white overflow-hidden">
       {/* Hero Section */}
       <section className="relative">
         <Hero />
       </section>
+      <section className="py-10 px-4 sm:px-8 lg:px-16 bg-gray-100">
+        <div className="max-w-7xl mx-auto">
+          <h2 className="text-3xl sm:text-4xl font-bold text-center mb-8">
+            Explore Our Marketplace
+          </h2>
 
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {/* Automotive & Parts */}
+            <div
+              className="rounded-xl overflow-hidden relative bg-cover bg-center h-64 flex items-end p-6 text-white"
+              style={{ backgroundImage: "url('/hero/automotive.jpg')" }}
+            >
+              <div>
+                <span className="bg-red-600 text-xs px-3 py-1 rounded-full font-semibold mb-2 inline-block">
+                  On Sale This Week
+                </span>
+                <h3 className="text-xl font-bold">Automotive & Parts</h3>
+                <p className="text-sm mt-1">
+                  Engines, Tires, E-Bikes, Tools & More
+                </p>
+                <button
+                  className="mt-2 text-sm underline hover:text-gray-200"
+                  onClick={() => router.push("/categories/automotive")}
+                >
+                  Shop Now →
+                </button>
+              </div>
+            </div>
+
+            {/* Tech & Electronics */}
+            <div
+              className="rounded-xl overflow-hidden relative bg-cover bg-center h-64 flex items-end p-6 text-white"
+              style={{ backgroundImage: "url('/hero/tech.jpg')" }}
+            >
+              <div>
+                <span className="bg-blue-600 text-xs px-3 py-1 rounded-full font-semibold mb-2 inline-block">
+                  New Tech
+                </span>
+                <h3 className="text-xl font-bold">Tech & Electronics</h3>
+                <p className="text-sm mt-1">
+                  Smartphones, Gadgets, Gaming, TVs & More
+                </p>
+                <button
+                  className="mt-2 text-sm underline hover:text-gray-200"
+                  onClick={() => router.push("/categories/tech")}
+                >
+                  Shop Now →
+                </button>
+              </div>
+            </div>
+
+            {/* Become a Supplier */}
+            <div
+              className="rounded-xl overflow-hidden relative bg-cover bg-center h-64 flex items-end p-6 text-white"
+              style={{ backgroundImage: "url('/hero/supplier.jpg')" }}
+            >
+              <div>
+                <span className="bg-green-600 text-xs px-3 py-1 rounded-full font-semibold mb-2 inline-block">
+                  Join Us
+                </span>
+                <h3 className="text-xl font-bold">Become a Supplier</h3>
+                <p className="text-sm mt-1">
+                  Upload your products and start selling
+                </p>
+                <button
+                  className="mt-2 text-sm underline hover:text-gray-200"
+                  onClick={() => router.push("/sign-up")}
+                >
+                  Start Now →
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+      <section className="py-4">
+        <ScrollingBanner />
+      </section>
+      <ProductShowcaseSection />
+      <ProductSections />
       {/* Categories Section */}
       <section className="py-20 bg-gradient-to-b from-gray-50 to-white">
         <div className="container mx-auto px-4">
@@ -454,7 +501,7 @@ const HomePage = () => {
           </motion.div>
         </div>
       </section>
-
+      <BlogSection />
       {/* Newsletter Section */}
       <section className="py-20 bg-gray-900">
         <div className="container mx-auto px-4">

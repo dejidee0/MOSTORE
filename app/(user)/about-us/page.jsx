@@ -13,7 +13,7 @@ const About = () => {
   return (
     <div className="min-h-screen bg-white w-full overflow-hidden font-raleway flex flex-col">
       {/* Breadcrumb */}
-      <div className="bg-gray-100 w-full px-6 py-3 text-sm text-gray-600">
+      <div className="bg-gray-100 w-full px-6 py-3 text-sm text-gray-600 md:hidden block">
         <div className="max-w-8xl mx-auto">
           <span className="font-medium text-primary">
             <Link href="/">Home</Link>

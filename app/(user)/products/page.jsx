@@ -21,7 +21,7 @@ import {
   Package,
 } from "lucide-react";
 import { getAllProducts, getAllCategories } from "@/lib/data/products";
-import ProductCard from "@/components/ProductCard"; // Import the external ProductCard
+import { ProductCard } from "@/components/ProductCard"; // Import the external ProductCard
 import Link from "next/link";
 
 // Helper function to get category icon

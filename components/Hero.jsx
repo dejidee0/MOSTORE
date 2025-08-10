@@ -2,32 +2,49 @@ import { useState, useEffect } from "react";
 import {
   ChevronLeft,
   ChevronRight,
-  Heart,
-  ShoppingCart,
-  Star,
+  ArrowRight,
+  Play,
+  Shield,
+  Truck,
+  Award,
+  Car,
+  Smartphone,
+  Monitor,
+  Wrench,
+  Zap,
+  Users,
+  Store,
+  Search,
+  Package,
 } from "lucide-react";
 import { slides } from "@/lib/data/slides";
+import { useRouter } from "next/navigation";
+
+// Updated slides data for your ecommerce platform
 
 const Hero = () => {
+  const router = useRouter();
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isClient, setIsClient] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
     setIsClient(true);
-    const checkMobile = () => setIsMobile(window.innerWidth < 1024);
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
     checkMobile();
-    window.addEventListener("resize", checkMobile);
-    return () => window.removeEventListener("resize", checkMobile);
+
+    const resizeHandler = () => window.requestAnimationFrame(checkMobile);
+    window.addEventListener("resize", resizeHandler);
+    return () => window.removeEventListener("resize", resizeHandler);
   }, []);
 
   useEffect(() => {
     if (!isClient) return;
     const timer = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % slides.length);
-    }, 7000);
+    }, 8000);
     return () => clearInterval(timer);
-  }, [isClient, slides.length]);
+  }, [isClient]);
 
   const nextSlide = () => setCurrentSlide((prev) => (prev + 1) % slides.length);
   const prevSlide = () =>
@@ -36,28 +53,9 @@ const Hero = () => {
 
   if (!isClient) {
     return (
-      <section className="relative w-full h-[700px] bg-black overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-orange-900/20 via-gray-900 to-black">
-          <div className="container mx-auto px-6 lg:px-8 h-full flex items-center">
-            <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 w-full items-center">
-              <div className="lg:col-span-3 text-white space-y-6">
-                <div className="space-y-2">
-                  <span className="text-orange-500 font-semibold text-sm tracking-wider">
-                    AUTOMOBILES
-                  </span>
-                  <h1 className="text-5xl lg:text-6xl font-black tracking-tight">
-                    Premium Auto Parts
-                  </h1>
-                  <h2 className="text-3xl lg:text-4xl text-orange-500 font-light">
-                    & Accessories
-                  </h2>
-                </div>
-                <p className="text-gray-300 text-lg">
-                  Complete automotive solutions for every vehicle
-                </p>
-              </div>
-            </div>
-          </div>
+      <section className="relative w-full h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black overflow-hidden">
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-orange-500"></div>
         </div>
       </section>
     );
@@ -66,339 +64,272 @@ const Hero = () => {
   const currentSlideData = slides[currentSlide];
 
   return (
-    <section className="relative w-full min-h-screen bg-black py-8 overflow-hidden">
-      {/* Dynamic Background */}
-      <div
-        key={`bg-${currentSlide}`}
-        className={`absolute inset-0 bg-gradient-to-br ${currentSlideData.bgGradient} transition-all duration-1000`}
-      >
-        {/* Animated background elements */}
-        <div className="absolute top-1/4 right-1/4 w-96 h-96 bg-orange-500/5 rounded-full blur-3xl animate-pulse"></div>
-        <div className="absolute bottom-1/4 left-1/4 w-80 h-80 bg-orange-400/3 rounded-full blur-2xl animate-pulse delay-1000"></div>
-      </div>
+    <section className="relative w-full h-screen bg-black overflow-hidden">
+      {/* Background */}
+      <div className="absolute inset-0">
+        <div
+          className="absolute inset-0 transition-all duration-1000 ease-in-out"
+          style={{
+            backgroundImage: `url(${currentSlideData.backgroundImage})`,
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+            backgroundRepeat: "no-repeat",
+          }}
+        >
+          <div className="absolute inset-0 bg-gradient-to-r from-black via-black/80 to-black/40"></div>
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
+        </div>
 
+        {/* Background Glow Elements */}
+        <div className="absolute top-1/4 right-1/4 w-96 h-96 bg-orange-500/5 rounded-full blur-3xl animate-pulse"></div>
+        <div className="absolute bottom-1/3 left-1/3 w-80 h-80 bg-orange-400/3 rounded-full blur-2xl animate-pulse delay-1000"></div>
+      </div>
       {/* Main Content */}
-      <div className="relative container mx-auto px-6 lg:px-8 h-full pb-20 lg:pb-8">
+      <div className="relative z-10 container mx-auto px-4 sm:px-6 lg:px-8 h-full">
         <div className="h-full flex items-center">
-          <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 w-full items-start lg:items-center">
-            {/* Left Content - Text and CTA (3 columns) */}
-            <div className="lg:col-span-3 order-1">
-              <div
-                key={`content-${currentSlide}`}
-                className="text-white space-y-6 transform transition-all duration-800 ease-out"
-                style={{
-                  animation: `slideInLeft 0.8s ease-out`,
-                }}
-              >
-                {/* Category Badge */}
-                <div
-                  className="flex items-center gap-4 transform transition-all duration-300 delay-200"
-                  style={{
-                    animation: `fadeInUp 0.6s ease-out 0.2s both`,
-                  }}
-                >
-                  <span className="bg-gradient-to-r from-orange-500 to-orange-600 text-white px-4 py-1 rounded-full text-sm font-semibold tracking-wide">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 w-full items-center min-h-0">
+            {/* Left */}
+            <div className="lg:col-span-8 order-2 lg:order-1">
+              <div className="text-white space-y-4 sm:space-y-6 max-w-4xl animate-[slideInLeft_0.8s_ease-out]">
+                <div className="flex flex-wrap items-center gap-2 sm:gap-4 mb-4 sm:mb-6">
+                  <span className="bg-gradient-to-r from-orange-500 to-red-500 text-white px-4 sm:px-6 py-2 rounded-full text-xs sm:text-sm font-bold tracking-wider uppercase">
                     {currentSlideData.category}
-                  </span>
-                  <span className="text-orange-400 font-semibold text-sm animate-pulse">
-                    {currentSlideData.discount}
                   </span>
                 </div>
 
-                {/* Main Title */}
-                <div className="space-y-2">
-                  <h1
-                    className="text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-tight transform transition-all duration-500"
-                    style={{
-                      animation: `fadeInLeft 0.8s ease-out 0.3s both`,
-                    }}
-                  >
-                    {currentSlideData.title}
+                <div className="space-y-1 sm:space-y-2">
+                  <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-black tracking-tight leading-tight sm:leading-none">
+                    <span className="block">
+                      {currentSlideData.title.split(" ")[0]}
+                    </span>
+                    <span className="block text-orange-500">
+                      {currentSlideData.title.split(" ").slice(1).join(" ")}
+                    </span>
                   </h1>
-                  <h2
-                    className="text-2xl sm:text-3xl lg:text-4xl text-orange-500 font-light transform transition-all duration-500"
-                    style={{
-                      animation: `fadeInLeft 0.8s ease-out 0.4s both`,
-                    }}
-                  >
+                  <h2 className="text-base sm:text-lg md:text-xl lg:text-2xl text-gray-300 font-light tracking-wide">
                     {currentSlideData.subtitle}
                   </h2>
                 </div>
 
-                {/* Tagline */}
-                <p
-                  className="text-gray-300 text-base sm:text-lg leading-relaxed max-w-lg transform transition-all duration-500"
-                  style={{
-                    animation: `fadeIn 0.6s ease-out 0.5s both`,
-                  }}
-                >
+                <p className="text-gray-300 text-base sm:text-lg md:text-xl leading-relaxed max-w-2xl font-medium">
                   {currentSlideData.tagline}
                 </p>
 
-                {/* Call to Action Buttons */}
-                <div
-                  className="flex items-center gap-4 pt-4 transform transition-all duration-500"
-                  style={{
-                    animation: `fadeInUp 0.6s ease-out 0.6s both`,
-                  }}
-                >
+                <div className="grid grid-cols-1 sm:flex sm:flex-wrap gap-3 sm:gap-6 py-3 sm:py-4">
+                  {currentSlideData.features.map((feature, index) => (
+                    <div
+                      key={index}
+                      className="flex items-center gap-2 text-orange-400"
+                    >
+                      <Shield className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
+                      <span className="text-sm font-semibold">{feature}</span>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Buttons */}
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4 pt-4 sm:pt-6">
                   <button
-                    className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white px-6 sm:px-8 py-3 sm:py-4 rounded-full font-semibold text-base sm:text-lg transition-all duration-300 shadow-lg flex items-center gap-2 hover:scale-105 hover:shadow-orange-500/30 hover:shadow-xl"
-                    onMouseDown={(e) =>
-                      (e.target.style.transform = "scale(0.95)")
-                    }
-                    onMouseUp={(e) => (e.target.style.transform = "")}
-                    onMouseLeave={(e) => (e.target.style.transform = "")}
+                    className="group bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white px-6 sm:px-8 py-3 sm:py-4 rounded-full font-bold text-base sm:text-lg transition-all duration-300 shadow-2xl hover:shadow-orange-500/50 hover:scale-105 flex items-center gap-2 sm:gap-3 justify-center"
+                    onClick={() => router.push("/products")}
                   >
-                    <ShoppingCart className="w-4 h-4 sm:w-5 sm:h-5" />
-                    SHOP NOW
+                    <Store className="w-5 h-5 sm:w-6 sm:h-6" />
+                    <span className="text-sm sm:text-base">SHOP NOW</span>
+                    <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 group-hover:translate-x-1 transition-transform" />
                   </button>
 
                   <button
-                    className="text-white hover:text-orange-500 transition-colors duration-300 p-3 rounded-full border border-gray-600 hover:border-orange-500 hover:scale-110"
-                    onMouseDown={(e) =>
-                      (e.target.style.transform = "scale(0.9)")
-                    }
-                    onMouseUp={(e) => (e.target.style.transform = "")}
-                    onMouseLeave={(e) => (e.target.style.transform = "")}
+                    className="group bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white px-6 sm:px-8 py-3 sm:py-4 rounded-full font-bold text-base sm:text-lg transition-all duration-300 shadow-2xl hover:shadow-green-500/50 hover:scale-105 flex items-center gap-2 sm:gap-3 justify-center"
+                    onClick={() => router.push("/sign-up")}
                   >
-                    <Heart className="w-5 h-5 sm:w-6 sm:h-6" />
+                    <Users className="w-5 h-5 sm:w-6 sm:h-6" />
+                    <span className="text-sm sm:text-base">
+                      JOIN AS SUPPLIER
+                    </span>
+                    <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 group-hover:translate-x-1 transition-transform" />
                   </button>
+                </div>
+
+                {/* Stats */}
+                <div className="flex items-center justify-between sm:gap-8 pt-4 sm:pt-6 border-t border-gray-700/50">
+                  <div className="flex flex-col">
+                    <span className="text-white font-extrabold text-xl sm:text-2xl">
+                      25K+
+                    </span>
+                    <span className="text-gray-400 text-xs sm:text-sm font-medium">
+                      Products Listed
+                    </span>
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-white font-extrabold text-xl sm:text-2xl">
+                      8K+
+                    </span>
+                    <span className="text-gray-400 text-xs sm:text-sm font-medium">
+                      Trusted Suppliers
+                    </span>
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-white font-extrabold text-xl sm:text-2xl">
+                      12+
+                    </span>
+                    <span className="text-gray-400 text-xs sm:text-sm font-medium">
+                      Categories
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
-
-            {/* Right Content - Products (2 columns) */}
-            <div className="lg:col-span-2 h-full flex items-center order-2 lg:order-2">
+            <div className=" hidden md:flex lg:col-span-4 order-2  justify-center lg:justify-end">
               <div
-                key={`products-${currentSlide}`}
-                className="w-full space-y-4 sm:space-y-6 transform transition-all duration-600 ease-out"
+                key={`services-${currentSlide}`}
+                className="relative group max-w-sm w-full"
                 style={{
-                  animation: `slideInRight 0.8s ease-out`,
+                  animation: `slideInRight 0.8s ease-out 0.3s both`,
                 }}
               >
-                {currentSlideData.products
-                  .slice(0, isMobile ? 1 : 2) // Show 1 on mobile, 2 on desktop
-                  .map((product, index) => (
-                    <div
-                      key={`${product.name}-${index}`}
-                      className={`relative group cursor-pointer transform transition-all duration-300 hover:scale-102 ${
-                        product.featured ? "lg:scale-110" : ""
-                      }`}
-                      style={{
-                        animation: `fadeInRight 0.6s ease-out ${
-                          0.3 + index * 0.2
-                        }s both`,
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.transform = `scale(${
-                          product.featured && !isMobile ? "1.12" : "1.02"
-                        })`;
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.transform = `scale(${
-                          product.featured && !isMobile ? "1.10" : "1"
-                        })`;
-                      }}
-                    >
-                      <div className="relative bg-gradient-to-br from-gray-800/90 to-gray-900/95 rounded-2xl overflow-hidden backdrop-blur-sm border border-gray-700/50 hover:border-orange-500/50 transition-all duration-300">
-                        {/* Product Image */}
-                        <div className="relative overflow-hidden">
-                          <img
-                            src={product.image}
-                            alt={product.name}
-                            className="w-full h-40 sm:h-48 object-cover transition-transform duration-500 group-hover:scale-105"
-                          />
+                <div className="relative bg-gradient-to-br from-gray-800/95 to-gray-900/95 rounded-3xl overflow-hidden backdrop-blur-xl border border-gray-700/50 hover:border-orange-500/50 transition-all duration-500 transform hover:scale-105">
+                  {/* Service Categories Grid */}
+                  <div className="p-8 ">
+                    <div className="text-center mb-6">
+                      <h3 className="text-white font-bold text-xl mb-2">
+                        Our Categories
+                      </h3>
+                      <p className="text-gray-400 text-sm">
+                        Everything you need in one place
+                      </p>
+                    </div>
 
-                          {/* Gradient Overlay */}
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
-
-                          {/* Featured Badge */}
-                          {product.featured && (
-                            <div className="absolute top-3 left-3 bg-gradient-to-r from-orange-500 to-orange-600 text-white px-3 py-1 rounded-full text-xs font-bold">
-                              FEATURED
-                            </div>
-                          )}
-
-                          {/* Quick Actions */}
-                          <div className="absolute top-3 right-3 flex gap-2 opacity-0 group-hover:opacity-100 transition-all duration-300">
-                            <button className="bg-white/20 backdrop-blur-sm text-white p-2 rounded-full hover:bg-orange-500 transition-colors">
-                              <Heart className="w-4 h-4" />
-                            </button>
-                            <button className="bg-white/20 backdrop-blur-sm text-white p-2 rounded-full hover:bg-orange-500 transition-colors">
-                              <ShoppingCart className="w-4 h-4" />
-                            </button>
-                          </div>
+                    {/* Category Icons Grid */}
+                    <div className="grid grid-cols-3 gap-6">
+                      <div className="text-center group/item">
+                        <div className="bg-orange-500/20 p-4 rounded-2xl mb-3 group-hover/item:bg-orange-500/30 transition-all duration-300">
+                          <Car className="w-8 h-8 text-orange-500 mx-auto" />
                         </div>
+                        <p className="text-white text-xs font-medium">
+                          Automotive
+                        </p>
+                      </div>
 
-                        {/* Product Info */}
-                        <div className="p-4 space-y-3">
-                          <h3 className="text-white font-semibold text-base sm:text-lg group-hover:text-orange-400 transition-colors">
-                            {product.name}
-                          </h3>
-
-                          {/* Rating */}
-                          <div className="flex items-center gap-2">
-                            <div className="flex items-center">
-                              {[...Array(5)].map((_, i) => (
-                                <Star
-                                  key={i}
-                                  className={`w-4 h-4 ${
-                                    i < Math.floor(product.rating)
-                                      ? "text-orange-500 fill-current"
-                                      : "text-gray-400"
-                                  }`}
-                                />
-                              ))}
-                            </div>
-                            <span className="text-gray-400 text-sm">
-                              ({product.rating})
-                            </span>
-                          </div>
-
-                          {/* Price */}
-                          <div className="flex items-center gap-3">
-                            <span className="text-orange-500 font-bold text-lg sm:text-xl">
-                              {product.price}
-                            </span>
-                            <span className="text-gray-500 line-through text-sm">
-                              {product.originalPrice}
-                            </span>
-                          </div>
+                      <div className="text-center group/item">
+                        <div className="bg-orange-500/20 p-4 rounded-2xl mb-3 group-hover/item:bg-orange-500/30 transition-all duration-300">
+                          <Smartphone className="w-8 h-8 text-orange-500 mx-auto" />
                         </div>
+                        <p className="text-white text-xs font-medium">Tech</p>
+                      </div>
 
-                        {/* Hover Glow Effect */}
-                        <div className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 bg-gradient-to-br from-orange-500/10 via-transparent to-orange-600/5 transition-opacity duration-300 pointer-events-none"></div>
+                      <div className="text-center group/item">
+                        <div className="bg-orange-500/20 p-4 rounded-2xl mb-3 group-hover/item:bg-orange-500/30 transition-all duration-300">
+                          <Zap className="w-8 h-8 text-orange-500 mx-auto" />
+                        </div>
+                        <p className="text-white text-xs font-medium">
+                          E-Bikes
+                        </p>
+                      </div>
+
+                      <div className="text-center group/item">
+                        <div className="bg-orange-500/20 p-4 rounded-2xl mb-3 group-hover/item:bg-orange-500/30 transition-all duration-300">
+                          <Wrench className="w-8 h-8 text-orange-500 mx-auto" />
+                        </div>
+                        <p className="text-white text-xs font-medium">Parts</p>
+                      </div>
+
+                      <div className="text-center group/item">
+                        <div className="bg-orange-500/20 p-4 rounded-2xl mb-3 group-hover/item:bg-orange-500/30 transition-all duration-300">
+                          <Monitor className="w-8 h-8 text-orange-500 mx-auto" />
+                        </div>
+                        <p className="text-white text-xs font-medium">
+                          Appliances
+                        </p>
+                      </div>
+
+                      <div className="text-center group/item">
+                        <div className="bg-orange-500/20 p-4 rounded-2xl mb-3 group-hover/item:bg-orange-500/30 transition-all duration-300">
+                          <Package className="w-8 h-8 text-orange-500 mx-auto" />
+                        </div>
+                        <p className="text-white text-xs font-medium">More</p>
                       </div>
                     </div>
-                  ))}
+
+                    {/* Service Highlights */}
+                    <div className="border-t border-gray-700/50 pt-6 space-y-4">
+                      <div className="flex items-center gap-3 text-gray-300">
+                        <Shield className="w-5 h-5 text-green-400" />
+                        <span className="text-sm">Verified Quality</span>
+                      </div>
+                      <div className="flex items-center gap-3 text-gray-300">
+                        <Truck className="w-5 h-5 text-green-400" />
+                        <span className="text-sm">Fast Shipping</span>
+                      </div>
+                      <div className="flex items-center gap-3 text-gray-300">
+                        <Award className="w-5 h-5 text-green-400" />
+                        <span className="text-sm">24/7 Support</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Glow Effect */}
+                  <div className="absolute inset-0 rounded-3xl opacity-0 group-hover:opacity-100 bg-gradient-to-br from-orange-500/20 via-transparent to-red-500/10 transition-opacity duration-500 pointer-events-none"></div>
+                </div>
               </div>
+            </div>
+            {/* Right: Progress & Navigation */}
+            <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 z-20 hidden md:block">
+              <div className="flex items-center gap-6 bg-black/60 backdrop-blur-xl rounded-full px-6 py-4 border border-gray-700/50">
+                {/* Previous Button */}
+                <button
+                  onClick={prevSlide}
+                  className="text-white hover:text-orange-500 transition-all duration-300 p-3 rounded-full hover:bg-orange-500/20 hover:scale-110"
+                >
+                  <ChevronLeft className="w-6 h-6" />
+                </button>
+
+                {/* Slide Indicators */}
+                <div className="flex gap-3">
+                  {slides.map((_, index) => (
+                    <button
+                      key={index}
+                      onClick={() => goToSlide(index)}
+                      className={`rounded-full transition-all duration-300 ${
+                        index === currentSlide
+                          ? "bg-orange-500 w-10 h-3 shadow-lg shadow-orange-500/50"
+                          : "bg-gray-600 hover:bg-gray-400 w-3 h-3 hover:scale-125"
+                      }`}
+                    />
+                  ))}
+                </div>
+
+                {/* Next Button */}
+                <button
+                  onClick={nextSlide}
+                  className="text-white hover:text-orange-500 transition-all duration-300 p-3 rounded-full hover:bg-orange-500/20 hover:scale-110"
+                >
+                  <ChevronRight className="w-6 h-6" />
+                </button>
+              </div>
+            </div>
+
+            {/* Slide Counter */}
+            <div className="absolute top-8 right-8 z-20 bg-black/60 backdrop-blur-xl rounded-full px-4 py-2 border border-gray-700/50">
+              <span className="text-white font-bold text-sm">
+                {String(currentSlide + 1).padStart(2, "0")} /{" "}
+                {String(slides.length).padStart(2, "0")}
+              </span>
+            </div>
+
+            {/* Animated Progress Bar */}
+            <div className="absolute bottom-0 left-0 w-full h-1 bg-gray-900">
+              <div
+                key={currentSlide}
+                className="h-full bg-gradient-to-r from-orange-500 to-red-500 transition-all duration-100 ease-linear shadow-lg shadow-orange-500/50"
+                style={{
+                  animation: `progressBar 8s linear`,
+                }}
+              />
             </div>
           </div>
         </div>
-      </div>
-
-      {/* Enhanced Navigation - Positioned to avoid overlap on mobile */}
-      <div className="absolute bottom-4 lg:bottom-8 left-1/2 transform -translate-x-1/2 z-20">
-        <div className="flex items-center gap-4 bg-black/40 backdrop-blur-md rounded-full px-3 py-3 border border-gray-700/50">
-          {/* Arrow Navigation */}
-          <button
-            onClick={prevSlide}
-            className="text-white hover:text-orange-500 transition-colors duration-200 p-2 rounded-full hover:bg-orange-500/20"
-          >
-            <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5" />
-          </button>
-
-          {/* Dot Indicators */}
-          <div className="flex gap-2">
-            {slides.map((_, index) => (
-              <button
-                key={index}
-                onClick={() => goToSlide(index)}
-                className={`rounded-full transition-all duration-300 ${
-                  index === currentSlide
-                    ? "bg-orange-500 w-6 sm:w-8 h-2 sm:h-3"
-                    : "bg-gray-500 hover:bg-gray-400 w-2 sm:w-3 h-2 sm:h-3"
-                }`}
-              />
-            ))}
-          </div>
-
-          <button
-            onClick={nextSlide}
-            className="text-white hover:text-orange-500 transition-colors duration-200 p-2 rounded-full hover:bg-orange-500/20"
-          >
-            <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5" />
-          </button>
-        </div>
-      </div>
-
-      {/* Progress Bar */}
-      <div className="absolute bottom-0 left-0 w-full h-1 bg-gray-800">
-        <div
-          key={currentSlide}
-          className="h-full bg-gradient-to-r from-orange-500 to-orange-600 transition-all duration-75 ease-linear"
-          style={{
-            animation: `progressBar 7s linear`,
-          }}
-        />
-      </div>
-
-      {/* CSS Animations */}
-      <style jsx>{`
-        @keyframes slideInLeft {
-          from {
-            opacity: 0;
-            transform: translateX(-100%);
-          }
-          to {
-            opacity: 1;
-            transform: translateX(0);
-          }
-        }
-
-        @keyframes slideInRight {
-          from {
-            opacity: 0;
-            transform: translateX(100%);
-          }
-          to {
-            opacity: 1;
-            transform: translateX(0);
-          }
-        }
-
-        @keyframes fadeInUp {
-          from {
-            opacity: 0;
-            transform: translateY(20px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-
-        @keyframes fadeInLeft {
-          from {
-            opacity: 0;
-            transform: translateX(-30px);
-          }
-          to {
-            opacity: 1;
-            transform: translateX(0);
-          }
-        }
-
-        @keyframes fadeInRight {
-          from {
-            opacity: 0;
-            transform: translateX(50px) scale(0.9);
-          }
-          to {
-            opacity: 1;
-            transform: translateX(0) scale(1);
-          }
-        }
-
-        @keyframes fadeIn {
-          from {
-            opacity: 0;
-          }
-          to {
-            opacity: 1;
-          }
-        }
-
-        @keyframes progressBar {
-          from {
-            width: 0%;
-          }
-          to {
-            width: 100%;
-          }
-        }
-      `}</style>
+      </div>{" "}
+      {/* ← closed missing <div> */}
     </section>
   );
 };

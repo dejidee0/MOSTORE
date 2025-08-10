@@ -24,6 +24,7 @@ import {
   ChevronDown,
   Bell,
 } from "lucide-react";
+import { useCart } from "@/lib/cart";
 
 const NavBar = ({ onWishListClick }) => {
   const router = useRouter();
@@ -31,7 +32,8 @@ const NavBar = ({ onWishListClick }) => {
   // User store
   const { user, loading, isAuthenticated, signOut, getUserEmail, initialized } =
     useUserStore();
-
+  // Cart hook - Get real cart data
+  const { totalItems: cartItemCount, getCartItemsCount } = useCart();
   const [isClient, setIsClient] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -174,7 +176,7 @@ const NavBar = ({ onWishListClick }) => {
   return (
     <>
       {/* Top Info Bar */}
-      <div className="bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 text-white text-xs py-2.5 hidden md:block">
+      <div className="bg-orange-500  text-white text-xs py-2.5 hidden md:block">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-8">
@@ -188,7 +190,7 @@ const NavBar = ({ onWishListClick }) => {
               </div>
             </div>
             <div className="flex items-center space-x-6">
-              <div className="text-orange-400 font-semibold bg-orange-400/10 px-3 py-1 rounded-full">
+              <div className="text-white font-semibold bg-gray-400/10 px-3 py-1 rounded-full">
                 🚚 Free shipping on orders over ₦50,000
               </div>
               {user && (
@@ -206,7 +208,7 @@ const NavBar = ({ onWishListClick }) => {
       </div>
 
       {/* Main Navigation */}
-      <nav className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-gray-200/80 shadow-sm">
+      <nav className="sticky top-0 z-50 bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 text-white backdrop-blur-md border-b border-gray-200/80 shadow-sm py-1">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             {/* Logo */}
@@ -214,115 +216,16 @@ const NavBar = ({ onWishListClick }) => {
               className="flex-shrink-0 flex items-center cursor-pointer group"
               onClick={() => router.push("/")}
             >
-              <div className="flex items-center bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 px-6 py-3 rounded-xl shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-105">
+              <div className="">
                 <img
                   src="/logo.png"
                   alt="MOSTORE"
-                  className="h-8 w-auto object-contain"
+                  className="h-12 w-auto object-contain"
                 />
               </div>
             </div>
 
             {/* Desktop Navigation */}
-            <div className="hidden lg:flex items-center space-x-1 flex-1 justify-center ml-8">
-              {/* Home Link */}
-              <button
-                onClick={() => router.push("/")}
-                className="flex items-center gap-2 px-4 py-2.5 text-gray-700 hover:text-orange-600 font-semibold text-sm transition-all duration-200 rounded-xl hover:bg-orange-50 hover:scale-105"
-              >
-                <Home className="w-4 h-4" />
-                Home
-              </button>
-
-              {/* Categories Dropdown */}
-              <div className="relative category-dropdown">
-                <button
-                  onClick={() =>
-                    setIsCategoryDropdownOpen(!isCategoryDropdownOpen)
-                  }
-                  className="flex items-center gap-2 px-4 py-2.5 text-gray-700 hover:text-orange-600 font-semibold text-sm transition-all duration-200 rounded-xl hover:bg-orange-50 hover:scale-105"
-                >
-                  <Package className="w-4 h-4" />
-                  Categories
-                  <ChevronDown
-                    className={`w-4 h-4 transition-transform duration-200 ${
-                      isCategoryDropdownOpen ? "rotate-180" : ""
-                    }`}
-                  />
-                </button>
-
-                {/* Categories Dropdown Menu */}
-                {isCategoryDropdownOpen && (
-                  <div className="absolute top-full left-0 mt-2 w-80 bg-white rounded-2xl shadow-xl border border-gray-100 py-3 z-50 animate-in slide-in-from-top-2 duration-200">
-                    <div className="px-4 py-2 border-b border-gray-100">
-                      <h3 className="text-sm font-bold text-gray-900">
-                        Shop by Category
-                      </h3>
-                    </div>
-
-                    {categoriesLoading ? (
-                      <div className="px-4 py-2">
-                        {Array.from({ length: 4 }).map((_, i) => (
-                          <div key={i} className="flex items-center gap-3 py-2">
-                            <div className="w-5 h-5 bg-gray-200 rounded animate-pulse" />
-                            <div className="h-4 bg-gray-200 rounded w-24 animate-pulse" />
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="max-h-96 overflow-y-auto">
-                        {categories.map((category) => (
-                          <button
-                            key={category.id}
-                            onClick={() =>
-                              handleCategoryClick(category.id, category.name)
-                            }
-                            className="w-full flex items-start gap-3 px-4 py-3 text-left hover:bg-orange-50 hover:text-orange-600 transition-colors group"
-                          >
-                            <div className="mt-0.5 text-gray-500 group-hover:text-orange-600">
-                              {getIconForCategory(category.name)}
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <div className="font-semibold text-sm text-gray-900 group-hover:text-orange-600 mb-1">
-                                {category.name}
-                              </div>
-                              <div className="text-xs text-gray-500 leading-relaxed">
-                                {formatCategoryItems(category.description)
-                                  .slice(0, 2)
-                                  .join(", ")}
-                                {formatCategoryItems(category.description)
-                                  .length > 2 && "..."}
-                              </div>
-                            </div>
-                          </button>
-                        ))}
-
-                        <div className="border-t border-gray-100 mt-2 pt-2">
-                          <button
-                            onClick={() => {
-                              router.push("/products");
-                              setIsCategoryDropdownOpen(false);
-                            }}
-                            className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-gray-50 transition-colors text-orange-600 font-semibold"
-                          >
-                            <Package className="w-5 h-5" />
-                            <span>View All Products</span>
-                          </button>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-
-              <button
-                onClick={() => router.push("/about-us")}
-                className="flex items-center gap-2 px-4 py-2.5 text-gray-700 hover:text-orange-600 font-semibold text-sm transition-all duration-200 rounded-xl hover:bg-orange-50 hover:scale-105"
-              >
-                <Home className="w-4 h-4" />
-                About Us
-              </button>
-            </div>
 
             {/* Desktop Search */}
             <div className="hidden md:flex items-center flex-1 max-w-md ml-8">
@@ -336,7 +239,7 @@ const NavBar = ({ onWishListClick }) => {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   onKeyDown={handleSearchKeyDown}
-                  className="w-full pl-12 pr-12 py-3 bg-gray-50 border-0 rounded-full text-sm placeholder-gray-500 focus:bg-white focus:ring-2 focus:ring-orange-200 focus:outline-none transition-all duration-200 shadow-sm hover:shadow-md"
+                  className="w-full pl-12 pr-12 py-3 bg-gray-50 border-0 rounded-md text-sm placeholder-gray-500 focus:bg-white focus:ring-2 focus:ring-orange-200 focus:outline-none transition-all duration-200 shadow-sm hover:shadow-md"
                 />
                 {searchQuery ? (
                   <button
@@ -356,7 +259,7 @@ const NavBar = ({ onWishListClick }) => {
               {/* Wishlist */}
               <button
                 onClick={onWishListClick}
-                className="relative p-3 text-gray-700 hover:text-orange-600 hover:bg-orange-50 rounded-full transition-all duration-200 hover:scale-105 group"
+                className="relative p-3 text-white hover:text-orange-600 hover:bg-orange-50 rounded-full transition-all duration-200 hover:scale-105 group"
                 title="Wishlist"
               >
                 <Heart className="w-5 h-5" />
@@ -375,7 +278,7 @@ const NavBar = ({ onWishListClick }) => {
                 <button
                   onClick={handleProfileClick}
                   disabled={loading && !initialized}
-                  className="relative p-3 text-gray-700 hover:text-orange-600 hover:bg-orange-50 rounded-full transition-all duration-200 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed group"
+                  className="relative p-3 text-white hover:text-orange-600 hover:bg-orange-50 rounded-full transition-all duration-200 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed group"
                   title={isAuthenticated() ? "Account Menu" : "Sign In"}
                 >
                   <User className="w-5 h-5" />
@@ -399,7 +302,7 @@ const NavBar = ({ onWishListClick }) => {
                           {getUserEmail()?.charAt(0).toUpperCase()}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-semibold text-gray-900 truncate">
+                          <p className="text-sm font-semibold text-white truncate">
                             {getUserEmail()}
                           </p>
                           <p className="text-xs text-gray-500">
@@ -412,7 +315,7 @@ const NavBar = ({ onWishListClick }) => {
                     <div className="py-2">
                       <button
                         onClick={navigateToProfile}
-                        className="flex items-center w-full px-6 py-3 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 transition-colors"
+                        className="flex items-center w-full px-6 py-3 text-sm text-white hover:bg-orange-50 hover:text-orange-600 transition-colors"
                       >
                         <User className="w-5 h-5 mr-3" />
                         <span className="font-medium">My Profile</span>
@@ -451,13 +354,13 @@ const NavBar = ({ onWishListClick }) => {
               {/* Cart */}
               <button
                 onClick={() => router.push("/cart")}
-                className="relative p-3 text-gray-700 hover:text-orange-600 hover:bg-orange-50 rounded-full transition-all duration-200 hover:scale-105 group"
+                className="relative p-3 text-white hover:text-orange-600 hover:bg-orange-50 rounded-full transition-all duration-200 hover:scale-105 group"
                 title="Shopping Cart"
               >
                 <ShoppingCart className="w-5 h-5" />
-                {itemCount > 0 && (
+                {cartItemCount > 0 && (
                   <span className="absolute -top-1 -right-1 bg-orange-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center animate-pulse">
-                    {itemCount}
+                    {cartItemCount}
                   </span>
                 )}
                 <span className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
@@ -471,7 +374,7 @@ const NavBar = ({ onWishListClick }) => {
               {/* Mobile Search */}
               <button
                 onClick={() => setIsSearchOpen(!isSearchOpen)}
-                className="p-2.5 text-gray-700 hover:text-orange-600 rounded-full hover:scale-105 transition-all duration-200"
+                className="p-2.5 text-white hover:text-orange-600 rounded-full hover:scale-105 transition-all duration-200"
               >
                 <Search className="w-5 h-5" />
               </button>
@@ -479,7 +382,7 @@ const NavBar = ({ onWishListClick }) => {
               {/* Mobile Wishlist */}
               <button
                 onClick={onWishListClick}
-                className="relative p-2.5 text-gray-700 hover:text-orange-600 rounded-full hover:scale-105 transition-all duration-200"
+                className="relative p-2.5 text-white hover:text-orange-600 rounded-full hover:scale-105 transition-all duration-200"
               >
                 <Heart className="w-5 h-5" />
                 {wishList.length > 0 && (
@@ -492,12 +395,12 @@ const NavBar = ({ onWishListClick }) => {
               {/* Mobile Cart */}
               <button
                 onClick={() => router.push("/cart")}
-                className="relative p-2.5 text-gray-700 hover:text-orange-600 rounded-full hover:scale-105 transition-all duration-200"
+                className="relative p-2.5 text-white hover:text-orange-600 rounded-full hover:scale-105 transition-all duration-200"
               >
                 <ShoppingCart className="w-5 h-5" />
-                {itemCount > 0 && (
+                {cartItemCount > 0 && (
                   <span className="absolute -top-1 -right-1 bg-orange-500 text-white text-xs font-bold rounded-full w-4 h-4 flex items-center justify-center">
-                    {itemCount}
+                    {cartItemCount}
                   </span>
                 )}
               </button>
@@ -505,7 +408,7 @@ const NavBar = ({ onWishListClick }) => {
               {/* Mobile Menu */}
               <button
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                className="p-2.5 text-gray-700 hover:text-orange-600 rounded-full hover:scale-105 transition-all duration-200"
+                className="p-2.5 text-white hover:text-orange-600 rounded-full hover:scale-105 transition-all duration-200"
               >
                 {isMobileMenuOpen ? (
                   <X className="w-5 h-5" />
@@ -669,6 +572,105 @@ const NavBar = ({ onWishListClick }) => {
           </div>
         )}
       </nav>
+      <div className="bg-white border-b-2 border-black text-gray-900 text-sm hidden md:flex items-center justify-between shadow-sm max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2">
+        {/* Left Side - Category Dropdown */}
+        <div className="relative category-dropdown">
+          <button
+            onClick={() => setIsCategoryDropdownOpen(!isCategoryDropdownOpen)}
+            className="flex items-center gap-2 px-6 py-2 rounded-md bg-orange-500 text-white font-semibold hover:bg-orange-700 transition-all duration-200 focus:outline-none "
+          >
+            <Package className="w-4 h-4" />
+            All Categories
+            <ChevronDown
+              className={`w-4 h-4 transition-transform duration-200 ${
+                isCategoryDropdownOpen ? "rotate-180" : ""
+              }`}
+            />
+          </button>
+
+          {/* Dropdown Menu */}
+          {isCategoryDropdownOpen && (
+            <div className="absolute top-full left-0 mt-2 w-80 bg-white rounded-lg shadow-xl border border-gray-100 py-3 z-50 transition-all duration-200">
+              <div className="px-4 py-2 border-b border-gray-100">
+                <h3 className="text-sm font-bold text-gray-900">
+                  Shop by Category
+                </h3>
+              </div>
+
+              {categoriesLoading ? (
+                <div className="px-4 py-2">
+                  {Array.from({ length: 4 }).map((_, i) => (
+                    <div key={i} className="flex items-center gap-3 py-2">
+                      <div className="w-5 h-5 bg-gray-200 rounded animate-pulse" />
+                      <div className="h-4 bg-gray-200 rounded w-24 animate-pulse" />
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="max-h-96 overflow-y-auto">
+                  {categories.map((category) => (
+                    <button
+                      key={category.id}
+                      onClick={() =>
+                        handleCategoryClick(category.id, category.name)
+                      }
+                      className="w-full flex items-start gap-3 px-4 py-3 text-left hover:bg-orange-50 hover:text-orange-600 transition-colors group"
+                    >
+                      <div className="mt-0.5 text-gray-500 group-hover:text-orange-600">
+                        {getIconForCategory(category.name)}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="font-semibold text-sm text-gray-900 group-hover:text-orange-600 mb-1">
+                          {category.name}
+                        </div>
+                        <div className="text-xs text-gray-500 leading-relaxed">
+                          {formatCategoryItems(category.description)
+                            .slice(0, 2)
+                            .join(", ")}
+                          {formatCategoryItems(category.description).length >
+                            2 && "..."}
+                        </div>
+                      </div>
+                    </button>
+                  ))}
+
+                  <div className="border-t border-gray-100 mt-2 pt-2">
+                    <button
+                      onClick={() => {
+                        router.push("/products");
+                        setIsCategoryDropdownOpen(false);
+                      }}
+                      className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-gray-50 transition-colors text-orange-600 font-semibold"
+                    >
+                      <Package className="w-5 h-5" />
+                      <span>View All Products</span>
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Right Side - Navigation Links */}
+        <nav className="flex gap-6 ml-8">
+          {[
+            { label: "Home", href: "/" },
+            { label: "About", href: "/about-us" },
+            { label: "Products", href: "/products" },
+            { label: "Blog", href: "/blog" },
+            { label: "Help", href: "/help" },
+          ].map((link) => (
+            <a
+              key={link.label}
+              href={link.href}
+              className="text-black font-semibold text-base hover:text-orange-600 transition-colors duration-200"
+            >
+              {link.label}
+            </a>
+          ))}
+        </nav>
+      </div>
     </>
   );
 };

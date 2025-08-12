@@ -1,8 +1,8 @@
 import Layout from "@/components/Dashboard/Layout";
 import { AuthInitializer } from "@/components/AuthInitializer";
-import { AdminProtectionWrapper } from "@/components/ProtectionWrapper";
-import "../globals.css";
+import "../../globals.css";
 import { ToastProvider } from "@/lib/toast";
+import ProtectedRoute from "@/components/ProtectedRoute";
 
 export default function AdminLayout({ children }) {
   return (
@@ -10,9 +10,9 @@ export default function AdminLayout({ children }) {
       <body className="font-raleway antialiased">
         <ToastProvider>
           <AuthInitializer>
-            <AdminProtectionWrapper>
+            <ProtectedRoute allowedRoles={["admin"]}>
               <Layout>{children}</Layout>
-            </AdminProtectionWrapper>
+            </ProtectedRoute>
           </AuthInitializer>
         </ToastProvider>
       </body>

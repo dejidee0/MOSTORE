@@ -29,6 +29,7 @@ import ScrollingBanner from "@/components/shared/Hero/ScrollingBanner";
 import ProductShowcaseSection from "@/components/shared/Hero/ProductShowCase";
 import ProductSections from "@/components/shared/Hero/ProductSections";
 import BlogSection from "@/components/BlogSection";
+import BlogLandingSection from "@/components/shared/Home/Blog";
 
 const HomePage = () => {
   const router = useRouter();
@@ -501,7 +502,7 @@ const HomePage = () => {
           </motion.div>
         </div>
       </section>
-      <BlogSection />
+      <BlogLandingSection />
       {/* Newsletter Section */}
       <section className="py-20 bg-gray-900">
         <div className="container mx-auto px-4">

@@ -7,6 +7,7 @@ import {
   Instagram,
   Youtube,
 } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 
 export default function Footer() {
@@ -45,12 +46,18 @@ export default function Footer() {
       <div className="container mx-auto px-4 py-4">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           <div>
-            <div className="flex items-center gap-2 mb-4">
-              <div className="w-8 h-8 bg-orange-500 rounded flex items-center justify-center">
-                <span className="text-white font-bold text-sm">M</span>
-              </div>
-              <span className="text-xl font-bold">MOSTORE</span>
+            <div className="relative w-16 h-16">
+              {" "}
+              {/* 4rem x 4rem */}
+              <Image
+                src="/logo-black.png"
+                alt="Logo"
+                fill
+                priority
+                className="object-contain"
+              />
             </div>
+
             <p className="text-orange-500 text-sm leading-relaxed">
               Welcome to our Store, where we pride ourselves on excellent
               customer service and our drive strive and grow business.

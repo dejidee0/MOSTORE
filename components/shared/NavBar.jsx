@@ -42,10 +42,11 @@ const NavBar = ({ onWishListClick }) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [categories, setCategories] = useState([]);
   const [categoriesLoading, setCategoriesLoading] = useState(true);
+  const role = user?.user_metadata.role;
 
   // Mock data - replace with actual data
   const wishList = [];
-  const itemCount = 3;
+  console.log(user);
 
   // Load categories on component mount
   useEffect(() => {
@@ -115,8 +116,14 @@ const NavBar = ({ onWishListClick }) => {
     if (!isAuthenticated()) {
       router.push("/sign-in");
     } else {
+      console.log("[DEBUG] Logged in user:", user); // ✅ Log user
       setIsProfileDropdownOpen(!isProfileDropdownOpen);
     }
+  };
+
+  const navigateToDashboard = (role) => {
+    setIsProfileDropdownOpen(false);
+    router.push(`/${role}/dashboard`);
   };
 
   const handleSignOut = async () => {
@@ -302,12 +309,15 @@ const NavBar = ({ onWishListClick }) => {
                           {getUserEmail()?.charAt(0).toUpperCase()}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-semibold text-white truncate">
+                          <p className="text-sm font-semibold text-gray-700 truncate">
                             {getUserEmail()}
                           </p>
-                          <p className="text-xs text-gray-500">
-                            Premium Member
-                          </p>
+
+                          {role !== "customer" && (
+                            <p className="text-xs text-gray-500">
+                              {role} Account
+                            </p>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -315,7 +325,7 @@ const NavBar = ({ onWishListClick }) => {
                     <div className="py-2">
                       <button
                         onClick={navigateToProfile}
-                        className="flex items-center w-full px-6 py-3 text-sm text-white hover:bg-orange-50 hover:text-orange-600 transition-colors"
+                        className="flex items-center w-full px-6 py-3 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 transition-colors"
                       >
                         <User className="w-5 h-5 mr-3" />
                         <span className="font-medium">My Profile</span>
@@ -336,6 +346,17 @@ const NavBar = ({ onWishListClick }) => {
                         <Settings className="w-5 h-5 mr-3" />
                         <span className="font-medium">Settings</span>
                       </button>
+
+                      {/* ✅ Show dashboard if supplier */}
+                      {(role === "supplier" || role === "admin") && (
+                        <button
+                          onClick={() => navigateToDashboard(role)}
+                          className="flex items-center w-full px-6 py-3 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 transition-colors"
+                        >
+                          <Home className="w-5 h-5 mr-3" />
+                          <span className="font-medium">My Dashboard</span>
+                        </button>
+                      )}
                     </div>
 
                     <div className="border-t border-gray-100 pt-2">
@@ -540,7 +561,15 @@ const NavBar = ({ onWishListClick }) => {
                       <Package className="w-5 h-5" />
                       <span>My Orders</span>
                     </button>
-
+                    {(role === "supplier" || role === "admin") && (
+                      <button
+                        onClick={() => navigateToDashboard(role)}
+                        className="flex items-center w-full px-2 py-3 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 transition-colors"
+                      >
+                        <Home className="w-5 h-5 mr-3" />
+                        <span className="font-medium">My Dashboard</span>
+                      </button>
+                    )}
                     <button
                       onClick={() => {
                         handleSignOut();

@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase-client";
 import { Upload, X, Loader2, Plus, Check, X as XIcon } from "lucide-react";
 
-export default function ProductForm({ isOpen, onClose, productToEdit }) {
+export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
   const [formData, setFormData] = useState({
     name: "",
     slug: "",
@@ -299,6 +299,7 @@ export default function ProductForm({ isOpen, onClose, productToEdit }) {
       const productData = {
         name: formData.name,
         slug: formData.slug,
+        supplier_id: user.id,
         description: formData.description,
         short_description: formData.short_description || null,
         price: Number(formData.price),
@@ -520,15 +521,6 @@ export default function ProductForm({ isOpen, onClose, productToEdit }) {
                     </option>
                   ))}
                 </select>
-                <button
-                  type="button"
-                  onClick={() => setShowNewCategoryInput(!showNewCategoryInput)}
-                  className="px-4 py-2 bg-orange-500 text-white rounded-md hover:bg-orange-600 transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                  disabled={isLoading || categoriesLoading}
-                >
-                  <Plus size={16} />
-                  New
-                </button>
               </div>
 
               {/* New Category Input */}

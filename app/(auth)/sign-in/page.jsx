@@ -33,6 +33,7 @@ const SignInPage = () => {
   }, [initialized, initialize]);
 
   // Handle authentication redirect
+  // In your SignInPage.js, modify the auth check useEffect:
   useEffect(() => {
     console.log("Auth check:", {
       initialized,
@@ -42,11 +43,21 @@ const SignInPage = () => {
     });
 
     if (initialized && !loading && isAuthenticated() && user) {
-      console.log("Redirecting to home...");
-      router.push("/");
+      const role = user.user_metadata?.role || "customer";
+      console.log("User role detected:", role);
+
+      switch (role) {
+        case "admin":
+          router.push("/admin/dashboard");
+          break;
+        case "supplier":
+          router.push("/supplier/dashboard");
+          break;
+        default: // customer
+          router.push("/");
+      }
     }
   }, [user, isAuthenticated, router, initialized, loading]);
-
   const handleChange = (e) =>
     setForm({ ...form, [e.target.name]: e.target.value });
 

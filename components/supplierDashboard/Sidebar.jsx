@@ -5,7 +5,7 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import logo from "../../public/assets/Mostore logo 2.png";
 
-const navLinks = ["Dashboard", "Products", "Order", "Suppliers", "Blog"];
+const navLinks = ["Dashboard", "Products"];
 
 export default function Sidebar({ isOpen, toggleSidebar }) {
   const pathname = usePathname();
@@ -14,7 +14,7 @@ export default function Sidebar({ isOpen, toggleSidebar }) {
     <>
       {/* Mobile Overlay */}
       <div
-        className={`fixed inset-0 z-20 bg-white/65 blur-lg bg-opacity-30 lg:hidden transition-opacity duration-300 ${
+        className={`fixed inset-0 z-20 bg-black bg-opacity-30 lg:hidden transition-opacity duration-300 ${
           isOpen ? "opacity-100 visible" : "opacity-0 invisible"
         }`}
         onClick={toggleSidebar}
@@ -33,23 +33,14 @@ export default function Sidebar({ isOpen, toggleSidebar }) {
       >
         {/* Logo Section */}
         <div className="flex items-center gap-2 px-4 py-6 border-b border-gray-200">
-          <Link href={"/"}>
-            {" "}
-            <Image src={logo} width={200} height={200} alt="OnePoint Logo" />
-          </Link>
+          <Image src={logo} width={200} height={200} alt="OnePoint Logo" />
         </div>
 
         {/* Navigation */}
         <nav className="flex flex-col gap-2 p-4">
           {navLinks.map((label) => {
-            const route =
-              label === "Dashboard"
-                ? "/admin/dashboard"
-                : `/admin/dashboard/${label.toLowerCase().replace(/ & | /g, "-")}`;
-
-            const isActive =
-              pathname === route ||
-              (label === "Dashboard" && pathname === "/admin/dashboard");
+            const route = `/supplier/dashboard/${label.toLowerCase().replace(/ & | /g, "-")}`;
+            const isActive = pathname === route;
 
             return (
               <Link
@@ -57,7 +48,7 @@ export default function Sidebar({ isOpen, toggleSidebar }) {
                 href={route}
                 className={`px-3 py-2 rounded-md text-base font-bold transition-all ${
                   isActive
-                    ? "bg-orange-500 text-white" // your primary orange
+                    ? "bg-primary text-white"
                     : "text-gray-700 hover:bg-gray-100"
                 }`}
               >

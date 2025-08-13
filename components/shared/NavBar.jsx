@@ -46,9 +46,7 @@ const NavBar = ({ onWishListClick }) => {
 
   // Mock data - replace with actual data
   const wishList = [];
-  console.log(user);
 
-  // Load categories on component mount
   useEffect(() => {
     loadCategories();
   }, []);
@@ -116,7 +114,6 @@ const NavBar = ({ onWishListClick }) => {
     if (!isAuthenticated()) {
       router.push("/sign-in");
     } else {
-      console.log("[DEBUG] Logged in user:", user); // ✅ Log user
       setIsProfileDropdownOpen(!isProfileDropdownOpen);
     }
   };
@@ -463,139 +460,164 @@ const NavBar = ({ onWishListClick }) => {
           </div>
         )}
 
-        {/* Mobile Menu */}
         {isMobileMenuOpen && (
-          <div className="lg:hidden border-t border-gray-100 bg-white animate-in slide-in-from-top-2 duration-200">
-            <div className="px-4 py-6 space-y-6 max-h-96 overflow-y-auto">
-              {/* Navigation Links */}
-              <div className="space-y-3">
-                <button
-                  onClick={() => {
-                    router.push("/");
-                    setIsMobileMenuOpen(false);
-                  }}
-                  className="flex items-center gap-3 py-3 text-gray-700 font-semibold hover:text-orange-600 transition-colors w-full text-left"
-                >
-                  <Home className="w-5 h-5" />
-                  Home
-                </button>
+          <div className="lg:hidden fixed inset-0 z-50 bg-white border-t border-gray-200 animate-in fade-in slide-in-from-top-2 duration-300">
+            <div className="px-5 py-6 space-y-8 max-h-[85vh] overflow-y-auto">
+              {/* Navigation */}
+              <div>
+                <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">
+                  Navigation
+                </h3>
+                <nav className="space-y-2">
+                  {[
+                    {
+                      label: "Home",
+                      href: "/",
+                      icon: <Home className="w-5 h-5" />,
+                    },
+                    { label: "About", href: "/about-us" },
+                    { label: "Products", href: "/products" },
+                    { label: "Blog", href: "/blog" },
+                    { label: "Help", href: "/help" },
+                  ].map((link) => (
+                    <button
+                      key={link.label}
+                      onClick={() => {
+                        router.push(link.href);
+                        setIsMobileMenuOpen(false);
+                      }}
+                      className="flex items-center gap-3 w-full px-3 py-3 rounded-xl text-gray-700 font-medium hover:bg-orange-50 hover:text-orange-600 transition-all"
+                    >
+                      {link.icon && (
+                        <span className="text-gray-500">{link.icon}</span>
+                      )}
+                      {link.label}
+                    </button>
+                  ))}
+                </nav>
               </div>
 
               {/* Categories */}
-              <div className="space-y-3">
-                <h3 className="text-sm font-bold text-gray-900 mb-3 px-2">
+              <div>
+                <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">
                   Categories
                 </h3>
-                {categoriesLoading
-                  ? Array.from({ length: 4 }).map((_, i) => (
-                      <div
-                        key={i}
-                        className="h-12 bg-gray-200 rounded-xl animate-pulse"
-                      />
-                    ))
-                  : categories.map((category) => (
-                      <button
-                        key={category.id}
-                        onClick={() =>
-                          handleCategoryClick(category.id, category.name)
-                        }
-                        className="flex items-center gap-4 py-3 px-2 text-gray-700 font-medium hover:text-orange-600 hover:bg-orange-50 rounded-xl transition-all w-full text-left"
-                      >
-                        <div className="text-gray-500">
-                          {getIconForCategory(category.name)}
-                        </div>
-                        <div className="flex-1">
-                          <div className="font-semibold">{category.name}</div>
-                          <div className="text-xs text-gray-500 mt-1">
-                            {formatCategoryItems(category.description)
-                              .slice(0, 2)
-                              .join(", ")}
+                <div className="space-y-2">
+                  {categoriesLoading
+                    ? Array.from({ length: 4 }).map((_, i) => (
+                        <div
+                          key={i}
+                          className="h-12 bg-gray-200 rounded-xl animate-pulse"
+                        />
+                      ))
+                    : categories.map((category) => (
+                        <button
+                          key={category.id}
+                          onClick={() =>
+                            handleCategoryClick(category.id, category.name)
+                          }
+                          className="flex items-center gap-3 w-full px-3 py-3 rounded-xl text-gray-700 font-medium hover:bg-orange-50 hover:text-orange-600 transition-all"
+                        >
+                          <span className="text-gray-500">
+                            {getIconForCategory(category.name)}
+                          </span>
+                          <div className="flex-1 text-left">
+                            <p className="font-semibold">{category.name}</p>
+                            <p className="text-xs text-gray-500 truncate">
+                              {formatCategoryItems(category.description)
+                                .slice(0, 2)
+                                .join(", ")}
+                            </p>
                           </div>
-                        </div>
-                      </button>
-                    ))}
-
-                <button
-                  onClick={() => {
-                    router.push("/products");
-                    setIsMobileMenuOpen(false);
-                  }}
-                  className="flex items-center gap-4 py-3 px-2 text-orange-600 font-semibold hover:bg-orange-50 rounded-xl transition-all w-full text-left"
-                >
-                  <Package className="w-5 h-5" />
-                  <span>All Products</span>
-                </button>
-              </div>
-
-              {/* Mobile Account Section */}
-              <div className="pt-4 border-t border-gray-100 space-y-3">
-                {isAuthenticated() ? (
-                  <>
-                    <div className="px-2 py-3 bg-gray-50 rounded-xl">
-                      <p className="text-xs text-gray-500 mb-1">
-                        Signed in as:
-                      </p>
-                      <p className="text-sm font-semibold text-gray-900 truncate">
-                        {getUserEmail()}
-                      </p>
-                    </div>
-
-                    <button
-                      onClick={() => {
-                        navigateToProfile();
-                        setIsMobileMenuOpen(false);
-                      }}
-                      className="flex items-center gap-4 py-3 px-2 text-gray-700 font-medium hover:text-orange-600 hover:bg-orange-50 rounded-xl transition-all w-full text-left"
-                    >
-                      <User className="w-5 h-5" />
-                      <span>My Profile</span>
-                    </button>
-
-                    <button
-                      onClick={() => {
-                        navigateToOrders();
-                        setIsMobileMenuOpen(false);
-                      }}
-                      className="flex items-center gap-4 py-3 px-2 text-gray-700 font-medium hover:text-orange-600 hover:bg-orange-50 rounded-xl transition-all w-full text-left"
-                    >
-                      <Package className="w-5 h-5" />
-                      <span>My Orders</span>
-                    </button>
-                    {(role === "supplier" || role === "admin") && (
-                      <button
-                        onClick={() => navigateToDashboard(role)}
-                        className="flex items-center w-full px-2 py-3 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 transition-colors"
-                      >
-                        <Home className="w-5 h-5 mr-3" />
-                        <span className="font-medium">My Dashboard</span>
-                      </button>
-                    )}
-                    <button
-                      onClick={() => {
-                        handleSignOut();
-                        setIsMobileMenuOpen(false);
-                      }}
-                      className="flex items-center gap-4 py-3 px-2 text-red-600 font-medium hover:bg-red-50 rounded-xl transition-all w-full text-left"
-                    >
-                      <LogOut className="w-5 h-5" />
-                      <span>Sign Out</span>
-                    </button>
-                  </>
-                ) : (
+                        </button>
+                      ))}
                   <button
                     onClick={() => {
-                      router.push("/sign-in");
+                      router.push("/products");
                       setIsMobileMenuOpen(false);
                     }}
-                    className="flex items-center gap-4 py-3 px-2 text-gray-700 font-medium hover:text-orange-600 hover:bg-orange-50 rounded-xl transition-all w-full text-left"
+                    className="flex items-center gap-3 w-full px-3 py-3 rounded-xl text-orange-600 font-semibold hover:bg-orange-50 transition-all"
                   >
-                    <User className="w-5 h-5" />
-                    <span>Sign In</span>
-                    {loading && !initialized && (
-                      <div className="w-3 h-3 border border-orange-300 border-t-orange-600 rounded-full animate-spin ml-auto"></div>
-                    )}
+                    <Package className="w-5 h-5" />
+                    All Products
                   </button>
-                )}
+                </div>
+              </div>
+
+              {/* Account Section */}
+              <div>
+                <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">
+                  Account
+                </h3>
+                <div className="space-y-2">
+                  {isAuthenticated() ? (
+                    <>
+                      <div className="px-3 py-3 bg-gray-50 rounded-xl">
+                        <p className="text-xs text-gray-500">Signed in as</p>
+                        <p className="text-sm font-semibold text-gray-900 truncate">
+                          {getUserEmail()}
+                        </p>
+                      </div>
+
+                      <button
+                        onClick={() => {
+                          navigateToProfile();
+                          setIsMobileMenuOpen(false);
+                        }}
+                        className="flex items-center gap-3 w-full px-3 py-3 rounded-xl text-gray-700 font-medium hover:bg-orange-50 hover:text-orange-600 transition-all"
+                      >
+                        <User className="w-5 h-5" />
+                        My Profile
+                      </button>
+
+                      <button
+                        onClick={() => {
+                          navigateToOrders();
+                          setIsMobileMenuOpen(false);
+                        }}
+                        className="flex items-center gap-3 w-full px-3 py-3 rounded-xl text-gray-700 font-medium hover:bg-orange-50 hover:text-orange-600 transition-all"
+                      >
+                        <Package className="w-5 h-5" />
+                        My Orders
+                      </button>
+
+                      {(role === "supplier" || role === "admin") && (
+                        <button
+                          onClick={() => navigateToDashboard(role)}
+                          className="flex items-center gap-3 w-full px-3 py-3 rounded-xl text-gray-700 font-medium hover:bg-orange-50 hover:text-orange-600 transition-all"
+                        >
+                          <Home className="w-5 h-5" />
+                          My Dashboard
+                        </button>
+                      )}
+
+                      <button
+                        onClick={() => {
+                          handleSignOut();
+                          setIsMobileMenuOpen(false);
+                        }}
+                        className="flex items-center gap-3 w-full px-3 py-3 rounded-xl text-red-600 font-medium hover:bg-red-50 transition-all"
+                      >
+                        <LogOut className="w-5 h-5" />
+                        Sign Out
+                      </button>
+                    </>
+                  ) : (
+                    <button
+                      onClick={() => {
+                        router.push("/sign-in");
+                        setIsMobileMenuOpen(false);
+                      }}
+                      className="flex items-center gap-3 w-full px-3 py-3 rounded-xl text-gray-700 font-medium hover:bg-orange-50 hover:text-orange-600 transition-all"
+                    >
+                      <User className="w-5 h-5" />
+                      Sign In
+                      {loading && !initialized && (
+                        <div className="w-3 h-3 border border-orange-300 border-t-orange-600 rounded-full animate-spin ml-auto"></div>
+                      )}
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
           </div>

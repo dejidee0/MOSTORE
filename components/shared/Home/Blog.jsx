@@ -187,7 +187,7 @@ const BlogLandingSection = () => {
                     </div>
 
                     <motion.a
-                      href={`/blog/${post.slug}`}
+                      href={`/blog/${post.id}`}
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
                       className="inline-flex items-center gap-2 text-orange-600 font-medium group-hover:gap-3 transition-all"

@@ -229,10 +229,15 @@ const NavBar = ({ onWishListClick }) => {
       <div className="bg-gradient-to-r from-orange-500 to-orange-600 text-white text-xs py-2 hidden lg:block shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between">
+            <h1 className="font-semibold text-sm text-white">
+              Sell Faster, Buy Smarter
+            </h1>
             <div className="flex items-center space-x-8">
               <div className="flex items-center gap-2 hover:text-orange-100 transition-colors cursor-pointer group">
                 <Phone className="w-3.5 h-3.5 group-hover:scale-110 transition-transform" />
-                <span className="font-medium">+234 123 456 7890</span>
+                <span className="font-medium">
+                  Need help? Call us: (+234 123 456 7890 or info@company.com)
+                </span>
               </div>
               <div className="flex items-center gap-2 hover:text-orange-100 transition-colors group">
                 <MapPin className="w-3.5 h-3.5 group-hover:scale-110 transition-transform" />
@@ -276,10 +281,70 @@ const NavBar = ({ onWishListClick }) => {
                 />
               </div>
             </div>
+            <div className="relative category-dropdown ml-8">
+              <button
+                onClick={() =>
+                  setIsCategoryDropdownOpen(!isCategoryDropdownOpen)
+                }
+                className="flex items-center gap-3 px-6 py-3 rounded-xl bg-gradient-to-r from-orange-500 to-orange-600 text-white font-semibold hover:from-orange-600 hover:to-orange-700 transition-all duration-200 focus:outline-none shadow-lg hover:shadow-xl transform hover:scale-105"
+              >
+                <Package className="w-5 h-5" />
+                <span>All Categories</span>
+                <ChevronDown
+                  className={`w-4 h-4 transition-transform duration-300 ${
+                    isCategoryDropdownOpen ? "rotate-180" : ""
+                  }`}
+                />
+              </button>
+
+              {/* Enhanced Dropdown Menu */}
+              {isCategoryDropdownOpen && (
+                <div className="absolute top-full left-0 mt-3 w-96 bg-white rounded-2xl shadow-2xl border border-gray-100 py-4 z-50 animate-in slide-in-from-top-2 duration-200">
+                  <div className="px-6 py-3 border-b border-gray-100">
+                    <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                      <Package className="w-5 h-5 text-orange-500" />
+                      Shop by Category
+                    </h3>
+                  </div>
+
+                  {categoriesLoading ? (
+                    <CategorySkeleton />
+                  ) : (
+                    <div className="max-h-96 overflow-y-auto">
+                      {categories.map((category) => (
+                        <CategoryItem
+                          key={category.id}
+                          category={category}
+                          onClick={() =>
+                            handleCategoryClick(category.id, category.name)
+                          }
+                          getIcon={getIconForCategory}
+                          formatItems={formatCategoryItems}
+                        />
+                      ))}
+
+                      <div className="border-t border-gray-100 mt-2 pt-2">
+                        <button
+                          onClick={() => {
+                            router.push("/products");
+                            setIsCategoryDropdownOpen(false);
+                          }}
+                          className="w-full flex items-center gap-3 px-6 py-4 text-left hover:bg-gradient-to-r hover:from-orange-50 hover:to-orange-100 transition-all duration-200 text-orange-600 font-semibold rounded-xl mx-2"
+                        >
+                          <Package className="w-5 h-5" />
+                          <span>View All Products</span>
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
 
             {/* Enhanced Desktop Search */}
             <div className="hidden lg:flex items-center flex-1 max-w-2xl ml-8">
-              <div className="relative w-full group">
+              <div className="relative w-full flex group">
+                {/* Search icon inside input */}
                 <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
                   <Search
                     className={`h-5 w-5 transition-colors ${
@@ -287,6 +352,8 @@ const NavBar = ({ onWishListClick }) => {
                     }`}
                   />
                 </div>
+
+                {/* Input field */}
                 <input
                   type="text"
                   placeholder="Search for products, brands, categories..."
@@ -295,17 +362,25 @@ const NavBar = ({ onWishListClick }) => {
                   onKeyDown={handleSearchKeyDown}
                   onFocus={() => setSearchFocused(true)}
                   onBlur={() => setSearchFocused(false)}
-                  className="w-full pl-12 pr-12 py-3.5 bg-gray-50 border-2 border-transparent rounded-xl text-sm placeholder-gray-500 focus:bg-white focus:border-orange-200 focus:ring-4 focus:ring-orange-100 focus:outline-none transition-all duration-200 shadow-sm hover:shadow-md hover:bg-white"
+                  className="w-full pl-12 pr-4 py-3.5 bg-gray-50 border-2 border-transparent rounded-l-xl text-sm placeholder-gray-500 focus:bg-white focus:border-orange-200 focus:ring-4 focus:ring-orange-100 focus:outline-none transition-all duration-200 shadow-sm hover:shadow-md hover:bg-white"
                 />
-                {searchQuery ? (
+
+                {/* Search button */}
+                <button
+                  onClick={() => handleSearch(searchQuery)}
+                  className="px-6 py-3.5 bg-gradient-to-r from-orange-500 to-orange-600 text-white font-semibold rounded-r-xl hover:from-orange-600 hover:to-orange-700 transition-all duration-200 shadow-sm hover:shadow-md"
+                >
+                  Search
+                </button>
+
+                {/* Clear button (optional) */}
+                {searchQuery && (
                   <button
                     onClick={() => setSearchQuery("")}
-                    className="absolute inset-y-0 right-4 flex items-center text-gray-400 hover:text-gray-600 transition-colors"
+                    className="absolute inset-y-0 right-[72px] flex items-center text-gray-400 hover:text-gray-600 transition-colors"
                   >
                     <X className="h-4 w-4" />
                   </button>
-                ) : (
-                  <div className="absolute inset-y-0 right-4 flex items-center"></div>
                 )}
               </div>
             </div>
@@ -423,6 +498,9 @@ const NavBar = ({ onWishListClick }) => {
                   Cart
                 </span>
               </button>
+              <h1 className="text-white font-bold cursor-pointer ml-3 hover:text-primary">
+                Help
+              </h1>
             </div>
 
             {/* Enhanced Mobile Actions */}
@@ -523,88 +601,6 @@ const NavBar = ({ onWishListClick }) => {
           />
         )}
       </nav>
-
-      {/* Enhanced Secondary Navigation */}
-      <div className="bg-white border-b border-gray-200 text-gray-900 text-sm hidden lg:flex items-center justify-between shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
-          <div className="flex items-center justify-between py-3">
-            {/* Enhanced Category Dropdown */}
-            <div className="relative category-dropdown">
-              <button
-                onClick={() =>
-                  setIsCategoryDropdownOpen(!isCategoryDropdownOpen)
-                }
-                className="flex items-center gap-3 px-6 py-3 rounded-xl bg-gradient-to-r from-orange-500 to-orange-600 text-white font-semibold hover:from-orange-600 hover:to-orange-700 transition-all duration-200 focus:outline-none shadow-lg hover:shadow-xl transform hover:scale-105"
-              >
-                <Package className="w-5 h-5" />
-                <span>All Categories</span>
-                <ChevronDown
-                  className={`w-4 h-4 transition-transform duration-300 ${
-                    isCategoryDropdownOpen ? "rotate-180" : ""
-                  }`}
-                />
-              </button>
-
-              {/* Enhanced Dropdown Menu */}
-              {isCategoryDropdownOpen && (
-                <div className="absolute top-full left-0 mt-3 w-96 bg-white rounded-2xl shadow-2xl border border-gray-100 py-4 z-50 animate-in slide-in-from-top-2 duration-200">
-                  <div className="px-6 py-3 border-b border-gray-100">
-                    <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-                      <Package className="w-5 h-5 text-orange-500" />
-                      Shop by Category
-                    </h3>
-                  </div>
-
-                  {categoriesLoading ? (
-                    <CategorySkeleton />
-                  ) : (
-                    <div className="max-h-96 overflow-y-auto">
-                      {categories.map((category) => (
-                        <CategoryItem
-                          key={category.id}
-                          category={category}
-                          onClick={() =>
-                            handleCategoryClick(category.id, category.name)
-                          }
-                          getIcon={getIconForCategory}
-                          formatItems={formatCategoryItems}
-                        />
-                      ))}
-
-                      <div className="border-t border-gray-100 mt-2 pt-2">
-                        <button
-                          onClick={() => {
-                            router.push("/products");
-                            setIsCategoryDropdownOpen(false);
-                          }}
-                          className="w-full flex items-center gap-3 px-6 py-4 text-left hover:bg-gradient-to-r hover:from-orange-50 hover:to-orange-100 transition-all duration-200 text-orange-600 font-semibold rounded-xl mx-2"
-                        >
-                          <Package className="w-5 h-5" />
-                          <span>View All Products</span>
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-
-            {/* Enhanced Navigation Links */}
-            <nav className="flex items-center gap-8 ml-8">
-              {navigationLinks.map((link) => (
-                <a
-                  key={link.label}
-                  href={link.href}
-                  className="text-gray-700 font-semibold text-base hover:text-orange-600 transition-all duration-200 relative group"
-                >
-                  {link.label}
-                  <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-orange-600 transition-all duration-200 group-hover:w-full"></span>
-                </a>
-              ))}
-            </nav>
-          </div>
-        </div>
-      </div>
     </>
   );
 };

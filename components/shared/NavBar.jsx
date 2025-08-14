@@ -228,10 +228,10 @@ const NavBar = ({ onWishListClick }) => {
     <>
       {/* Top Info Bar - Enhanced */}
       <div className="bg-gradient-to-r from-orange-500 to-orange-600 text-white text-xs py-2 hidden lg:block shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between">
             {/* Brand Slogan */}
-            <div className="flex items-center">
+            <div className="flex items-center ml-10">
               <h1 className="font-semibold text-sm text-white tracking-wide">
                 <span className="hidden sm:inline">
                   Sell Faster, Buy Smarter
@@ -241,7 +241,10 @@ const NavBar = ({ onWishListClick }) => {
             </div>
 
             {/* Contact & Location */}
-            <div className="flex items-center space-x-6">
+            <div className="flex items-end space-x-6 ml-10"></div>
+
+            {/* User Welcome & Settings */}
+            <div className="flex items-center space-x-4">
               <div
                 className="flex items-center gap-2 hover:text-orange-100 transition-colors cursor-pointer group"
                 onClick={() => (window.location.href = "tel:+2341234567890")}
@@ -254,10 +257,6 @@ const NavBar = ({ onWishListClick }) => {
                   Call: +234 123 456 7890
                 </span>
               </div>
-            </div>
-
-            {/* User Welcome & Settings */}
-            <div className="flex items-center space-x-4">
               {userInfo ? (
                 <div className="text-orange-100 text-xs bg-white/10 backdrop-blur-sm px-3 py-1 rounded-full border border-white/20 flex items-center gap-2 transition-all hover:bg-white/15">
                   <Star className="w-3 h-3 fill-current" />

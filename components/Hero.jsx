@@ -72,8 +72,8 @@ const Hero = () => {
           sizes="100vw"
           className="object-cover transition-opacity duration-1000"
         />
-        <div className="absolute inset-0 bg-gradient-to-r from-black via-black/80 to-black/40" />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-r from-black via-black/60 to-black/20" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent" />
 
         {/* Background Glow */}
         <div className="absolute top-1/4 right-1/4 w-96 h-96 bg-orange-500/5 rounded-full blur-3xl animate-pulse"></div>
@@ -177,74 +177,7 @@ const Hero = () => {
               key={`services-${currentSlide}`}
               className="relative group max-w-sm w-full"
               style={{ animation: `slideInRight 0.8s ease-out 0.3s both` }}
-            >
-              <div className="relative bg-gradient-to-br from-gray-900/90 to-gray-800/90 rounded-3xl overflow-hidden backdrop-blur-xl border border-gray-700/50 hover:border-orange-500/50 transition-all duration-500 transform hover:scale-105 shadow-lg">
-                {/* Header */}
-                <div className="px-8 py-6 text-center mb-6">
-                  <h3 className="text-white font-extrabold text-2xl mb-1">
-                    Our Categories
-                  </h3>
-                  <p className="text-gray-400 text-sm sm:text-base">
-                    Discover everything you need in one place
-                  </p>
-                </div>
-
-                {/* Category Icons Grid */}
-                <div className="grid grid-cols-3 gap-6 px-6 pb-6">
-                  {[
-                    { icon: Car, label: "Automotive" },
-                    { icon: Smartphone, label: "Tech" },
-                    { icon: Zap, label: "E-Bikes" },
-                    { icon: Wrench, label: "Parts" },
-                    { icon: Monitor, label: "Appliances" },
-                    { icon: Package, label: "More" },
-                  ].map(({ icon: Icon, label }, idx) => (
-                    <div
-                      key={idx}
-                      className="flex flex-col items-center justify-center group/item transition-transform duration-300 hover:-translate-y-1"
-                    >
-                      <div className="bg-gradient-to-tr from-orange-500/30 to-red-500/20 p-5 rounded-3xl mb-2 flex items-center justify-center shadow-md group-hover/item:shadow-lg transition-shadow duration-300">
-                        <Icon className="w-7 h-7 text-orange-500" />
-                      </div>
-                      <p className="text-white text-xs sm:text-sm font-semibold text-center">
-                        {label}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-
-                {/* Highlights */}
-                <div className="border-t border-gray-700/50 pt-6 py-4 px-6 space-y-3">
-                  {[
-                    {
-                      icon: Shield,
-                      text: "Verified Quality",
-                      color: "text-green-400",
-                    },
-                    {
-                      icon: Truck,
-                      text: "Fast Shipping",
-                      color: "text-green-400",
-                    },
-                    {
-                      icon: Award,
-                      text: "24/7 Support",
-                      color: "text-green-400",
-                    },
-                  ].map(({ icon: Icon, text, color }, idx) => (
-                    <div key={idx} className="flex items-center gap-3">
-                      <Icon className={`w-5 h-5 ${color}`} />
-                      <span className="text-gray-300 text-sm font-medium">
-                        {text}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-
-                {/* Glow Overlay */}
-                <div className="absolute inset-0 rounded-3xl opacity-0 group-hover:opacity-100 bg-gradient-to-br from-orange-500/20 via-transparent to-red-500/10 transition-opacity duration-500 pointer-events-none"></div>
-              </div>
-            </div>
+            ></div>
           </div>
         </div>
       </div>

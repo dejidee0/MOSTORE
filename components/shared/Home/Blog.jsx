@@ -76,7 +76,7 @@ const BlogLandingSection = () => {
   if (isLoading) {
     return (
       <section className="py-16 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 animate-pulse">
+        <div className="max-w-7xl px-4 sm:px-6 lg:px-8 animate-pulse">
           <div className="h-12 bg-gray-200 rounded w-1/3 mx-auto mb-4"></div>
           <div className="h-6 bg-gray-200 rounded w-1/2 mx-auto mb-12"></div>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
@@ -90,19 +90,19 @@ const BlogLandingSection = () => {
   }
 
   return (
-    <section className="py-16 bg-gradient-to-br from-gray-50 to-white">
+    <section className="py-10 bg-gradient-to-br from-gray-50 to-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="text-center mb-12"
+          className=" mb-4"
         >
-          <h2 className="text-4xl font-bold text-gray-900 mb-4">
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">
             Latest From Our <span className="text-orange-500">Blog</span>
           </h2>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+          <p className="text-lg text-gray-600 max-w-2xl">
             Stay updated with the latest trends, reviews, and insights from our
             blog
           </p>

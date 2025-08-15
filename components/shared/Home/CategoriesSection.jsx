@@ -35,12 +35,12 @@ const CategoriesSection = ({ categories = [], categoriesLoading = false }) => {
   const router = useRouter();
 
   return (
-    <section className="py-12 bg-white">
+    <section className="py-6 bg-white">
       <div className="max-w-7xl mx-auto px-4">
         {/* Header */}
         <div className="mb-8">
-          <h2 className="text-3xl font-bold text-gray-900 mb-2">
-            Featured Categories
+          <h2 className="text-4xl lg:text-2xl font-black text-gray-900 mb-2">
+            Featured <span className="text-orange-500">Categories</span>
           </h2>
         </div>
 

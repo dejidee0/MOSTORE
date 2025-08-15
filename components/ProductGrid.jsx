@@ -35,13 +35,6 @@ export default function ProductGrid() {
   return (
     <section className=" bg-white">
       <div className="max-w-7xl mx-auto">
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          className="text-center mb-12"
-        ></motion.div>
-
         {loading && (
           <div className="flex justify-center items-center py-12">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-800"></div>
@@ -74,6 +67,7 @@ export default function ProductGrid() {
             {products.map((product, index) => (
               <motion.div
                 key={product.id}
+                className=""
                 initial={{ opacity: 0, y: 30 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: index * 0.1 }}

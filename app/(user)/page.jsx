@@ -25,6 +25,7 @@ import Hero from "@/components/Hero";
 import ScrollingBanner from "@/components/shared/Hero/ScrollingBanner";
 import ServiceFeatures from "@/components/shared/Home/ServiceFeature";
 import CategoriesSection from "@/components/shared/Home/CategoriesSection";
+import FeaturedBanners from "@/components/shared/Home/FeaaturedBanners";
 
 // Lazy-load heavy sections
 const ProductShowcaseSection = dynamic(() =>
@@ -78,53 +79,7 @@ const HomePage = () => {
       <ServiceFeatures />
 
       {/* Featured banners */}
-      <section className="py-10 px-4 sm:px-8 lg:px-16 bg-gray-100">
-        <div className="max-w-7xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {[
-            {
-              title: "Automotive & Parts",
-              img: "/hero/automotive.jpg",
-              badge: "On Sale This Week",
-              link: "/categories/automotive",
-              color: "bg-red-600",
-              desc: "Engines, Tires, E-Bikes, Tools & More",
-            },
-            {
-              title: "Tech & Electronics",
-              img: "/hero/tech.jpg",
-              badge: "New Tech",
-              link: "/categories/tech",
-              color: "bg-blue-600",
-              desc: "Smartphones, Gadgets, Gaming, TVs & More",
-            },
-            {
-              title: "Become a Supplier",
-              img: "/hero/supplier.jpg",
-              badge: "Join Us",
-              link: "/sign-up",
-              color: "bg-green-600",
-              desc: "Upload your products and start selling",
-            },
-          ].map((banner, i) => (
-            <div
-              key={i}
-              className="rounded-xl overflow-hidden relative bg-cover bg-center h-64 flex items-end p-6 text-white cursor-pointer"
-              style={{ backgroundImage: `url(${banner.img})` }}
-              onClick={() => router.push(banner.link)}
-            >
-              <div>
-                <span
-                  className={`${banner.color} text-xs px-3 py-1 rounded-full font-semibold mb-2 inline-block`}
-                >
-                  {banner.badge}
-                </span>
-                <h3 className="text-xl font-bold">{banner.title}</h3>
-                <p className="text-sm mt-1">{banner.desc}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
+      <FeaturedBanners />
 
       <ScrollingBanner />
       <CategoriesSection
@@ -133,21 +88,17 @@ const HomePage = () => {
       />
       {/* Featured Products */}
       <section className="py-8 bg-white">
-        <div className="container mx-auto px-4">
+        <div className="max-w-7xl mx-auto px-4">
           <motion.div
             initial={{ opacity: 0, y: 50 }}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
             viewport={{ once: true }}
-            className="text-center mb-16"
+            className=" mb-8"
           >
-            <h2 className="text-4xl lg:text-6xl font-black text-gray-900 mb-6">
+            <h2 className="text-4xl lg:text-2xl font-black text-gray-900 mb-2">
               Featured <span className="text-orange-500">Products</span>
             </h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              Handpicked premium products with exceptional quality and
-              performance
-            </p>
           </motion.div>
           <ProductGrid />
         </div>
@@ -156,9 +107,9 @@ const HomePage = () => {
       <ProductSections />
 
       {/* Trust Section */}
-      <section className="py-20 bg-gradient-to-r from-orange-500 to-orange-600 text-white">
+      <section className="py-10 bg-gradient-to-r from-orange-500 to-orange-600 text-white">
         <div className="container mx-auto px-4 text-center">
-          <h2 className="text-4xl lg:text-6xl font-black mb-8">
+          <h2 className="text-2xl lg:text-4xl font-black mb-8">
             Trusted by 50,000+ Customers
           </h2>
           <p className="text-xl mb-12 max-w-3xl mx-auto opacity-90">
@@ -207,8 +158,8 @@ const HomePage = () => {
       <BlogLandingSection />
 
       {/* Newsletter */}
-      <section className="py-20 bg-gray-900 text-white text-center">
-        <h2 className="text-4xl lg:text-5xl font-black mb-6">
+      <section className="py-10 bg-gray-900 text-white text-center">
+        <h2 className="text-xl lg:text-3xl font-black mb-6">
           Stay Updated with <span className="text-orange-500">MOSTORE</span>
         </h2>
         <p className="text-xl text-gray-300 mb-12">

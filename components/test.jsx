@@ -112,3 +112,30 @@
 //     dotColors: ["bg-yellow-400", "bg-gray-400"],
 //   },
 // ];
+<section className="max-h-[450px] mx-auto py-8 overflow-hidden bg-gray-900 -mx-6 md:-mx-8 lg:-mx-12">
+  <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center px-6 md:px-8 lg:px-12">
+    {/* Left Side Text */}
+    <div className="text-white space-y-4">
+      <h2 className="text-3xl md:text-4xl font-bold">Deal of the Day</h2>
+      <p className="text-gray-300">
+        Grab our exclusive deal before it’s gone! This offer is only valid until
+        midnight.
+      </p>
+    </div>
+
+    {/* Right Side Product */}
+    <div className="relative group w-full max-w-sm h-[450px] flex items-center justify-center">
+      {/* Background Glow */}
+      <div className="absolute -inset-4 bg-gradient-to-r from-purple-500 to-indigo-500 rounded-lg blur opacity-25 group-hover:opacity-50 transition duration-500"></div>
+
+      {/* Scalable Card Container */}
+      <div className="relative h-full w-full flex">
+        <div className="flex-1 flex items-center justify-center overflow-hidden">
+          <div className="h-full w-full flex items-center justify-center scale-95 group-hover:scale-100 transition-transform duration-500">
+            <ProductCard product={dealProduct} />
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>;

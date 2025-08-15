@@ -12,18 +12,7 @@ export const SectionHeader = ({
   tomorrow.setHours(0, 0, 0, 0);
 
   return (
-    <div className="text-center mb-12">
-      <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6 }}
-        className="flex items-center justify-center mb-4"
-      >
-        <div className="bg-gradient-to-r from-orange-500 to-orange-600 p-3 rounded-2xl shadow-lg">
-          <Icon className="w-8 h-8 text-white" />
-        </div>
-      </motion.div>
-
+    <div className="mb-4">
       <motion.h2
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}

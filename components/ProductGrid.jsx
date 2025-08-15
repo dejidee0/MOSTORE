@@ -34,7 +34,7 @@ export default function ProductGrid() {
 
   return (
     <section className=" bg-white">
-      <div className="container mx-auto">
+      <div className="max-w-7xl mx-auto">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}

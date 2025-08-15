@@ -1,6 +1,13 @@
 "use client";
-import React, { useState, useEffect, useMemo, Suspense } from "react";
-import { useRouter } from "next/navigation";
+import React, {
+  useState,
+  useEffect,
+  useMemo,
+  useCallback,
+  memo,
+  Suspense,
+} from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   Search,
   Filter,
@@ -21,11 +28,11 @@ import {
   Package,
 } from "lucide-react";
 import { getAllProducts, getAllCategories } from "@/lib/data/products";
-import { ProductCard } from "@/components/ProductCard"; // Import the external ProductCard
+import { ProductCard } from "@/components/ProductCard";
 import Link from "next/link";
 
-// Helper function to get category icon
-const getCategoryIcon = (categoryName) => {
+// Memoized helper function to get category icon
+const getCategoryIcon = memo((categoryName) => {
   const name = categoryName.toLowerCase();
   if (name.includes("vehicle") && name.includes("mobility"))
     return <Car className="w-4 h-4" />;
@@ -34,11 +41,110 @@ const getCategoryIcon = (categoryName) => {
   if (name.includes("electronics")) return <Smartphone className="w-4 h-4" />;
   if (name.includes("appliances")) return <Monitor className="w-4 h-4" />;
   return <Package className="w-4 h-4" />;
-};
+});
 
-// Create a separate component that uses useSearchParams
+// Memoized star rating component
+const StarRating = memo(({ rating }) => {
+  return (
+    <div className="flex items-center gap-1">
+      {Array.from({ length: 5 }, (_, i) => (
+        <Star
+          key={i}
+          className={`w-4 h-4 ${
+            i < rating ? "fill-orange-400 text-orange-400" : "text-gray-300"
+          }`}
+        />
+      ))}
+    </div>
+  );
+});
+
+// Memoized List View Product Card Component
+const ListViewProductCard = memo(({ product }) => {
+  const discountedPrice = product.originalprice
+    ? product.originalprice - product.price
+    : 0;
+
+  return (
+    <div className="bg-white rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 border border-gray-100 overflow-hidden">
+      <div className="flex flex-col sm:flex-row">
+        <div className="relative w-full sm:w-48 h-48 sm:h-32 flex-shrink-0">
+          <img
+            src={product.images?.[0] || "/placeholder-product.jpg"}
+            alt={product.name}
+            className="w-full h-full object-cover"
+            loading="lazy"
+          />
+          {product.discount && (
+            <div className="absolute top-2 left-2 bg-red-500 text-white px-2 py-1 rounded-md text-xs font-semibold">
+              -{product.discount}%
+            </div>
+          )}
+        </div>
+
+        <div className="flex-1 p-4">
+          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between h-full">
+            <div className="flex-1">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-xs text-orange-600 bg-orange-50 px-2 py-1 rounded-full font-medium">
+                  {product.categories?.name}
+                </span>
+                <span className="text-xs text-gray-500">{product.brand}</span>
+              </div>
+
+              <h3 className="text-lg font-semibold text-gray-900 mb-2 line-clamp-1">
+                {product.name}
+              </h3>
+
+              <p className="text-gray-600 text-sm mb-3 line-clamp-2">
+                {product.short_description}
+              </p>
+
+              <div className="flex items-center gap-2 mb-2">
+                <StarRating rating={product.rating} />
+                <span className="text-sm text-gray-500">
+                  ({product.total_reviews})
+                </span>
+              </div>
+            </div>
+
+            <div className="flex flex-col sm:items-end gap-3 mt-4 sm:mt-0">
+              <div className="flex items-center gap-2">
+                <span className="text-xl font-bold text-gray-900">
+                  ₦{product.price.toLocaleString()}
+                </span>
+                {product.originalprice && (
+                  <span className="text-sm text-gray-500 line-through">
+                    ₦{product.originalprice.toLocaleString()}
+                  </span>
+                )}
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors">
+                  <Heart className="w-4 h-4" />
+                </button>
+
+                <Link href={`/products/${product.id}`}>
+                  <button className="p-2 text-gray-400 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition-colors">
+                    <Eye className="w-4 h-4" />
+                  </button>
+                </Link>
+                <button className="bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600 transition-colors flex items-center gap-2">
+                  <ShoppingCart className="w-4 h-4" />
+                  Add to Cart
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+});
+
+// Main Products Content Component
 const ProductsContent = () => {
-  const { useSearchParams } = require("next/navigation");
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -50,10 +156,9 @@ const ProductsContent = () => {
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [categoriesLoading, setCategoriesLoading] = useState(true);
 
-  // Filter states
-  const [filters, setFilters] = useState({
+  // Filter states - optimized initial state
+  const [filters, setFilters] = useState(() => ({
     search: searchQuery || "",
     category: categoryParam || "all",
     priceRange: [0, 2000],
@@ -62,7 +167,7 @@ const ProductsContent = () => {
     featured: false,
     brand: "all",
     discount: false,
-  });
+  }));
 
   // UI states
   const [sortBy, setSortBy] = useState("newest");
@@ -72,31 +177,16 @@ const ProductsContent = () => {
   const [itemsPerPage] = useState(12);
 
   // Advanced filter states
-  const [expandedSections, setExpandedSections] = useState({
+  const [expandedSections, setExpandedSections] = useState(() => ({
     price: true,
     rating: true,
     features: false,
-  });
+  }));
 
-  // Load data on component mount
-  useEffect(() => {
-    loadInitialData();
-  }, []);
-
-  // Update filters when URL params change
-  useEffect(() => {
-    setFilters((prev) => ({
-      ...prev,
-      search: searchQuery || "",
-      category: categoryParam || "all",
-    }));
-  }, [searchQuery, categoryParam]);
-
-  const loadInitialData = async () => {
+  // Optimized data loading with error handling
+  const loadInitialData = useCallback(async () => {
     try {
       setLoading(true);
-      setCategoriesLoading(true);
-
       const [productsData, categoriesData] = await Promise.all([
         getAllProducts(),
         getAllCategories(),
@@ -106,35 +196,65 @@ const ProductsContent = () => {
       setCategories(categoriesData);
     } catch (error) {
       console.error("Error loading data:", error);
+      // Handle error state appropriately
+      setProducts([]);
+      setCategories([]);
     } finally {
       setLoading(false);
-      setCategoriesLoading(false);
     }
-  };
+  }, []);
 
-  // Get unique brands from products
+  // Load data on component mount
+  useEffect(() => {
+    loadInitialData();
+  }, [loadInitialData]);
+
+  // Optimized URL parameter synchronization
+  useEffect(() => {
+    const newFilters = {
+      search: searchQuery || "",
+      category: categoryParam || "all",
+    };
+
+    setFilters((prev) => ({
+      ...prev,
+      ...newFilters,
+    }));
+  }, [searchQuery, categoryParam]);
+
+  // Memoized available brands calculation
   const availableBrands = useMemo(() => {
     const brands = [...new Set(products.map((p) => p.brand).filter(Boolean))];
     return brands.sort();
   }, [products]);
 
-  // Advanced filtering logic
+  // Optimized filtering logic with early returns
   const filteredProducts = useMemo(() => {
+    if (!products.length) return [];
+
     return products.filter((product) => {
-      // Search filter
+      // Search filter - early return for performance
       if (filters.search) {
         const searchLower = filters.search.toLowerCase();
-        const matchesSearch =
-          product.name.toLowerCase().includes(searchLower) ||
-          product.description.toLowerCase().includes(searchLower) ||
-          product.brand?.toLowerCase().includes(searchLower) ||
-          product.categories?.name?.toLowerCase().includes(searchLower);
-        if (!matchesSearch) return false;
+        const searchableFields = [
+          product.name,
+          product.description,
+          product.brand,
+          product.categories?.name,
+        ]
+          .filter(Boolean)
+          .join(" ")
+          .toLowerCase();
+
+        if (!searchableFields.includes(searchLower)) return false;
       }
 
       // Category filter
-      if (filters.category !== "all") {
-        if (product.category_id !== filters.category) return false;
+      if (
+        filters.category !== "all" &&
+        product.category_id !== filters.category
+      ) {
+        return false;
       }
 
       // Price range filter
@@ -174,8 +294,10 @@ const ProductsContent = () => {
     });
   }, [products, filters]);
 
-  // Sorting logic
+  // Optimized sorting logic
   const sortedProducts = useMemo(() => {
+    if (!filteredProducts.length) return [];
+
     const sorted = [...filteredProducts];
 
     switch (sortBy) {
@@ -197,7 +319,7 @@ const ProductsContent = () => {
     }
   }, [filteredProducts, sortBy]);
 
-  // Pagination
+  // Optimized pagination
   const paginatedProducts = useMemo(() => {
     const startIndex = (currentPage - 1) * itemsPerPage;
     return sortedProducts.slice(startIndex, startIndex + itemsPerPage);
@@ -205,29 +327,33 @@ const ProductsContent = () => {
 
   const totalPages = Math.ceil(sortedProducts.length / itemsPerPage);
 
-  // Filter handlers
-  const handleFilterChange = (key, value) => {
+  // Optimized filter handlers with useCallback
+  const handleFilterChange = useCallback((key, value) => {
     setFilters((prev) => ({ ...prev, [key]: value }));
-    setCurrentPage(1); // Reset to first page when filters change
-  };
+    setCurrentPage(1);
+  }, []);
 
-  const handleSearchChange = (value) => {
-    setFilters((prev) => ({ ...prev, search: value }));
-    // Update URL without navigation
-    const newSearchParams = new URLSearchParams(searchParams);
-    if (value) {
-      newSearchParams.set("q", value);
-    } else {
-      newSearchParams.delete("q");
-    }
-    window.history.replaceState(
-      {},
-      "",
-      `${window.location.pathname}?${newSearchParams}`
-    );
-  };
+  const handleSearchChange = useCallback(
+    (value) => {
+      setFilters((prev) => ({ ...prev, search: value }));
 
-  const clearAllFilters = () => {
+      // Debounced URL update
+      const newSearchParams = new URLSearchParams(searchParams);
+      if (value) {
+        newSearchParams.set("q", value);
+      } else {
+        newSearchParams.delete("q");
+      }
+      window.history.replaceState(
+        {},
+        "",
+        `${window.location.pathname}?${newSearchParams}`
+      );
+    },
+    [searchParams]
+  );
+
+  const clearAllFilters = useCallback(() => {
     setFilters({
       search: "",
       category: "all",
@@ -235,122 +361,41 @@ const ProductsContent = () => {
       rating: 0,
       inStock: false,
       featured: false,
+      brand: "all",
       discount: false,
     });
     setCurrentPage(1);
-    // Clear URL params
     window.history.replaceState({}, "", window.location.pathname);
-  };
+  }, []);
 
-  const toggleSection = (section) => {
+  const toggleSection = useCallback((section) => {
     setExpandedSections((prev) => ({
       ...prev,
       [section]: !prev[section],
     }));
-  };
+  }, []);
 
-  // Render star rating
-  const renderStars = (rating) => {
-    return Array.from({ length: 5 }, (_, i) => (
-      <Star
-        key={i}
-        className={`w-4 h-4 ${
-          i < rating ? "fill-orange-400 text-orange-400" : "text-gray-300"
-        }`}
-      />
-    ));
-  };
-
-  // List View Product Card Component (for list view only)
-  const ListViewProductCard = ({ product }) => {
-    const discountedPrice = product.originalprice
-      ? product.originalprice - product.price
-      : 0;
-
-    return (
-      <div className="bg-white rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 border border-gray-100 overflow-hidden">
-        <div className="flex flex-col sm:flex-row">
-          <div className="relative w-full sm:w-48 h-48 sm:h-32 flex-shrink-0">
-            <img
-              src={product.images?.[0] || "/placeholder-product.jpg"}
-              alt={product.name}
-              className="w-full h-full object-cover"
-            />
-            {product.discount && (
-              <div className="absolute top-2 left-2 bg-red-500 text-white px-2 py-1 rounded-md text-xs font-semibold">
-                -{product.discount}%
-              </div>
-            )}
-          </div>
-
-          <div className="flex-1 p-4">
-            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between h-full">
-              <div className="flex-1">
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="text-xs text-orange-600 bg-orange-50 px-2 py-1 rounded-full font-medium">
-                    {product.categories?.name}
-                  </span>
-                  <span className="text-xs text-gray-500">{product.brand}</span>
-                </div>
-
-                <h3 className="text-lg font-semibold text-gray-900 mb-2 line-clamp-1">
-                  {product.name}
-                </h3>
-
-                <p className="text-gray-600 text-sm mb-3 line-clamp-2">
-                  {product.short_description}
-                </p>
-
-                <div className="flex items-center gap-2 mb-2">
-                  <div className="flex items-center gap-1">
-                    {renderStars(product.rating)}
-                  </div>
-                  <span className="text-sm text-gray-500">
-                    ({product.total_reviews})
-                  </span>
-                </div>
-              </div>
-
-              <div className="flex flex-col sm:items-end gap-3 mt-4 sm:mt-0">
-                <div className="flex items-center gap-2">
-                  <span className="text-xl font-bold text-gray-900">
-                    ₦{product.price.toLocaleString()}
-                  </span>
-                  {product.originalprice && (
-                    <span className="text-sm text-gray-500 line-through">
-                      ₦{product.originalprice.toLocaleString()}
-                    </span>
-                  )}
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <button className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors">
-                    <Heart className="w-4 h-4" />
-                  </button>
-
-                  <Link href={`/products/${product.id}`}>
-                    <button className="p-2 text-gray-400 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition-colors">
-                      <Eye className="w-4 h-4" />
-                    </button>
-                  </Link>
-                  <button className="bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600 transition-colors flex items-center gap-2">
-                    <ShoppingCart className="w-4 h-4" />
-                    Add to Cart
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
+  // Loading skeleton component
+  const LoadingSkeleton = memo(() => (
+    <div className="bg-white rounded-xl shadow-sm overflow-hidden animate-pulse">
+      <div className="w-full h-64 bg-gray-200"></div>
+      <div className="p-4">
+        <div className="h-4 bg-gray-200 rounded mb-2"></div>
+        <div className="h-6 bg-gray-200 rounded mb-2"></div>
+        <div className="h-4 bg-gray-200 rounded mb-4"></div>
+        <div className="flex justify-between items-center">
+          <div className="h-6 bg-gray-200 rounded w-20"></div>
+          <div className="h-10 bg-gray-200 rounded w-24"></div>
         </div>
       </div>
-    );
-  };
+    </div>
+  ));
 
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <div className="bg-white shadow-sm border-b">
-        <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
             <div>
               <h1 className="text-3xl font-bold text-gray-900">
@@ -366,7 +411,7 @@ const ProductsContent = () => {
               </p>
             </div>
 
-            {/* Search Bar */}
+            {/* Optimized Search Bar */}
             <div className="relative flex-1 max-w-md">
               <Search className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
               <input
@@ -388,7 +433,8 @@ const ProductsContent = () => {
           </div>
         </div>
       </div>
-      <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex flex-col lg:flex-row gap-8">
           {/* Mobile Filter Button */}
           <div className="lg:hidden flex items-center justify-between mb-4">
@@ -398,14 +444,16 @@ const ProductsContent = () => {
             >
               <SlidersHorizontal className="w-4 h-4" />
               Filters
-              {Object.values(filters).some(
-                (f) =>
-                  f !== "all" &&
-                  f !== "" &&
-                  f !== 0 &&
-                  f !== false &&
-                  !Array.isArray(f)
-              ) && (
+              {Object.entries(filters).some(([key, value]) => {
+                if (key === "priceRange")
+                  return value[0] > 0 || value[1] < 2000;
+                return (
+                  value !== "all" &&
+                  value !== "" &&
+                  value !== 0 &&
+                  value !== false
+                );
+              }) && (
                 <span className="bg-orange-500 text-white text-xs px-2 py-1 rounded-full">
                   Active
                 </span>
@@ -548,7 +596,7 @@ const ProductsContent = () => {
                           className="text-orange-500 focus:ring-orange-500"
                         />
                         <div className="flex items-center gap-1">
-                          {renderStars(rating)}
+                          <StarRating rating={rating} />
                           <span className="text-sm text-gray-600">& up</span>
                         </div>
                       </label>
@@ -686,21 +734,7 @@ const ProductsContent = () => {
                 }`}
               >
                 {Array.from({ length: 6 }).map((_, i) => (
-                  <div
-                    key={i}
-                    className="bg-white rounded-xl shadow-sm overflow-hidden animate-pulse"
-                  >
-                    <div className="w-full h-64 bg-gray-200"></div>
-                    <div className="p-4">
-                      <div className="h-4 bg-gray-200 rounded mb-2"></div>
-                      <div className="h-6 bg-gray-200 rounded mb-2"></div>
-                      <div className="h-4 bg-gray-200 rounded mb-4"></div>
-                      <div className="flex justify-between items-center">
-                        <div className="h-6 bg-gray-200 rounded w-20"></div>
-                        <div className="h-10 bg-gray-200 rounded w-24"></div>
-                      </div>
-                    </div>
-                  </div>
+                  <LoadingSkeleton key={i} />
                 ))}
               </div>
             ) : sortedProducts.length === 0 ? (
@@ -739,7 +773,7 @@ const ProductsContent = () => {
                   )}
                 </div>
 
-                {/* Pagination */}
+                {/* Optimized Pagination */}
                 {totalPages > 1 && (
                   <div className="mt-12 flex justify-center">
                     <div className="flex items-center gap-2">

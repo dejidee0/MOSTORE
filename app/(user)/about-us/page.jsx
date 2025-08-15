@@ -14,7 +14,7 @@ const About = () => {
     <div className="min-h-screen bg-white w-full overflow-hidden font-raleway flex flex-col">
       {/* Breadcrumb */}
       <div className="bg-gray-100 w-full px-6 py-3 text-sm text-gray-600 md:hidden block">
-        <div className="max-w-8xl mx-auto">
+        <div className="max-w-7xl mx-auto">
           <span className="font-medium text-primary">
             <Link href="/">Home</Link>
           </span>{" "}
@@ -23,7 +23,7 @@ const About = () => {
       </div>
 
       {/* Main Content */}
-      <main className="flex flex-col-reverse md:flex-row items-center justify-between max-w-8xl mx-auto px-6 py-20 gap-10">
+      <main className="flex flex-col-reverse md:flex-row items-center justify-between max-w-7xl mx-auto px-6 py-20 gap-10">
         {/* Text Content */}
         <div className="w-full md:w-1/2 space-y-6">
           <h1 className="text-4xl font-bold text-gray-800">About Us</h1>
@@ -55,7 +55,7 @@ const About = () => {
 
       {/* Stats Section */}
       <section className="w-full bg-gray-50 py-16 px-6">
-        <div className="max-w-8xl mx-auto grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
+        <div className="max-w-7xl mx-auto grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
           {[
             {
               icon: <FaStore size={28} />,

@@ -228,7 +228,7 @@ const NavBar = ({ onWishListClick }) => {
     <>
       {/* Top Info Bar - Enhanced */}
       <div className="bg-gradient-to-r from-orange-500 to-orange-600 text-white text-xs py-2 hidden lg:block shadow-sm">
-        <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between">
             {/* Brand Slogan */}
             <div className="flex items-center ml-10">

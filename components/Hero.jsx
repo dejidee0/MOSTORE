@@ -6,16 +6,8 @@ import {
   ChevronRight,
   ArrowRight,
   Shield,
-  Truck,
-  Award,
-  Car,
-  Smartphone,
-  Monitor,
-  Wrench,
-  Zap,
   Users,
   Store,
-  Package,
 } from "lucide-react";
 import { slides } from "@/lib/data/slides";
 import { useRouter } from "next/navigation";
@@ -183,7 +175,7 @@ const Hero = () => {
       </div>
 
       {/* Bottom Controls */}
-      <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 z-20 hidden md:flex items-center gap-6 bg-black/60 backdrop-blur-xl rounded-full px-6 py-4 border border-gray-700/50">
+      <div className="absolute bottom-20 left-1/2 transform -translate-x-1/2 z-20 hidden md:flex items-center gap-6 bg-black/60 backdrop-blur-xl rounded-full p-4 border border-gray-700/50">
         <button
           onClick={prevSlide}
           className="text-white hover:text-orange-500 transition-all duration-300 p-3 rounded-full hover:bg-orange-500/20 hover:scale-110"

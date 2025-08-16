@@ -8,13 +8,13 @@ const getCategoryImage = (name) => {
   const lower = name?.toLowerCase() || "";
   if (lower.includes("electronics"))
     return "https://images.unsplash.com/photo-1558618047-3c8c76ca7d13?w=400&h=300&fit=crop";
-  if (lower.includes("home appliances"))
+  if (lower.includes("general household"))
     return "https://images.unsplash.com/photo-1586953208448-b95a79798f07?w=400&h=300&fit=crop";
   if (lower.includes("general use"))
     return "https://images.unsplash.com/photo-1598032892972-3585a84b21d1?w=400&h=300&fit=crop";
-  if (lower.includes("vehicles & mobility"))
+  if (lower.includes("automobiles"))
     return "https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=400&h=300&fit=crop";
-  if (lower.includes("vehicle parts") || lower.includes("accessories"))
+  if (lower.includes("general parts"))
     return "https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?w=400&h=300&fit=crop";
 
   // Default fallback

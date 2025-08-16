@@ -427,6 +427,13 @@ const NavBar = ({ onWishListClick }) => {
               </Link>
 
               {/* Help Link */}
+              <Link href="/products">
+                {" "}
+                <button className="hidden lg:flex items-center text-white font-medium hover:text-orange-300 transition-colors duration-200 ml-2">
+                  Shop
+                </button>
+              </Link>
+
               <button className="hidden lg:flex items-center text-white font-medium hover:text-orange-300 transition-colors duration-200 ml-2">
                 Help
               </button>

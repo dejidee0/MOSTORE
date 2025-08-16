@@ -175,23 +175,23 @@ const Hero = () => {
       </div>
 
       {/* Bottom Controls */}
-      <div className="absolute bottom-20 left-1/2 transform -translate-x-1/2 z-20 hidden md:flex items-center gap-6 bg-black/60 backdrop-blur-xl rounded-full p-4 border border-gray-700/50">
+      <div className="absolute bottom-20 left-1/2 transform -translate-x-1/2 z-20 hidden md:flex items-center gap-4 bg-black/60 backdrop-blur-xl rounded-full p-2 border border-gray-700/50">
         <button
           onClick={prevSlide}
-          className="text-white hover:text-orange-500 transition-all duration-300 p-3 rounded-full hover:bg-orange-500/20 hover:scale-110"
+          className="text-white hover:text-orange-500 transition-all duration-300 p-2 rounded-full hover:bg-orange-500/20 hover:scale-105"
         >
-          <ChevronLeft className="w-6 h-6" />
+          <ChevronLeft className="w-4 h-4" />
         </button>
 
-        <div className="flex gap-3">
+        <div className="flex gap-2">
           {slides.map((_, idx) => (
             <button
               key={idx}
               onClick={() => goToSlide(idx)}
               className={`rounded-full transition-all duration-300 ${
                 idx === currentSlide
-                  ? "bg-orange-500 w-10 h-3 shadow-lg shadow-orange-500/50"
-                  : "bg-gray-600 w-3 h-3 hover:scale-125"
+                  ? "bg-orange-500 w-6 h-2 shadow-md shadow-orange-500/40"
+                  : "bg-gray-600 w-2.5 h-2.5 hover:scale-110"
               }`}
             />
           ))}
@@ -199,9 +199,9 @@ const Hero = () => {
 
         <button
           onClick={nextSlide}
-          className="text-white hover:text-orange-500 transition-all duration-300 p-3 rounded-full hover:bg-orange-500/20 hover:scale-110"
+          className="text-white hover:text-orange-500 transition-all duration-300 p-2 rounded-full hover:bg-orange-500/20 hover:scale-105"
         >
-          <ChevronRight className="w-6 h-6" />
+          <ChevronRight className="w-4 h-4" />
         </button>
       </div>
 

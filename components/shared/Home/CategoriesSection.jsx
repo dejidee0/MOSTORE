@@ -10,7 +10,7 @@ const getCategoryImage = (name) => {
     return "https://images.unsplash.com/photo-1558618047-3c8c76ca7d13?w=400&h=300&fit=crop";
   if (lower.includes("general household"))
     return "https://images.unsplash.com/photo-1586953208448-b95a79798f07?w=400&h=300&fit=crop";
-  if (lower.includes("general use"))
+  if (lower.includes("motorcycles"))
     return "https://images.unsplash.com/photo-1598032892972-3585a84b21d1?w=400&h=300&fit=crop";
   if (lower.includes("automobiles"))
     return "https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=400&h=300&fit=crop";
@@ -89,7 +89,7 @@ const CategoriesSection = ({ categories = [], categoriesLoading = false }) => {
 
                   {/* Name */}
                   <div className="text-center">
-                    <span className="text-sm font-medium text-gray-700 group-hover:text-orange-600 transition-colors duration-200">
+                    <span className="text-sm  text-gray-900 font-semibold group-hover:text-orange-600 transition-colors duration-200">
                       {category.name}
                     </span>
                     {items.length > 0 && (

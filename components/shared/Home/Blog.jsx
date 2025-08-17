@@ -10,8 +10,10 @@ import {
   Eye,
   ArrowRight,
   Star,
+  ExternalLink,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase-client";
+import Link from "next/link";
 
 const BlogLandingSection = () => {
   const [featuredPosts, setFeaturedPosts] = useState([]);
@@ -76,7 +78,7 @@ const BlogLandingSection = () => {
   if (isLoading) {
     return (
       <section className="py-16 bg-gray-50">
-        <div className="max-w-7xl px-4 sm:px-6 lg:px-8 animate-pulse">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 animate-pulse">
           <div className="h-12 bg-gray-200 rounded w-1/3 mx-auto mb-4"></div>
           <div className="h-6 bg-gray-200 rounded w-1/2 mx-auto mb-12"></div>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
@@ -92,30 +94,34 @@ const BlogLandingSection = () => {
   return (
     <section className="py-10 bg-gradient-to-br from-gray-50 to-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Header */}
+        {/* Header with View All Button */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className=" mb-4"
+          className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8"
         >
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">
-            Latest From Our <span className="text-orange-500">Blog</span>
-          </h2>
-          <p className="text-lg text-gray-600 max-w-2xl">
-            Stay updated with the latest trends, reviews, and insights from our
-            blog
-          </p>
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">
+              Latest From Our <span className="text-orange-500">Blog</span>
+            </h2>
+            <p className="text-lg text-gray-600 max-w-2xl">
+              Stay updated with the latest trends, reviews, and insights from
+              our blog
+            </p>
+          </div>
+
+          {/* View All Button - Desktop */}
         </motion.div>
 
         {/* Featured Posts */}
-        {featuredPosts.length > 0 && (
+        {featuredPosts.length > 0 ? (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ delay: 0.1 }}
-            className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-16"
+            className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8"
           >
             {featuredPosts.map((post, index) => (
               <motion.article
@@ -186,19 +192,70 @@ const BlogLandingSection = () => {
                       </div>
                     </div>
 
-                    <motion.a
-                      href={`/blog/${post.id}`}
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      className="inline-flex items-center gap-2 text-orange-600 font-medium group-hover:gap-3 transition-all"
-                    >
-                      Read More
-                      <ArrowRight className="w-4 h-4" />
-                    </motion.a>
+                    <Link href={`/blog/${post.id}`}>
+                      <motion.span
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        className="inline-flex items-center gap-2 text-orange-600 font-medium group-hover:gap-3 transition-all cursor-pointer"
+                      >
+                        Read More
+                        <ArrowRight className="w-4 h-4" />
+                      </motion.span>
+                    </Link>
                   </div>
                 </div>
               </motion.article>
             ))}
+          </motion.div>
+        ) : (
+          // No Featured Posts Fallback
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center py-16"
+          >
+            <div className="w-16 h-16 mx-auto mb-4 bg-orange-100 rounded-full flex items-center justify-center">
+              <MessageCircle className="w-8 h-8 text-orange-500" />
+            </div>
+            <h3 className="text-xl font-semibold text-gray-900 mb-2">
+              No Featured Posts Yet
+            </h3>
+            <p className="text-gray-600 mb-6">
+              We're working on bringing you amazing content. Check back soon!
+            </p>
+            <Link href="/blog">
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="inline-flex items-center gap-2 px-6 py-3 bg-orange-500 text-white font-semibold rounded-lg hover:bg-orange-600 transition-colors duration-200"
+              >
+                Explore All Posts
+                <ArrowRight className="w-4 h-4" />
+              </motion.button>
+            </Link>
+          </motion.div>
+        )}
+
+        {/* View All Button - Mobile & Tablet + Always Show When Posts Exist */}
+        {featuredPosts.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.3 }}
+            className="text-center"
+          >
+            <Link href="/blog">
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="inline-flex items-center gap-2 px-8 py-4 bg-white border-2 border-orange-500 text-orange-600 font-semibold rounded-lg hover:bg-orange-50 transition-all duration-200 shadow-sm hover:shadow-md"
+              >
+                <span className="hidden sm:inline">Explore More Articles</span>
+                <ArrowRight className="w-5 h-5" />
+              </motion.button>
+            </Link>
           </motion.div>
         )}
       </div>

@@ -56,8 +56,8 @@ export default function ProductShowcaseSection() {
     ));
 
   return (
-    <section className="w-full bg-gray-50 py-8 sm:py-6">
-      <div className="max-w-7xl mx-auto ">
+    <section className="w-full bg-gray-50 py-8 sm:py-0">
+      <div className="max-w-7xl mx-auto px-4">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8">
           {/* Left Promotional Banner */}
           <div className="lg:col-span-3">

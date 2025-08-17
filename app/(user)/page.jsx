@@ -26,6 +26,7 @@ import ScrollingBanner from "@/components/shared/Hero/ScrollingBanner";
 import ServiceFeatures from "@/components/shared/Home/ServiceFeature";
 import CategoriesSection from "@/components/shared/Home/CategoriesSection";
 import FeaturedBanners from "@/components/shared/Home/FeaaturedBanners";
+import AutomotiveHeroSection from "@/components/shared/Home/AutomotiveHeroSection";
 
 // Lazy-load heavy sections
 const ProductShowcaseSection = dynamic(() =>
@@ -106,55 +107,7 @@ const HomePage = () => {
       <ProductShowcaseSection />
       <ProductSections />
 
-      {/* Trust Section */}
-      <section className="py-10 bg-gradient-to-r from-orange-500 to-orange-600 text-white">
-        <div className="container mx-auto px-4 text-center">
-          <h2 className="text-2xl lg:text-4xl font-black mb-8">
-            Trusted by 50,000+ Customers
-          </h2>
-          <p className="text-xl mb-12 max-w-3xl mx-auto opacity-90">
-            Join thousands of satisfied customers who trust MOSTORE for premium
-            quality and exceptional service
-          </p>
-          <div className="grid md:grid-cols-4 gap-8 mb-12">
-            {[
-              {
-                icon: Shield,
-                title: "Secure Shopping",
-                desc: "256-bit SSL encryption",
-              },
-              {
-                icon: Truck,
-                title: "Fast Delivery",
-                desc: "Free shipping on orders €50+",
-              },
-              {
-                icon: Award,
-                title: "Quality Guarantee",
-                desc: "30-day return policy",
-              },
-              {
-                icon: Users,
-                title: "Expert Support",
-                desc: "24/7 customer service",
-              },
-            ].map((f, i) => (
-              <div key={i}>
-                <f.icon className="w-12 h-12 mx-auto mb-4 opacity-90" />
-                <h3 className="font-bold text-lg mb-2">{f.title}</h3>
-                <p className="opacity-75">{f.desc}</p>
-              </div>
-            ))}
-          </div>
-          <button
-            onClick={() => router.push("/products")}
-            className="bg-white text-orange-600 px-12 py-4 rounded-full font-bold text-lg hover:bg-gray-100 shadow-2xl"
-          >
-            Start Shopping Now
-          </button>
-        </div>
-      </section>
-
+      <AutomotiveHeroSection />
       <BlogLandingSection />
 
       {/* Newsletter */}

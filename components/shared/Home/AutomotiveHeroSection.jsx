@@ -27,9 +27,9 @@ const AutomotiveHeroSection = () => {
         <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-transparent"></div>
       </div>
 
-      {/* Content */}
+      {/* Content - Using responsive container matching your blog sections */}
       <div className="relative z-10 flex h-full items-center">
-        <div className="max-w-7xl mx-36 xl:mx-28">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
           <div className="max-w-3xl">
             {/* Sale Badge */}
             <motion.div
@@ -48,7 +48,7 @@ const AutomotiveHeroSection = () => {
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.4 }}
-              className="mb-4 text-2xl font-bold leading-tight text-white sm:text-3xl lg:text-4xl"
+              className="mb-4 text-2xl font-bold leading-tight text-white sm:text-3xl lg:text-4xl xl:text-5xl"
             >
               Get the Right Part at the Right Price for the Comfort of Your
               Vehicle
@@ -59,7 +59,7 @@ const AutomotiveHeroSection = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.6 }}
-              className="mb-6 text-base text-gray-300 sm:text-lg"
+              className="mb-6 text-base text-gray-300 sm:text-lg lg:text-xl"
             >
               Plakrore maheten. Astronens ultranirad. Dod.
             </motion.p>
@@ -76,7 +76,7 @@ const AutomotiveHeroSection = () => {
                   boxShadow: "0 20px 40px rgba(255, 255, 255, 0.1)",
                 }}
                 whileTap={{ scale: 0.98 }}
-                className="group inline-flex items-center gap-3 rounded-lg bg-white px-8 py-4 text-lg font-semibold text-black transition-all duration-300 hover:bg-gray-100 focus:outline-none focus:ring-4 focus:ring-white/20"
+                className="group inline-flex items-center gap-3 rounded-lg bg-white px-6 py-3 sm:px-8 sm:py-4 text-base sm:text-lg font-semibold text-black transition-all duration-300 hover:bg-gray-100 focus:outline-none focus:ring-4 focus:ring-white/20"
               >
                 Shop Now
                 <motion.div
@@ -84,7 +84,7 @@ const AutomotiveHeroSection = () => {
                   whileHover={{ x: 5 }}
                   transition={{ duration: 0.2 }}
                 >
-                  <ArrowRight className="h-5 w-5" />
+                  <ArrowRight className="h-4 w-4 sm:h-5 sm:w-5" />
                 </motion.div>
               </motion.button>
             </motion.div>

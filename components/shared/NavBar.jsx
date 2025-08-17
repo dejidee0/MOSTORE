@@ -420,12 +420,14 @@ const NavBar = ({ onWishListClick }) => {
             {/* Action Buttons Section */}
             <div className="flex items-center space-x-2 lg:space-x-4">
               {/* Supplier Button */}
+
+              {/* Help Link */}
               <Link href="/register">
-                <button className="hidden lg:flex items-center px-4 py-2.5 bg-white cursor-pointer hover:scale-105 text-orange-600 font-medium rounded-lg hover:bg-gray-50 transition-all duration-200 shadow-sm hover:shadow-md active:scale-[0.98]">
-                  Become a Supplier
+                {" "}
+                <button className="hidden lg:flex items-center text-white font-medium hover:text-orange-300 transition-colors duration-200 ml-2">
+                  Sell
                 </button>
               </Link>
-
               {/* Help Link */}
               <Link href="/products">
                 {" "}

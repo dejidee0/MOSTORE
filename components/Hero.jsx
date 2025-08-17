@@ -123,15 +123,6 @@ const Hero = () => {
                 <span className="text-sm sm:text-base">SHOP NOW</span>
                 <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 group-hover:translate-x-1 transition-transform" />
               </button>
-
-              <button
-                onClick={() => router.push("/sign-up")}
-                className="group bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white px-6 sm:px-8 py-3 sm:py-4 rounded-full font-bold text-base sm:text-lg transition-all duration-300 shadow-2xl hover:shadow-green-500/50 hover:scale-105 flex items-center gap-2 sm:gap-3 justify-center"
-              >
-                <Users className="w-5 h-5 sm:w-6 sm:h-6" />
-                <span className="text-sm sm:text-base">JOIN AS SUPPLIER</span>
-                <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 group-hover:translate-x-1 transition-transform" />
-              </button>
             </div>
 
             {/* Stats */}

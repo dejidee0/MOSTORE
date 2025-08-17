@@ -37,7 +37,7 @@ export default function ProductSections() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-orange-50/50">
-      <div className="max-7xl mx-auto px-6 py-16 space-y-24">
+      <div className="max-7xl mx-auto px-6 py-8 space-y-6">
         {/* Deal of the Day Section */}
 
         {/* Recently Added Section */}

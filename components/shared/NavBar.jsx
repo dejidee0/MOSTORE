@@ -287,7 +287,7 @@ const NavBar = ({ onWishListClick }) => {
               {/* Currency Selector */}
               <div className="relative group">
                 <button className="flex items-center gap-1 text-xs hover:text-orange-100 transition-colors">
-                  <span>Currency: EUR</span>
+                  <span>Currency: USD</span>
                 </button>
                 {/* Currency dropdown would go here */}
               </div>

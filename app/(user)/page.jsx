@@ -111,7 +111,7 @@ const HomePage = () => {
       <BlogLandingSection />
 
       {/* Newsletter */}
-      <section className="py-10 bg-gray-900 text-white text-center">
+      <section className="py-10 bg-gray-900 text-white text-center px-6">
         <h2 className="text-xl lg:text-3xl font-black mb-6">
           Stay Updated with <span className="text-orange-500">MOSTORE</span>
         </h2>

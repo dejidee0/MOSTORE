@@ -60,12 +60,6 @@ export default function Footer() {
             {/* Contact Info Integrated */}
             <div className="space-y-1 mb-3 text-xs">
               <div className="flex items-center gap-2">
-                <MapPin className="w-3 h-3 text-gray-600" />
-                <span className="text-gray-700">
-                  Largo Centro Studi 11, 47833 Morciano di Romagna, RN, ITALY
-                </span>
-              </div>
-              <div className="flex items-center gap-2">
                 <Phone className="w-3 h-3 text-orange-500" />
                 <span className="text-gray-700">+39 0541 857848</span>
               </div>
@@ -176,11 +170,6 @@ export default function Footer() {
             <div className="flex items-center gap-3">
               <span className="text-gray-700 font-medium">PAYMENT METHODS</span>
               <div className="flex gap-1">
-                <div className="w-8 h-5 bg-white border border-gray-300 rounded flex items-center justify-center">
-                  <span className="text-[10px] font-bold text-blue-600">
-                    VISA
-                  </span>
-                </div>
                 <div className="w-8 h-5 bg-white border border-gray-300 rounded flex items-center justify-center">
                   <span className="text-[10px] font-bold text-orange-600">
                     MC

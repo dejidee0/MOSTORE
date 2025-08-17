@@ -61,14 +61,15 @@ export default function ProductShowcaseSection() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8">
           {/* Left Promotional Banner */}
           <div className="lg:col-span-3">
-            <div className="relative bg-slate-800 rounded-2xl overflow-hidden h-full min-h-[400px] lg:min-h-[600px]">
+            <div className="relative bg-slate-500 rounded-2xl overflow-hidden h-full min-h-[400px] lg:min-h-[600px]">
               <div className="absolute inset-0">
                 <img
                   src="https://images.unsplash.com/photo-1503736334956-4c8f8e92946d?w=600&h=800&fit=crop"
                   alt="Promotional Banner"
-                  className="w-full h-full object-cover opacity-30"
+                  className="w-full h-full object-cover opacity-60" // Increased opacity
                 />
-                <div className="absolute inset-0 bg-slate-800/80"></div>
+                <div className="absolute inset-0 bg-slate-800/50"></div> //
+                Reduced overlay
               </div>
               <div className="relative z-10 p-6 sm:p-8 h-full flex flex-col justify-between">
                 <div>

@@ -29,7 +29,7 @@ const AutomotiveHeroSection = () => {
 
       {/* Content */}
       <div className="relative z-10 flex h-full items-center">
-        <div className="max-w-7xl mx-36">
+        <div className="max-w-7xl mx-36 xl:mx-28">
           <div className="max-w-3xl">
             {/* Sale Badge */}
             <motion.div

@@ -266,7 +266,7 @@ const NavBar = ({ onWishListClick }) => {
                 </div>
               ) : (
                 <Link
-                  href="/login"
+                  href="/sign-in"
                   className="text-xs font-medium hover:text-orange-100 transition-colors"
                 >
                   Sign In / Register
@@ -287,7 +287,7 @@ const NavBar = ({ onWishListClick }) => {
               {/* Currency Selector */}
               <div className="relative group">
                 <button className="flex items-center gap-1 text-xs hover:text-orange-100 transition-colors">
-                  <span>Currency: USD</span>
+                  <span>Currency: EUR</span>
                 </button>
                 {/* Currency dropdown would go here */}
               </div>

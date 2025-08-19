@@ -13,146 +13,210 @@ import Image from "next/image";
 import Link from "next/link";
 
 export default function Footer() {
-  const footerSections = [
-    {
-      title: "NEED HELP?",
-      links: [
-        { name: "Chat with us", href: "/chat" },
-        { name: "Help Center & FAQ", href: "/help" },
-        { name: "Contact Us", href: "/contact" },
-      ],
-    },
-    {
-      title: "USEFUL LINKS",
-      links: [
-        { name: "About MOSTORE", href: "/about" },
-        { name: "How to shop", href: "/how-to-shop" },
-        { name: "Returns", href: "/returns" },
-        { name: "Terms & Conditions", href: "/terms" },
-      ],
-    },
-    {
-      title: "MAKE MONEY",
-      links: [
-        { name: "Sell on MOSTORE", href: "/sell" },
-        { name: "Vendor hub", href: "/vendor" },
-      ],
-    },
-  ];
-
   return (
-    <footer className="bg-gray-300 max-h-[40vh] overflow-hidden">
-      <div className="max-w-7xl mx-auto px-4 py-4">
-        <div className="grid grid-cols-1 lg:grid-cols-6 gap-4">
-          {/* Logo, Contact & Social - Compact */}
-          <div className="lg:col-span-2">
-            <div className="flex items-center gap-2 mb-2">
-              <span className="text-lg font-bold text-gray-800">
+    <footer className="bg-gray-800 text-white relative overflow-hidden">
+      {/* Background Pattern */}
+      <div className="absolute inset-0 opacity-10">
+        <div
+          className="absolute inset-0"
+          style={{
+            backgroundImage: `radial-gradient(circle at 2px 2px, rgba(255,255,255,0.15) 1px, transparent 0)`,
+            backgroundSize: "20px 20px",
+          }}
+        ></div>
+      </div>
+
+      <div className="relative max-w-7xl mx-auto px-6 py-6">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          {/* Logo Section with NEED HELP and USEFUL LINKS */}
+          <div className="lg:col-span-4">
+            <div className="mb-4">
+              <span className="text-2xl font-bold text-white">
                 MO<span className="text-orange-500">STORE</span>
               </span>
             </div>
 
-            <p className="text-orange-500 text-xs leading-relaxed mb-2">
-              Welcome to our Store, where we pride ourselves on excellent
-              customer service.
-            </p>
-
-            {/* Contact Info Integrated */}
-            <div className="space-y-1 mb-3 text-xs">
-              <div className="flex items-center gap-2">
-                <Phone className="w-3 h-3 text-orange-500" />
-                <span className="text-gray-700">+39 0541 857848</span>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 gap-4">
+              {/* NEED HELP Section */}
+              <div className="mb-4">
+                <h4 className="font-bold text-white mb-2 text-xs uppercase tracking-wide">
+                  NEED HELP?
+                </h4>
+                <ul className="space-y-1">
+                  <li>
+                    <Link
+                      href="/help"
+                      className="text-gray-300 hover:text-orange-400 transition-colors text-xs"
+                    >
+                      Help Center & FAQ
+                    </Link>
+                  </li>
+                  <li>
+                    <Link
+                      href="/contact"
+                      className="text-gray-300 hover:text-orange-400 transition-colors text-xs"
+                    >
+                      Contact Us
+                    </Link>
+                  </li>
+                </ul>
               </div>
-              <div className="flex items-center gap-2">
-                <Mail className="w-3 h-3 text-orange-500" />
-                <span className="text-gray-700">support@ourstore.com</span>
+
+              {/* USEFUL LINKS Section - Compact */}
+              <div>
+                <h4 className="font-bold text-white mb-2 text-xs uppercase tracking-wide">
+                  USEFUL LINKS
+                </h4>
+                <div className="grid grid-cols-2 gap-x-4 gap-y-1">
+                  <Link
+                    href="/about"
+                    className="text-gray-300 hover:text-orange-400 transition-colors text-xs"
+                  >
+                    About MOSTORE
+                  </Link>
+                  <Link
+                    href="/how-to-shop"
+                    className="text-gray-300 hover:text-orange-400 transition-colors text-xs"
+                  >
+                    How to shop
+                  </Link>
+                  <Link
+                    href="/delivery"
+                    className="text-gray-300 hover:text-orange-400 transition-colors text-xs"
+                  >
+                    Delivery options
+                  </Link>
+                  <Link
+                    href="/returns"
+                    className="text-gray-300 hover:text-orange-400 transition-colors text-xs"
+                  >
+                    Returns
+                  </Link>
+                  <Link
+                    href="/payments"
+                    className="text-gray-300 hover:text-orange-400 transition-colors text-xs"
+                  >
+                    Payments
+                  </Link>
+                  <Link
+                    href="/terms"
+                    className="text-gray-300 hover:text-orange-400 transition-colors text-xs"
+                  >
+                    Terms & Condition
+                  </Link>
+                  <Link
+                    href="/privacy"
+                    className="text-gray-300 hover:text-orange-400 transition-colors text-xs"
+                  >
+                    Privacy Policy
+                  </Link>
+                  <Link
+                    href="/news"
+                    className="text-gray-300 hover:text-orange-400 transition-colors text-xs"
+                  >
+                    News
+                  </Link>
+                </div>
               </div>
-            </div>
-
-            <div className="flex gap-2 mb-2">
-              <Link
-                href="#"
-                className="w-6 h-6 bg-orange-500 rounded-full flex items-center justify-center hover:bg-orange-600"
-              >
-                <Facebook className="w-3 h-3 text-white" />
-              </Link>
-              <Link
-                href="#"
-                className="w-6 h-6 bg-orange-500 rounded-full flex items-center justify-center hover:bg-orange-600"
-              >
-                <Twitter className="w-3 h-3 text-white" />
-              </Link>
-              <Link
-                href="#"
-                className="w-6 h-6 bg-orange-500 rounded-full flex items-center justify-center hover:bg-orange-600"
-              >
-                <Instagram className="w-3 h-3 text-white" />
-              </Link>
-            </div>
-
-            <div className="text-xs text-orange-500 font-medium">
-              Mon-Fri: 9am-6pm | Sat: 10am-3pm
             </div>
           </div>
 
-          {/* Footer Links - Compact */}
-          {footerSections.map((section, index) => (
-            <div key={index}>
-              <h4 className="font-semibold text-gray-800 mb-2 text-xs uppercase">
-                {section.title}
-              </h4>
-              <ul className="space-y-1">
-                {section.links.map((link, linkIndex) => (
-                  <li key={linkIndex}>
-                    <Link
-                      href={link.href}
-                      className="text-xs text-gray-600 hover:text-orange-500 transition-colors"
-                    >
-                      {link.name}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
-
-          {/* Newsletter & App Download - Compact */}
-          <div>
-            <h4 className="font-semibold text-orange-500 mb-2 text-xs uppercase underline">
-              NEWSLETTER
+          {/* MAKE MONEY ON MOSTORE Section */}
+          <div className="lg:col-span-3">
+            <h4 className="font-bold text-white mb-2 text-xs uppercase tracking-wide">
+              MAKE MONEY ON MOSTORE
             </h4>
-            <p className="text-gray-700 text-xs mb-2">
-              Get updates on latest offers.
+            <ul className="space-y-1">
+              <li>
+                <Link
+                  href="/sell"
+                  className="text-gray-300 hover:text-orange-400 transition-colors text-xs"
+                >
+                  Sell on MOSTORE
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/vendor"
+                  className="text-gray-300 hover:text-orange-400 transition-colors text-xs"
+                >
+                  Vendor hub
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/affiliate"
+                  className="text-gray-300 hover:text-orange-400 transition-colors text-xs"
+                >
+                  Affiliate & Influencer
+                </Link>
+              </li>
+            </ul>
+          </div>
+
+          {/* Newsletter & App Section - Compact */}
+          <div className="lg:col-span-5">
+            <h4 className="font-bold text-white mb-2 text-xs uppercase tracking-wide">
+              NEW TO MOSTORE ?
+            </h4>
+            <p className="text-orange-400 text-xs mb-2 font-medium">
+              Stay Updated with MOSTORE
             </p>
+            <p className="text-gray-300 text-xs mb-3 leading-relaxed">
+              Subscribe to our newsletter to get updates on our latest offers,
+              exclusive deals, new arrivals and expert insights delivered to
+              your inbox
+            </p>
+
             <div className="flex mb-3">
               <input
                 type="email"
-                placeholder="Your email"
-                className="flex-1 px-2 py-1 text-xs border border-gray-300 rounded-l bg-white focus:outline-none focus:ring-1 focus:ring-orange-500"
+                placeholder="Enter E-mail Address"
+                className="flex-1 px-3 py-2 text-xs border-0 bg-gray-600 text-white placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-orange-400"
               />
-              <button className="bg-orange-500 px-2 py-1 text-white rounded-r hover:bg-orange-600 flex items-center justify-center">
-                <Send className="w-3 h-3" />
+              <button className="bg-gray-700 border border-gray-600 px-4 py-2 text-white hover:bg-gray-600 transition-colors text-xs font-medium">
+                Subscribe
               </button>
             </div>
 
-            {/* App Download */}
-            <div className="mb-2">
-              <h5 className="font-semibold text-gray-800 mb-1 text-xs uppercase">
-                GET OUR APP
-              </h5>
-              <p className="text-gray-600 text-xs mb-2">Coming Soon!</p>
-              <div className="flex flex-col gap-1">
-                <div className="flex items-center gap-1 bg-gray-400 text-gray-600 px-2 py-1 rounded text-xs cursor-not-allowed">
-                  <div className="w-4 h-4 bg-gray-500 rounded flex items-center justify-center">
-                    <span className="text-white text-[8px]">🍎</span>
-                  </div>
-                  <span className="text-[10px]">App Store</span>
+            <div className="flex items-start mb-3">
+              <input
+                type="checkbox"
+                id="agreement"
+                className="mr-2 mt-0.5 accent-orange-500 scale-75"
+              />
+              <label
+                htmlFor="agreement"
+                className="text-xs text-gray-400 leading-tight"
+              >
+                I agree <span className="text-orange-400">mostore</span> Privacy
+                and Cookie Policy. You can unsubscribe newsletters at any time.
+                I accept the{" "}
+                <span className="text-orange-400">Legal Terms</span>
+              </label>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {/* App Download - Compact */}
+              <div className="bg-orange-500 p-3 rounded">
+                <div className="flex items-center mb-1">
+                  <Smartphone className="w-4 h-4 text-white mr-2" />
+                  <span className="text-white font-bold text-xs">
+                    DOWNLOAD MOSTORE FREE APP
+                  </span>
                 </div>
-                <div className="flex items-center gap-1 bg-gray-400 text-gray-600 px-2 py-1 rounded text-xs cursor-not-allowed">
-                  <div className="w-4 h-4 bg-gray-500 rounded flex items-center justify-center">
-                    <span className="text-white text-[8px]">▶</span>
+                <p className="text-white text-xs mb-2">
+                  Get access to exclusive offers!
+                </p>
+                <div className="flex gap-1">
+                  <div className="bg-black text-white px-2 py-1 rounded flex items-center gap-1 flex-1">
+                    <span className="text-xs">🍎</span>
+                    <span className="text-xs">App Store</span>
                   </div>
-                  <span className="text-[10px]">Google Play</span>
+                  <div className="bg-black text-white px-2 py-1 rounded flex items-center gap-1 flex-1">
+                    <span className="text-xs">▶</span>
+                    <span className="text-xs">Google Play</span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -160,26 +224,34 @@ export default function Footer() {
         </div>
 
         {/* Bottom Section - Compact */}
-        <div className="mt-3 pt-2 border-t border-gray-400">
-          <div className="flex flex-col sm:flex-row justify-between items-center gap-2 text-xs">
-            <div className="text-gray-600">
-              © 2025{" "}
-              <span className="text-orange-500 font-semibold">MOSTORE</span>.
-              All Rights Reserved
+        <div className="mt-6 pt-4 border-t border-gray-600">
+          <div className="flex flex-col lg:flex-row justify-between items-center gap-3">
+            <div className="flex items-center gap-4">
+              <span className="text-gray-300 font-medium text-xs">
+                PAYMENT METHODS
+              </span>
+              <div className="flex gap-2">
+                <div className="bg-white px-3 py-1 rounded">
+                  <span className="text-xs font-bold text-blue-600">
+                    Stripe
+                  </span>
+                </div>
+                <div className="bg-white px-3 py-1 rounded">
+                  <span className="text-xs font-bold text-orange-600">
+                    Skrill
+                  </span>
+                </div>
+              </div>
             </div>
-            <div className="flex items-center gap-3">
-              <span className="text-gray-700 font-medium">PAYMENT METHODS</span>
-              <div className="flex gap-1">
-                <div className="w-8 h-5 bg-white border border-gray-300 rounded flex items-center justify-center">
-                  <span className="text-[10px] font-bold text-orange-600">
-                    MC
-                  </span>
-                </div>
-                <div className="w-10 h-5 bg-white border border-gray-300 rounded flex items-center justify-center">
-                  <span className="text-[10px] font-bold text-blue-600">
-                    PayPal
-                  </span>
-                </div>
+
+            <div className="text-center">
+              <div className="text-gray-400 text-xs leading-tight">
+                © 2025{" "}
+                <span className="text-orange-400 font-semibold">MOSTORE</span>.
+                All Rights Reserved - The Use Of This Site Is Subject To Certain
+                Terms And Conditions, Local Store Prices May Vary From Those
+                Displayed. Products Shown As Available Are Normally Stocked But
+                Inventory Levels Cannot Be Guaranteed
               </div>
             </div>
           </div>

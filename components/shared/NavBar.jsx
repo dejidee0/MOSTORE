@@ -257,21 +257,6 @@ const NavBar = ({ onWishListClick }) => {
                   Call: +234 123 456 7890
                 </span>
               </div>
-              {userInfo ? (
-                <div className="text-orange-100 text-xs bg-white/10 backdrop-blur-sm px-3 py-1 rounded-full border border-white/20 flex items-center gap-2 transition-all hover:bg-white/15">
-                  <Star className="w-3 h-3 fill-current" />
-                  <span className="text-white font-medium truncate max-w-[120px]">
-                    Welcome back, {userInfo.displayName}!
-                  </span>
-                </div>
-              ) : (
-                <Link
-                  href="/sign-in"
-                  className="text-xs font-medium hover:text-orange-100 transition-colors"
-                >
-                  Sign In / Register
-                </Link>
-              )}
 
               {/* Language Selector */}
               <div className="relative group ml-3">

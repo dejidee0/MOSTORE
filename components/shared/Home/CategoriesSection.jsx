@@ -64,7 +64,7 @@ const CategoriesSection = ({ categories = [], categoriesLoading = false }) => {
           </div>
         ) : (
           // 🔹 Actual Categories - Optimized Grid
-          <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 2xl:grid-cols-6 gap-4 lg:gap-6">
+          <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 2xl:grid-cols-6 gap-4 lg:gap-6">
             {displayCategories.map((category) => {
               const items = formatCategoryItems(category.description);
               return (

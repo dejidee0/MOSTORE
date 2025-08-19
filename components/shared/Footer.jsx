@@ -28,101 +28,99 @@ export default function Footer() {
 
       <div className="relative max-w-7xl mx-auto px-6 py-6">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          {/* Logo Section with NEED HELP and USEFUL LINKS */}
-          <div className="lg:col-span-4">
+          {/* Logo Section with NEED HELP */}
+          <div className="lg:col-span-3">
             <div className="mb-4">
               <span className="text-2xl font-bold text-white">
                 MO<span className="text-orange-500">STORE</span>
               </span>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 gap-4">
-              {/* NEED HELP Section */}
-              <div className="mb-4">
-                <h4 className="font-bold text-white mb-2 text-xs uppercase tracking-wide">
-                  NEED HELP?
-                </h4>
-                <ul className="space-y-1">
-                  <li>
-                    <Link
-                      href="/help"
-                      className="text-gray-300 hover:text-orange-400 transition-colors text-xs"
-                    >
-                      Help Center & FAQ
-                    </Link>
-                  </li>
-                  <li>
-                    <Link
-                      href="/contact"
-                      className="text-gray-300 hover:text-orange-400 transition-colors text-xs"
-                    >
-                      Contact Us
-                    </Link>
-                  </li>
-                </ul>
-              </div>
+            {/* NEED HELP Section */}
+            <div className="mb-4">
+              <h4 className="font-bold text-white mb-2 text-xs uppercase tracking-wide">
+                NEED HELP?
+              </h4>
+              <ul className="space-y-1">
+                <li>
+                  <Link
+                    href="/help"
+                    className="text-gray-300 hover:text-orange-400 transition-colors text-xs"
+                  >
+                    Help Center & FAQ
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    href="/contact"
+                    className="text-gray-300 hover:text-orange-400 transition-colors text-xs"
+                  >
+                    Contact Us
+                  </Link>
+                </li>
+              </ul>
+            </div>
+          </div>
 
-              {/* USEFUL LINKS Section - Compact */}
-              <div>
-                <h4 className="font-bold text-white mb-2 text-xs uppercase tracking-wide">
-                  USEFUL LINKS
-                </h4>
-                <div className="grid grid-cols-2 gap-x-4 gap-y-1">
-                  <Link
-                    href="/about"
-                    className="text-gray-300 hover:text-orange-400 transition-colors text-xs"
-                  >
-                    About MOSTORE
-                  </Link>
-                  <Link
-                    href="/how-to-shop"
-                    className="text-gray-300 hover:text-orange-400 transition-colors text-xs"
-                  >
-                    How to shop
-                  </Link>
-                  <Link
-                    href="/delivery"
-                    className="text-gray-300 hover:text-orange-400 transition-colors text-xs"
-                  >
-                    Delivery options
-                  </Link>
-                  <Link
-                    href="/returns"
-                    className="text-gray-300 hover:text-orange-400 transition-colors text-xs"
-                  >
-                    Returns
-                  </Link>
-                  <Link
-                    href="/payments"
-                    className="text-gray-300 hover:text-orange-400 transition-colors text-xs"
-                  >
-                    Payments
-                  </Link>
-                  <Link
-                    href="/terms"
-                    className="text-gray-300 hover:text-orange-400 transition-colors text-xs"
-                  >
-                    Terms & Condition
-                  </Link>
-                  <Link
-                    href="/privacy"
-                    className="text-gray-300 hover:text-orange-400 transition-colors text-xs"
-                  >
-                    Privacy Policy
-                  </Link>
-                  <Link
-                    href="/news"
-                    className="text-gray-300 hover:text-orange-400 transition-colors text-xs"
-                  >
-                    News
-                  </Link>
-                </div>
-              </div>
+          {/* USEFUL LINKS Section - Own Column */}
+          <div className="lg:col-span-2">
+            <h4 className="font-bold text-white mb-2 text-xs uppercase tracking-wide">
+              USEFUL LINKS
+            </h4>
+            <div className="space-y-1">
+              <Link
+                href="/about"
+                className="block text-gray-300 hover:text-orange-400 transition-colors text-xs"
+              >
+                About MOSTORE
+              </Link>
+              <Link
+                href="/how-to-shop"
+                className="block text-gray-300 hover:text-orange-400 transition-colors text-xs"
+              >
+                How to shop
+              </Link>
+              <Link
+                href="/delivery"
+                className="block text-gray-300 hover:text-orange-400 transition-colors text-xs"
+              >
+                Delivery options
+              </Link>
+              <Link
+                href="/returns"
+                className="block text-gray-300 hover:text-orange-400 transition-colors text-xs"
+              >
+                Returns
+              </Link>
+              <Link
+                href="/payments"
+                className="block text-gray-300 hover:text-orange-400 transition-colors text-xs"
+              >
+                Payments
+              </Link>
+              <Link
+                href="/terms"
+                className="block text-gray-300 hover:text-orange-400 transition-colors text-xs"
+              >
+                Terms & Condition
+              </Link>
+              <Link
+                href="/privacy"
+                className="block text-gray-300 hover:text-orange-400 transition-colors text-xs"
+              >
+                Privacy Policy
+              </Link>
+              <Link
+                href="/news"
+                className="block text-gray-300 hover:text-orange-400 transition-colors text-xs"
+              >
+                News
+              </Link>
             </div>
           </div>
 
           {/* MAKE MONEY ON MOSTORE Section */}
-          <div className="lg:col-span-3">
+          <div className="lg:col-span-2">
             <h4 className="font-bold text-white mb-2 text-xs uppercase tracking-wide">
               MAKE MONEY ON MOSTORE
             </h4>
@@ -154,7 +152,7 @@ export default function Footer() {
             </ul>
           </div>
 
-          {/* Newsletter & App Section - Compact */}
+          {/* Newsletter Section - Far Right */}
           <div className="lg:col-span-5">
             <h4 className="font-bold text-white mb-2 text-xs uppercase tracking-wide">
               NEW TO MOSTORE ?
@@ -196,37 +194,8 @@ export default function Footer() {
               </label>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              {/* App Download - Compact */}
-              <div className="bg-orange-500 p-3 rounded">
-                <div className="flex items-center mb-1">
-                  <Smartphone className="w-4 h-4 text-white mr-2" />
-                  <span className="text-white font-bold text-xs">
-                    DOWNLOAD MOSTORE FREE APP
-                  </span>
-                </div>
-                <p className="text-white text-xs mb-2">
-                  Get access to exclusive offers!
-                </p>
-                <div className="flex gap-1">
-                  <div className="bg-black text-white px-2 py-1 rounded flex items-center gap-1 flex-1">
-                    <span className="text-xs">🍎</span>
-                    <span className="text-xs">App Store</span>
-                  </div>
-                  <div className="bg-black text-white px-2 py-1 rounded flex items-center gap-1 flex-1">
-                    <span className="text-xs">▶</span>
-                    <span className="text-xs">Google Play</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Bottom Section - Compact */}
-        <div className="mt-6 pt-4 border-t border-gray-600">
-          <div className="flex flex-col lg:flex-row justify-between items-center gap-3">
-            <div className="flex items-center gap-4">
+            {/* Payment Methods - Above Border */}
+            <div className="flex items-center gap-4 justify-end mt-6">
               <span className="text-gray-300 font-medium text-xs">
                 PAYMENT METHODS
               </span>
@@ -243,7 +212,12 @@ export default function Footer() {
                 </div>
               </div>
             </div>
+          </div>
+        </div>
 
+        {/* Bottom Section - Copyright Only */}
+        <div className="mt-6 pt-4 border-t border-gray-600">
+          <div className="flex justify-center">
             <div className="text-center">
               <div className="text-gray-400 text-xs leading-tight">
                 © 2025{" "}

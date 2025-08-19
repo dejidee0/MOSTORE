@@ -1,24 +1,10 @@
 "use client";
 
-import React, { useEffect, useState, useCallback, useMemo } from "react";
+import React, { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
-import Image from "next/image";
+
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
-import {
-  Car,
-  Bike,
-  Wrench,
-  Smartphone,
-  Monitor,
-  Package,
-  Battery,
-  Shield,
-  ChevronRight,
-  Award,
-  Users,
-  Truck,
-} from "lucide-react";
 import { getAllCategories } from "@/lib/data/products";
 import ProductGrid from "@/components/ProductGrid";
 import Hero from "@/components/Hero";

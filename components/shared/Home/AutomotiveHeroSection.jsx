@@ -21,10 +21,10 @@ const AutomotiveHeroSection = () => {
         </video>
 
         {/* Dark overlay for better text readability */}
-        <div className="absolute inset-0 bg-black/60"></div>
+        <div className="absolute inset-0 bg-black/10"></div>
 
         {/* Gradient overlay for premium look */}
-        <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-transparent"></div>
+        <div className="absolute inset-0 bg-gradient-to-r from-black/50 via-black/20 to-transparent"></div>
       </div>
 
       {/* Content - Using responsive container matching your blog sections */}

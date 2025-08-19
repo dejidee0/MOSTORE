@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Heart, Star, ShoppingCart, Eye } from "lucide-react";
+import { Star, ShoppingCart, Eye } from "lucide-react";
 import { useCart } from "@/lib/cart";
 import { supabase } from "@/lib/supabase-client";
 import Link from "next/link";
@@ -68,8 +68,6 @@ export default function ProductShowcaseSection() {
                   alt="Promotional Banner"
                   className="w-full h-full object-cover opacity-60" // Increased opacity
                 />
-                <div className="absolute inset-0 bg-slate-800/50"></div> //
-                Reduced overlay
               </div>
               <div className="relative z-10 p-6 sm:p-8 h-full flex flex-col justify-between">
                 <div>

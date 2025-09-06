@@ -2,11 +2,11 @@ import { Raleway } from "next/font/google";
 
 import "../globals.css";
 
-import NavbarWrapper from "@/components/NavbarWrapper";
 import { ToastProvider } from "@/lib/toast";
 import Footer from "@/components/shared/Footer";
 import AuthProvider from "@/components/AuthProvider";
 import { CartProvider } from "@/lib/cart";
+import NavBar from "@/components/shared/NavBar";
 const raleway = Raleway({
   subsets: ["latin"],
   variable: "--font-raleway",
@@ -26,7 +26,7 @@ export default function UserLayout({ children }) {
         <AuthProvider>
           <CartProvider>
             {" "}
-            <NavbarWrapper showWishlist={true} />
+            <NavBar />
             <ToastProvider>{children}</ToastProvider>
             <Footer />
           </CartProvider>

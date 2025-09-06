@@ -4,21 +4,30 @@ import { motion } from "framer-motion";
 import { Star, ShoppingCart, Heart, Share2, Eye } from "lucide-react";
 import Link from "next/link";
 import { useCart } from "@/lib/cart";
+import { useWishlist } from "@/hooks/useWishlist";
 
 export const ProductCard = ({ product }) => {
   if (!product) return null; // ✅ Do not render anything if product is missing
 
   const [isImageLoaded, setIsImageLoaded] = useState(false);
-  const [isWishlisted, setIsWishlisted] = useState(false);
   const [isAddingToCart, setIsAddingToCart] = useState(false);
   const { addItem, isItemInCart, getItemCount } = useCart();
+  const {
+    isInWishlist,
+    toggleItem: toggleWishlist,
+    isAuthenticated,
+  } = useWishlist();
+
+  // Check if product is in wishlist
+  const isWishlisted = isInWishlist(product.id);
 
   const discountedPrice =
     product?.originalprice != null
       ? (product.originalprice * (1 - (product.discount || 0) / 100)).toFixed(2)
       : product?.price != null
-      ? product.price.toFixed(2)
-      : "0.00";
+        ? product.price.toFixed(2)
+        : "0.00";
+
   const formatPrice = (price) =>
     new Intl.NumberFormat("en-US", {
       style: "currency",
@@ -49,10 +58,32 @@ export const ProductCard = ({ product }) => {
     }
   };
 
-  const handleWishlist = (e) => {
+  const handleWishlist = async (e) => {
     e.preventDefault();
     e.stopPropagation();
-    setIsWishlisted(!isWishlisted);
+
+    if (!isAuthenticated) {
+      // You can add a toast notification here or redirect to login
+      console.log("Please sign in to add items to wishlist");
+      return;
+    }
+
+    // Format product data for wishlist
+    const wishlistProduct = {
+      id: product.id,
+      name: product.name,
+      price: parseFloat(discountedPrice || product.price),
+      images: product.images,
+      slug: product.slug,
+      category: product.category,
+      brand: product.brand,
+      stock_quantity: product.stock_quantity,
+      rating: product.rating,
+      review_count: product.review_count,
+      original_price: product.originalprice,
+    };
+
+    await toggleWishlist(wishlistProduct);
   };
 
   const handleShare = (e) => {
@@ -124,32 +155,48 @@ export const ProductCard = ({ product }) => {
             onClick={handleWishlist}
             className={`w-9 h-9 rounded-full backdrop-blur-md transition-all duration-300 flex items-center justify-center shadow-lg ${
               isWishlisted
-                ? "bg-orange-500 text-white"
-                : "bg-white/90 hover:bg-white text-gray-700 hover:text-orange-500"
+                ? "bg-red-500 text-white shadow-red-200"
+                : "bg-white/90 hover:bg-white text-gray-700 hover:text-red-500"
             }`}
+            title={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
           >
             <Heart
-              className={`w-4 h-4 ${isWishlisted ? "fill-current" : ""}`}
+              className={`w-4 h-4 transition-all duration-200 ${
+                isWishlisted ? "fill-current scale-110" : "hover:scale-110"
+              }`}
             />
           </motion.button>
+
           <Link href={`/products/${product.slug}`} className="flex-1">
             <motion.button
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
               className="w-9 h-9 bg-white/90 hover:bg-white text-gray-700 hover:text-orange-500 rounded-full backdrop-blur-md transition-all duration-300 flex items-center justify-center shadow-lg"
+              title="View product"
             >
               <Eye className="w-4 h-4" />
             </motion.button>
           </Link>
+
           <motion.button
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.9 }}
             onClick={handleShare}
             className="w-9 h-9 bg-white/90 hover:bg-white text-gray-700 hover:text-orange-500 rounded-full backdrop-blur-md transition-all duration-300 flex items-center justify-center shadow-lg"
+            title="Share product"
           >
             <Share2 className="w-4 h-4" />
           </motion.button>
         </div>
+
+        {/* Wishlist indicator when not hovering */}
+        {isWishlisted && (
+          <div className="absolute top-3 right-3 opacity-100 group-hover:opacity-0 transition-all duration-300 z-10">
+            <div className="w-9 h-9 bg-red-500 text-white rounded-full flex items-center justify-center shadow-lg">
+              <Heart className="w-4 h-4 fill-current" />
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Content Section */}
@@ -171,24 +218,38 @@ export const ProductCard = ({ product }) => {
 
           {/* Product Name */}
           <Link href={`/products/${product.slug}`}>
-            <h3 className="font-semibold text-gray-800 mb-1 line-clamp-2 text-sm leading-5 group-hover:text-orange-600 transition-colors duration-200 cursor-pointer">
+            <h3
+              className="font-semibold text-gray-800 mb-1 line-clamp-2 
+                 text-xs sm:text-sm leading-4 sm:leading-5 
+                 group-hover:text-orange-600 transition-colors duration-200 cursor-pointer"
+            >
               {product.name}
             </h3>
           </Link>
+
+          {/* Rating */}
+          {product.rating && (
+            <div className="flex items-center gap-1">
+              <Star className="w-3 h-3 sm:w-4 sm:h-4 fill-yellow-400 text-yellow-400" />
+              <span className="text-xs text-gray-600">
+                {product.rating} ({product.review_count || 0})
+              </span>
+            </div>
+          )}
 
           {/* Price */}
           <div className="flex items-end gap-2">
             {product.originalprice && product.discount ? (
               <>
-                <span className="text-lg font-bold text-gray-900">
+                <span className="text-sm sm:text-lg font-bold text-gray-900">
                   {formatPrice(discountedPrice)}
                 </span>
-                <span className="text-xs line-through text-gray-400 mb-0.5">
+                <span className="text-[10px] sm:text-xs line-through text-gray-400 mb-0.5">
                   {formatPrice(product.originalprice)}
                 </span>
               </>
             ) : (
-              <span className="text-lg font-bold text-gray-900">
+              <span className="text-sm sm:text-lg font-bold text-gray-900">
                 {formatPrice(product.price)}
               </span>
             )}
@@ -201,20 +262,28 @@ export const ProductCard = ({ product }) => {
           whileTap={{ scale: 0.98 }}
           disabled={isAddingToCart || product.stock_quantity === 0}
           onClick={handleAddToCart}
-          className={`mt-4 w-full flex items-center justify-center gap-2 px-4 py-2 rounded-md font-medium shadow-md transition-colors duration-300 ${
-            product.stock_quantity === 0
-              ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-              : inCart
-              ? "bg-green-500 text-white hover:bg-green-600"
-              : "bg-orange-500 text-white hover:bg-orange-600"
-          }`}
+          className={`mt-3 sm:mt-4 w-full flex items-center justify-center gap-1 sm:gap-2 
+              px-2 sm:px-4 py-1.5 sm:py-2 rounded-md font-medium shadow-md 
+              text-xs sm:text-sm transition-colors duration-300 ${
+                product.stock_quantity === 0
+                  ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                  : inCart
+                    ? "bg-green-500 text-white hover:bg-green-600"
+                    : "bg-orange-500 text-white hover:bg-orange-600"
+              }`}
         >
-          <ShoppingCart className="w-4 h-4" />
+          {isAddingToCart ? (
+            <div className="w-3 h-3 sm:w-4 sm:h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+          ) : (
+            <ShoppingCart className="w-3 h-3 sm:w-4 sm:h-4" />
+          )}
           {product.stock_quantity === 0
             ? "Out of Stock"
-            : inCart
-            ? `In Cart (${cartQuantity})`
-            : "Add to Cart"}
+            : isAddingToCart
+              ? "Adding..."
+              : inCart
+                ? `In Cart (${cartQuantity})`
+                : "Add to Cart"}
         </motion.button>
       </div>
     </motion.div>

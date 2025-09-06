@@ -29,6 +29,7 @@ import {
 } from "lucide-react";
 import { useCart } from "@/lib/cart";
 import Link from "next/link";
+import { useWishlist } from "@/hooks/useWishlist";
 
 const NavBar = ({ onWishListClick }) => {
   const router = useRouter();
@@ -41,6 +42,7 @@ const NavBar = ({ onWishListClick }) => {
 
   // State management
   const [isClient, setIsClient] = useState(false);
+  const { totalItems: wishlistCount } = useWishlist();
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
@@ -251,10 +253,10 @@ const NavBar = ({ onWishListClick }) => {
               >
                 <Phone className="w-3.5 h-3.5 group-hover:scale-110 transition-transform" />
                 <span className="font-medium hidden md:inline">
-                  Need help? Call us: (+234 123 456 7890)
+                  Need help? Call us: (+33753602218)
                 </span>
                 <span className="font-medium md:hidden">
-                  Call: +234 123 456 7890
+                  Call: +33753602218
                 </span>
               </div>
 
@@ -266,7 +268,6 @@ const NavBar = ({ onWishListClick }) => {
                   </span>
                   <span>English</span>
                 </button>
-                {/* Language dropdown would go here */}
               </div>
 
               {/* Currency Selector */}
@@ -274,7 +275,6 @@ const NavBar = ({ onWishListClick }) => {
                 <button className="flex items-center gap-1 text-xs hover:text-orange-100 transition-colors">
                   <span>Currency: EUR</span>
                 </button>
-                {/* Currency dropdown would go here */}
               </div>
             </div>
           </div>
@@ -420,29 +420,33 @@ const NavBar = ({ onWishListClick }) => {
                   Shop
                 </button>
               </Link>
-
-              <button className="hidden lg:flex items-center text-white font-medium hover:text-orange-300 transition-colors duration-200 ml-2">
-                Help
-              </button>
+              <Link href="/help">
+                {" "}
+                <button className="hidden lg:flex items-center text-white font-medium hover:text-orange-300 transition-colors duration-200 ml-2">
+                  Help
+                </button>
+              </Link>
 
               {/* Desktop Action Icons */}
               <div className="hidden lg:flex items-center space-x-1 ml-4">
                 {/* Wishlist */}
-                <button
-                  onClick={onWishListClick}
-                  className="relative p-3 text-white hover:text-orange-300 hover:bg-gray-700 rounded-xl transition-all duration-200 group"
-                  title="Wishlist"
-                >
-                  <Heart className="w-5 h-5 group-hover:scale-110 transition-transform" />
-                  {wishList.length > 0 && (
-                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center animate-pulse shadow-lg">
-                      {wishList.length}
+                <Link href="/wishlist">
+                  {" "}
+                  <button
+                    className="relative p-3 text-white hover:text-orange-300 hover:bg-gray-700 rounded-xl transition-all duration-200 group"
+                    title="Wishlist"
+                  >
+                    <Heart className="w-5 h-5 group-hover:scale-110 transition-transform" />
+                    {wishList.length > 0 && (
+                      <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center animate-pulse shadow-lg">
+                        {wishList.length}
+                      </span>
+                    )}
+                    <span className="absolute -bottom-10 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white text-xs px-3 py-2 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap shadow-lg">
+                      Wishlist
                     </span>
-                  )}
-                  <span className="absolute -bottom-10 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white text-xs px-3 py-2 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap shadow-lg">
-                    Wishlist
-                  </span>
-                </button>
+                  </button>
+                </Link>
 
                 {/* Account */}
                 <div className="relative profile-dropdown">
@@ -550,15 +554,19 @@ const NavBar = ({ onWishListClick }) => {
                 </button>
 
                 <button
-                  onClick={onWishListClick}
-                  className="relative p-2.5 text-gray-300 hover:text-white hover:bg-gray-700 rounded-lg transition-all duration-200"
+                  onClick={() => router.push("/wishlist")}
+                  className="relative p-3 text-white hover:text-orange-300 hover:bg-gray-700 rounded-xl transition-all duration-200 group"
+                  title="Wishlist"
                 >
-                  <Heart className="w-5 h-5" />
-                  {wishList.length > 0 && (
-                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full w-4 h-4 flex items-center justify-center">
-                      {wishList.length}
+                  <Heart className="w-5 h-5 group-hover:scale-110 transition-transform" />
+                  {wishlistCount > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center animate-pulse shadow-lg">
+                      {wishlistCount}
                     </span>
                   )}
+                  <span className="absolute -bottom-10 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white text-xs px-3 py-2 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap shadow-lg">
+                    Wishlist
+                  </span>
                 </button>
 
                 <button

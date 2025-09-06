@@ -30,35 +30,82 @@ const ServiceFeatures = () => {
   ];
 
   return (
-    <div className="bg-white py-6 px-4">
-      <div className="max-w-7xl mx-auto">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+    <section className="py-8 bg-white">
+      <div className="max-w-7xl mx-auto px-4 sm:px-8 lg:px-16">
+        {/* Mobile: Single Row with Horizontal Scroll */}
+        <div className="block md:hidden">
+          <div className="overflow-x-auto">
+            <div
+              className="flex space-x-4 pb-4"
+              style={{ width: "max-content" }}
+            >
+              {features.map((f, i) => {
+                const Icon = f.icon;
+                return (
+                  <div
+                    key={i}
+                    className="flex-shrink-0 w-64 p-6 rounded-xl border border-gray-200 hover:shadow-lg transition-all duration-300 hover:border-gray-300 bg-white"
+                  >
+                    {/* Icon */}
+                    <div
+                      className={`${f.bgColor} w-14 h-14 rounded-full flex items-center justify-center mb-4`}
+                    >
+                      <Icon
+                        className="w-7 h-7 text-gray-700"
+                        strokeWidth={1.5}
+                      />
+                    </div>
+
+                    {/* Text */}
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                        {f.title}
+                      </h3>
+                      <p className="text-sm text-gray-600 leading-relaxed">
+                        {f.subtitle}
+                      </p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Mobile scroll indicator */}
+          <div className="flex justify-center space-x-2 mt-4">
+            {features.map((_, i) => (
+              <div
+                key={i}
+                className={`w-2 h-2 rounded-full ${
+                  i === 0 ? "bg-gray-400" : "bg-gray-300"
+                }`}
+              ></div>
+            ))}
+          </div>
+        </div>
+
+        {/* Desktop: Grid Layout */}
+        <div className="hidden md:grid grid-cols-2 lg:grid-cols-4 gap-6">
           {features.map((f, i) => {
             const Icon = f.icon;
             return (
               <div
                 key={i}
-                className="flex items-start sm:items-center gap-4 p-5 rounded-2xl bg-white border border-gray-200 shadow-sm transition-all duration-300 hover:shadow-lg hover:-translate-y-1"
-                style={{
-                  animation: `fadeInUp 0.6s ease-out ${i * 0.1}s both`,
-                }}
+                className="p-6 rounded-xl border border-gray-200 hover:shadow-lg transition-all duration-300 hover:border-gray-300 bg-white"
               >
                 {/* Icon */}
                 <div
-                  className={`w-14 h-14 ${f.bgColor} rounded-full flex items-center justify-center shadow-sm flex-shrink-0`}
+                  className={`${f.bgColor} w-14 h-14 rounded-full flex items-center justify-center mb-4`}
                 >
-                  <Icon
-                    className="w-7 h-7 text-gray-700 transition-transform duration-300 group-hover:rotate-6"
-                    strokeWidth={1.5}
-                  />
+                  <Icon className="w-7 h-7 text-gray-700" strokeWidth={1.5} />
                 </div>
 
                 {/* Text */}
-                <div className="flex flex-col">
-                  <h3 className="font-semibold text-gray-900 text-base">
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">
                     {f.title}
                   </h3>
-                  <p className="text-gray-500 text-sm mt-1 leading-snug max-w-[200px]">
+                  <p className="text-sm text-gray-600 leading-relaxed">
                     {f.subtitle}
                   </p>
                 </div>
@@ -67,20 +114,7 @@ const ServiceFeatures = () => {
           })}
         </div>
       </div>
-
-      <style jsx>{`
-        @keyframes fadeInUp {
-          from {
-            opacity: 0;
-            transform: translateY(20px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-      `}</style>
-    </div>
+    </section>
   );
 };
 

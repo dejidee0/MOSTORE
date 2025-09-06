@@ -2,18 +2,19 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Star, ShoppingCart, Eye } from "lucide-react";
+import { Star, ShoppingCart, Eye, Heart } from "lucide-react";
 import { useCart } from "@/lib/cart";
+import { useWishlist } from "@/hooks/useWishlist";
 import { supabase } from "@/lib/supabase-client";
 import Link from "next/link";
+import Image from "next/image";
 
 export default function ProductShowcaseSection() {
   const router = useRouter();
   const { addItem } = useCart();
-  const [favoriteItems, setFavoriteItems] = useState(new Set());
+  const { isInWishlist, toggleItem } = useWishlist();
   const [products, setProducts] = useState([]);
 
-  // Fetch 8 most recent active products
   useEffect(() => {
     const fetchProducts = async () => {
       const { data, error } = await supabase
@@ -33,21 +34,46 @@ export default function ProductShowcaseSection() {
     fetchProducts();
   }, []);
 
-  const toggleFavorite = (productId) => {
-    const newFavorites = new Set(favoriteItems);
-    if (newFavorites.has(productId)) {
-      newFavorites.delete(productId);
-    } else {
-      newFavorites.add(productId);
-    }
-    setFavoriteItems(newFavorites);
+  const formatPrice = (price) => `₦${parseFloat(price).toLocaleString()}`;
+
+  const handleWishlistClick = async (product, e) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const wishlistProduct = {
+      id: product.id,
+      name: product.name,
+      price: product.price,
+      images: product.images,
+      slug: product.slug,
+      category: product.category,
+      brand: product.brand,
+      stock_quantity: product.stock_quantity,
+      original_price: product.originalprice,
+    };
+
+    await toggleItem(wishlistProduct);
+  };
+
+  const handleAddToCart = async (product, e) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    await addItem(
+      {
+        ...product,
+        id: product.id.toString(),
+        image: product.images?.[0],
+      },
+      1
+    );
   };
 
   const renderStars = (rating) =>
     Array.from({ length: 5 }, (_, index) => (
       <Star
         key={index}
-        className={`w-4 h-4 ${
+        className={`w-3 h-3 ${
           index < rating
             ? "text-orange-400 fill-orange-400"
             : "text-gray-300 fill-gray-300"
@@ -56,44 +82,39 @@ export default function ProductShowcaseSection() {
     ));
 
   return (
-    <section className="w-full bg-gray-50 py-8 sm:py-0">
-      <div className="max-w-7xl mx-auto px-4">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8">
+    <section className="w-full bg-gray-50 py-4">
+      <div className="max-w-7xl mx-auto px-3">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
           {/* Left Promotional Banner */}
           <div className="lg:col-span-3">
-            <div className="relative bg-slate-500 rounded-2xl overflow-hidden h-full min-h-[400px] lg:min-h-[600px]">
+            <div className="relative bg-slate-500 rounded-xl overflow-hidden h-64 lg:h-full lg:min-h-[500px]">
               <div className="absolute inset-0">
                 <img
                   src="https://images.unsplash.com/photo-1503736334956-4c8f8e92946d?w=600&h=800&fit=crop"
                   alt="Promotional Banner"
-                  className="w-full h-full object-cover opacity-60" // Increased opacity
+                  className="w-full h-full object-cover opacity-60"
                 />
               </div>
-              <div className="relative z-10 p-6 sm:p-8 h-full flex flex-col justify-between">
+              <div className="relative z-10 p-4 lg:p-6 h-full flex flex-col justify-between">
                 <div>
-                  <div className="text-white text-4xl sm:text-5xl lg:text-6xl font-black mb-4">
+                  <div className="text-white text-3xl lg:text-5xl font-black mb-2">
                     -35%
                   </div>
-                  <div className="text-white text-sm mb-2 opacity-90">
+                  <div className="text-white text-xs mb-1 opacity-90">
                     Only This Week
                   </div>
-                  <h2 className="text-white text-xl sm:text-2xl font-bold mb-4">
+                  <h2 className="text-white text-lg lg:text-xl font-bold mb-2">
                     Electronics
                   </h2>
-                  <p className="text-gray-300 text-sm leading-relaxed mb-6">
-                    Nis telesa, laber. Mytonomi bedessade mineten. Pokura
-                    rengen, lulurat. Niren nunade häd.
+                  <p className="text-gray-300 text-xs leading-relaxed mb-4 lg:mb-6">
+                    Get amazing deals on the latest electronics and gadgets.
                   </p>
                 </div>
-                <Link
-                  href={
-                    "/products?category=a4ebac6f-50a2-4ce2-9057-0003cd1b737d"
-                  }
-                >
-                  <button className="flex items-center gap-2 text-white text-sm font-medium hover:text-orange-400 transition-colors group">
+                <Link href="/products?category=electronics">
+                  <button className="flex items-center gap-2 text-white text-xs font-medium hover:text-orange-400 transition-colors group">
                     <span>Shop Now</span>
                     <svg
-                      className="w-4 h-4 group-hover:translate-x-1 transition-transform"
+                      className="w-3 h-3 group-hover:translate-x-1 transition-transform"
                       fill="none"
                       viewBox="0 0 24 24"
                       stroke="currentColor"
@@ -111,75 +132,88 @@ export default function ProductShowcaseSection() {
             </div>
           </div>
 
-          {/* Product Grid */}
+          {/* Product Grid - Jumia Style */}
           <div className="lg:col-span-9">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-2 sm:gap-3">
               {products.map((product) => (
-                <div
-                  key={product.id}
-                  className="bg-white rounded-2xl shadow-md transition-shadow duration-300 group flex flex-col overflow-hidden border border-gray-100 hover:shadow-xl hover:border-orange-100 h-full"
-                >
-                  {/* Product Image with Badge */}
-                  <div className="relative overflow-hidden rounded-t-2xl h-48">
-                    <img
-                      src={product.images?.[0]}
-                      alt={product.name}
-                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                    />
-                    {product.discount && (
-                      <div className="absolute top-3 right-3 bg-orange-500 text-white text-xs font-bold px-2 py-1 rounded-full">
-                        {product.discount}% OFF
-                      </div>
-                    )}
-                  </div>
+                <Link key={product.id} href={`/products/${product.id}`}>
+                  <div className="bg-white rounded-lg border border-gray-100 hover:shadow-md transition-shadow duration-200 overflow-hidden group cursor-pointer">
+                    {/* Product Image */}
+                    <div className="relative aspect-square bg-gray-50 overflow-hidden">
+                      {product.images?.[0] && (
+                        <Image
+                          src={product.images[0]}
+                          alt={product.name}
+                          fill
+                          className="object-cover group-hover:scale-105 transition-transform duration-300"
+                          sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                        />
+                      )}
 
-                  {/* Product Info */}
-                  <div className="p-4 flex-1 flex flex-col justify-between">
-                    <div>
-                      <h3 className="text-gray-900 font-medium text-sm leading-snug line-clamp-2 mb-2">
+                      {/* Discount Badge */}
+                      {product.discount && (
+                        <div className="absolute top-1 left-1 bg-orange-500 text-white text-xs font-bold px-1.5 py-0.5 rounded">
+                          -{product.discount}%
+                        </div>
+                      )}
+
+                      {/* Wishlist Heart */}
+                      <button
+                        onClick={(e) => handleWishlistClick(product, e)}
+                        className="absolute top-1 right-1 p-1.5 bg-white/80 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-white"
+                      >
+                        <Heart
+                          className={`w-3.5 h-3.5 ${
+                            isInWishlist(product.id)
+                              ? "fill-red-500 text-red-500"
+                              : "text-gray-600"
+                          }`}
+                        />
+                      </button>
+                    </div>
+
+                    {/* Product Info */}
+                    <div className="p-2 space-y-1">
+                      {/* Product Name */}
+                      <h3 className="text-xs font-medium text-gray-900 line-clamp-2 leading-tight min-h-[2.5rem]">
                         {product.name}
                       </h3>
 
-                      <div className="flex items-center gap-1 mb-2">
+                      {/* Rating - Only show on larger screens */}
+                      <div className="hidden sm:flex items-center gap-1">
                         {renderStars(product.rating || 0)}
-                        <span className="text-gray-500 text-xs ml-1">
+                        <span className="text-gray-500 text-xs">
                           ({product.total_reviews || 0})
                         </span>
                       </div>
 
-                      <div className="flex items-baseline gap-2">
-                        {product.originalprice && (
-                          <span className="text-gray-400 text-sm line-through">
-                            ${product.originalprice}
-                          </span>
+                      {/* Price Section */}
+                      <div className="space-y-0.5">
+                        <div className="text-sm font-bold text-gray-900">
+                          {formatPrice(product.price)}
+                        </div>
+                        {product.originalprice && product.discount && (
+                          <div className="flex items-center gap-1">
+                            <span className="text-xs text-gray-400 line-through">
+                              {formatPrice(product.originalprice)}
+                            </span>
+                            <span className="text-xs text-orange-600 font-medium">
+                              -{product.discount}%
+                            </span>
+                          </div>
                         )}
-                        <span className="text-orange-600 text-lg font-bold">
-                          ${product.price}
-                        </span>
                       </div>
-                    </div>
 
-                    {/* Hidden Action Buttons */}
-                    <div className="overflow-hidden max-h-0 group-hover:max-h-20 transition-all duration-300 mt-4">
-                      <div className="flex items-center gap-3 justify-center">
-                        <button
-                          onClick={() => addItem(product, 1)}
-                          className="bg-orange-500 hover:bg-orange-600 text-white p-3 rounded-lg flex items-center justify-center shadow-md transition-transform duration-300"
-                          aria-label="Add to cart"
-                        >
-                          <ShoppingCart className="w-5 h-5" />
-                        </button>
-                        <button
-                          onClick={() => router.push(`/products/${product.id}`)}
-                          className="bg-gray-100 hover:bg-orange-50 text-gray-700 hover:text-orange-600 p-3 rounded-lg flex items-center justify-center shadow-sm transition-transform duration-300"
-                          aria-label="View product"
-                        >
-                          <Eye className="w-5 h-5" />
-                        </button>
-                      </div>
+                      {/* Add to Cart Button - Hidden on mobile, shown on hover */}
+                      <button
+                        onClick={(e) => handleAddToCart(product, e)}
+                        className="w-full mt-2 bg-orange-500 text-white text-xs font-medium py-1.5 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-orange-600"
+                      >
+                        Add to Cart
+                      </button>
                     </div>
                   </div>
-                </div>
+                </Link>
               ))}
             </div>
           </div>

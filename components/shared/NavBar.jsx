@@ -26,6 +26,9 @@ import {
   Bell,
   Star,
   Truck,
+  HelpCircle,
+  Headphones,
+  LifeBuoy,
 } from "lucide-react";
 import { useCart } from "@/lib/cart";
 import Link from "next/link";
@@ -47,6 +50,7 @@ const NavBar = ({ onWishListClick }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
   const [isCategoryDropdownOpen, setIsCategoryDropdownOpen] = useState(false);
+  const [isHelpDropdownOpen, setIsHelpDropdownOpen] = useState(false); // New help dropdown state
   const [searchQuery, setSearchQuery] = useState("");
   const [categories, setCategories] = useState([]);
   const [categoriesLoading, setCategoriesLoading] = useState(true);
@@ -123,6 +127,9 @@ const NavBar = ({ onWishListClick }) => {
       }
       if (!event.target.closest(".category-dropdown")) {
         setIsCategoryDropdownOpen(false);
+      }
+      if (!event.target.closest(".help-dropdown")) {
+        setIsHelpDropdownOpen(false);
       }
     };
 
@@ -210,6 +217,7 @@ const NavBar = ({ onWishListClick }) => {
     setIsMobileMenuOpen(false);
     setIsProfileDropdownOpen(false);
     setIsCategoryDropdownOpen(false);
+    setIsHelpDropdownOpen(false);
   }, []);
 
   // Navigation links
@@ -219,7 +227,6 @@ const NavBar = ({ onWishListClick }) => {
       { label: "About", href: "/about-us" },
       { label: "Products", href: "/products" },
       { label: "Blog", href: "/blog" },
-      { label: "Help", href: "/help" },
     ],
     []
   );
@@ -249,7 +256,7 @@ const NavBar = ({ onWishListClick }) => {
             <div className="flex items-center space-x-4">
               <div
                 className="flex items-center gap-2 hover:text-orange-100 transition-colors cursor-pointer group"
-                onClick={() => (window.location.href = "tel:+2341234567890")}
+                onClick={() => (window.location.href = "tel:+33753602218")}
               >
                 <Phone className="w-3.5 h-3.5 group-hover:scale-110 transition-transform" />
                 <span className="font-medium hidden md:inline">
@@ -280,6 +287,7 @@ const NavBar = ({ onWishListClick }) => {
           </div>
         </div>
       </div>
+
       {/* Main Navigation - Enhanced */}
       <nav className="sticky top-0 z-50 bg-gray-900 backdrop-blur-md border-b border-gray-200 shadow-lg">
         <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -405,41 +413,144 @@ const NavBar = ({ onWishListClick }) => {
             {/* Action Buttons Section */}
             <div className="flex items-center space-x-2 lg:space-x-4">
               {/* Supplier Button */}
-
-              {/* Help Link */}
               <Link href="/sign-up">
-                {" "}
                 <button className="hidden lg:flex items-center text-white font-medium hover:text-orange-300 transition-colors duration-200 ml-2">
                   Sell
                 </button>
               </Link>
-              {/* Help Link */}
+
+              {/* Shop Link */}
               <Link href="/products">
-                {" "}
                 <button className="hidden lg:flex items-center text-white font-medium hover:text-orange-300 transition-colors duration-200 ml-2">
                   Shop
                 </button>
               </Link>
-              <Link href="/help">
-                {" "}
-                <button className="hidden lg:flex items-center text-white font-medium hover:text-orange-300 transition-colors duration-200 ml-2">
+
+              {/* Help Dropdown */}
+              <div className="relative help-dropdown hidden lg:block">
+                <button
+                  onClick={() => setIsHelpDropdownOpen(!isHelpDropdownOpen)}
+                  className="flex items-center gap-1 text-white font-medium hover:text-orange-300 transition-colors duration-200 ml-2 py-2 px-3 rounded-lg hover:bg-gray-800"
+                >
                   Help
+                  <ChevronDown
+                    className={`w-3 h-3 transition-transform duration-200 ${
+                      isHelpDropdownOpen ? "rotate-180" : ""
+                    }`}
+                  />
                 </button>
-              </Link>
+
+                {/* Help Dropdown Menu */}
+                {isHelpDropdownOpen && (
+                  <div className="absolute top-full right-0 mt-2 w-80 bg-white rounded-xl shadow-2xl border border-gray-100 py-3 z-50 animate-in slide-in-from-top-2 duration-200">
+                    <div className="px-4 py-2 border-b border-gray-100">
+                      <h3 className="text-sm font-bold text-gray-900 flex items-center gap-2">
+                        <LifeBuoy className="w-4 h-4 text-orange-500" />
+                        How can we help you?
+                      </h3>
+                    </div>
+
+                    <div className="py-2">
+                      {/* Help Center */}
+                      <Link href="/help">
+                        <button
+                          onClick={() => setIsHelpDropdownOpen(false)}
+                          className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-orange-50 transition-all duration-200 text-gray-700 hover:text-orange-600 group"
+                        >
+                          <div className="w-10 h-10 bg-orange-100 group-hover:bg-orange-200 rounded-lg flex items-center justify-center transition-colors">
+                            <HelpCircle className="w-5 h-5 text-orange-600" />
+                          </div>
+                          <div className="flex-1">
+                            <p className="font-semibold text-sm text-gray-900 group-hover:text-orange-600">
+                              Help Center
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              Browse FAQs and get instant answers
+                            </p>
+                          </div>
+                        </button>
+                      </Link>
+
+                      {/* Need to Order */}
+                      <div className="w-full flex items-center gap-3 px-4 py-3 text-gray-700 cursor-default">
+                        <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                          <Headphones className="w-5 h-5 text-blue-600" />
+                        </div>
+                        <div className="flex-1">
+                          <p className="font-semibold text-sm text-gray-900">
+                            Need to Order?
+                          </p>
+                          <p className="text-xs text-gray-500 mb-1">
+                            Call our sales team for assistance
+                          </p>
+                          <div className="bg-blue-50 px-3 py-2 rounded-lg border border-blue-200">
+                            <p className="text-blue-700 font-bold text-sm">
+                              +33 753 602 218
+                            </p>
+                            <p className="text-blue-600 text-xs">
+                              Mon-Fri: 9AM-6PM CET
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Track Package */}
+                      <div
+                        className="w-full flex items-center gap-3 px-4 py-3 text-gray-400 cursor-not-allowed relative group"
+                        title="Coming Soon"
+                      >
+                        <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
+                          <Truck className="w-5 h-5 text-gray-400" />
+                        </div>
+                        <div className="flex-1">
+                          <p className="font-semibold text-sm text-gray-400">
+                            Track Your Package
+                          </p>
+                          <p className="text-xs text-gray-400">
+                            Real-time order tracking
+                          </p>
+                          <div className="inline-flex items-center gap-1 mt-1">
+                            <div className="w-2 h-2 bg-orange-400 rounded-full animate-pulse"></div>
+                            <span className="text-xs text-orange-600 font-medium">
+                              Coming Soon
+                            </span>
+                          </div>
+                        </div>
+                        
+                        {/* Hover tooltip */}
+                        <div className="absolute -top-10 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white text-xs px-3 py-2 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                          Coming Soon
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="px-4 py-2 border-t border-gray-100 bg-gray-50 rounded-b-xl">
+                      <p className="text-xs text-gray-500 text-center">
+                        Need immediate help? Email us at{" "}
+                        <a
+                          href="mailto:support@mostore.com"
+                          className="text-orange-600 hover:text-orange-700 font-medium"
+                        >
+                          support@mostore.com
+                        </a>
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
 
               {/* Desktop Action Icons */}
               <div className="hidden lg:flex items-center space-x-1 ml-4">
                 {/* Wishlist */}
                 <Link href="/wishlist">
-                  {" "}
                   <button
                     className="relative p-3 text-white hover:text-orange-300 hover:bg-gray-700 rounded-xl transition-all duration-200 group"
                     title="Wishlist"
                   >
                     <Heart className="w-5 h-5 group-hover:scale-110 transition-transform" />
-                    {wishList.length > 0 && (
+                    {wishlistCount > 0 && (
                       <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center animate-pulse shadow-lg">
-                        {wishList.length}
+                        {wishlistCount}
                       </span>
                     )}
                     <span className="absolute -bottom-10 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white text-xs px-3 py-2 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap shadow-lg">
@@ -564,9 +675,6 @@ const NavBar = ({ onWishListClick }) => {
                       {wishlistCount}
                     </span>
                   )}
-                  <span className="absolute -bottom-10 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white text-xs px-3 py-2 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap shadow-lg">
-                    Wishlist
-                  </span>
                 </button>
 
                 <button
@@ -756,6 +864,18 @@ const MobileMenu = memo(
                   {link.label}
                 </button>
               ))}
+              
+              {/* Help Center in Mobile Menu */}
+              <button
+                onClick={() => {
+                  router.push("/help");
+                  setIsMobileMenuOpen(false);
+                }}
+                className="flex items-center gap-3 w-full px-4 py-3 rounded-xl text-gray-700 font-medium hover:bg-orange-50 hover:text-orange-600 transition-all duration-200"
+              >
+                <HelpCircle className="w-5 h-5 text-gray-500" />
+                Help Center
+              </button>
             </nav>
           </div>
 
@@ -894,6 +1014,37 @@ const MobileMenu = memo(
                   )}
                 </button>
               )}
+            </div>
+          </div>
+
+          {/* Help Section for Mobile */}
+          <div>
+            <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-4">
+              Need Help?
+            </h3>
+            <div className="space-y-3">
+              {/* Call for Orders */}
+              <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+                <div className="flex items-center gap-3 mb-2">
+                  <Headphones className="w-5 h-5 text-blue-600" />
+                  <span className="font-semibold text-blue-900">Need to Order?</span>
+                </div>
+                <p className="text-blue-700 font-bold text-lg">+33 753 602 218</p>
+                <p className="text-blue-600 text-sm">Mon-Fri: 9AM-6PM CET</p>
+              </div>
+
+              {/* Email Support */}
+              <div className="bg-gray-50 border border-gray-200 rounded-xl p-4">
+                <p className="text-sm text-gray-600">
+                  Email us at{" "}
+                  <a
+                    href="mailto:support@mostore.com"
+                    className="text-orange-600 font-medium"
+                  >
+                    support@mostore.com
+                  </a>
+                </p>
+              </div>
             </div>
           </div>
         </div>

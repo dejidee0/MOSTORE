@@ -1,6 +1,32 @@
 // app/(user)/checkout/page.js
 "use client";
 
+import { Suspense } from "react";
+import CheckoutContent from "./CheckoutContent";
+
+// Loading component for the suspense boundary
+function CheckoutLoading() {
+  return (
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="text-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500 mx-auto mb-3"></div>
+        <span className="text-sm text-gray-600">Loading checkout...</span>
+      </div>
+    </div>
+  );
+}
+
+export default function CheckoutPage() {
+  return (
+    <Suspense fallback={<CheckoutLoading />}>
+      <CheckoutContent />
+    </Suspense>
+  );
+}
+
+// app/(user)/checkout/CheckoutContent.js - Create this new file
+"use client";
+
 import { useState, useEffect } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
@@ -46,7 +72,7 @@ const PaymentWidget = dynamic(() => import("./PaymentWidget"), {
   ),
 });
 
-export default function CheckoutPage() {
+export default function CheckoutContent() {
   const { cart, total, itemCount, clearCart } = useCart();
   const { user } = useUserStore();
   const { addToast } = useToast();
@@ -75,7 +101,6 @@ export default function CheckoutPage() {
   });
 
   const [formErrors, setFormErrors] = useState({});
-  // Remove hardcoded payment method - let Stripe handle all options
   const [paymentMethod, setPaymentMethod] = useState("stripe");
 
   // Check if Stripe is loaded
@@ -255,11 +280,9 @@ export default function CheckoutPage() {
           orderData,
           customerEmail: formData.email,
           description: `Order for ${formData.name} - ${itemCount} items`,
-          // Enable automatic payment methods based on customer location/currency
           automatic_payment_methods: {
             enabled: true,
           },
-          // You can also specify specific payment methods if needed
           payment_method_types: [
             "card",
             "sepa_debit",
@@ -271,9 +294,9 @@ export default function CheckoutPage() {
             "p24",
             "alipay",
             "wechat_pay",
-            "paypal", // if enabled
-            "klarna", // if enabled
-            "afterpay_clearpay", // if enabled
+            "paypal",
+            "klarna",
+            "afterpay_clearpay",
           ],
         }),
       });

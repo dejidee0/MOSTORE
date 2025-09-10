@@ -1,5 +1,13 @@
 "use client";
 import { useState, useEffect, useCallback, useMemo, memo } from "react";
+import {
+  Drawer,
+  DrawerTrigger,
+  DrawerContent,
+  DrawerClose,
+  DrawerTitle,
+  DrawerHeader,
+} from "@/components/ui/drawer";
 import { useRouter } from "next/navigation";
 import useUserStore from "@/lib/stores/useUserStore";
 import { getAllCategories } from "@/lib/data/products";
@@ -54,9 +62,10 @@ const NavBar = ({ onWishListClick }) => {
   const [isClient, setIsClient] = useState(false);
   const { totalItems: wishlistCount } = useWishlist();
   const [isSearchOpen, setIsSearchOpen] = useState(false);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  // Removed sidebarOpen state; Drawer will manage its own open state
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
   const [isCategoryDropdownOpen, setIsCategoryDropdownOpen] = useState(false);
+  const [mobileCategoriesOpen, setMobileCategoriesOpen] = useState(false);
   const [isHelpDropdownOpen, setIsHelpDropdownOpen] = useState(false); // New help dropdown state
   const [searchQuery, setSearchQuery] = useState("");
   const [categories, setCategories] = useState([]);
@@ -227,10 +236,10 @@ const NavBar = ({ onWishListClick }) => {
   // Navigation links
   const navigationLinks = useMemo(
     () => [
-      { label: "Home", href: "/" },
-      { label: "About", href: "/about-us" },
-      { label: "Products", href: "/products" },
-      { label: "Blog", href: "/blog" },
+      !user && { label: "Sign in", href: "/sign-in" },
+
+      { label: "Wishlist", href: "/wishlist" },
+      { label: "Sell on Mostore", href: "/sign-up" },
     ],
     []
   );
@@ -667,7 +676,6 @@ const NavBar = ({ onWishListClick }) => {
                 >
                   <Search className="w-5 h-5" />
                 </button>
-
                 <button
                   onClick={() => router.push("/wishlist")}
                   className="relative p-3 text-white hover:text-orange-300 hover:bg-gray-700 rounded-xl transition-all duration-200 group"
@@ -680,7 +688,6 @@ const NavBar = ({ onWishListClick }) => {
                     </span>
                   )}
                 </button>
-
                 <button
                   onClick={() => router.push("/cart")}
                   className="relative p-2.5 text-gray-300 hover:text-white hover:bg-gray-700 rounded-lg transition-all duration-200"
@@ -692,17 +699,120 @@ const NavBar = ({ onWishListClick }) => {
                     </span>
                   )}
                 </button>
-
-                <button
-                  onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                  className="p-2.5 text-gray-300 hover:text-white hover:bg-gray-700 rounded-lg transition-all duration-200"
-                >
-                  {isMobileMenuOpen ? (
-                    <X className="w-5 h-5" />
-                  ) : (
-                    <Menu className="w-5 h-5" />
-                  )}
-                </button>
+                {/* Sidebar Drawer is now rendered here for mobile */}
+                <Drawer direction="left">
+                  <DrawerTitle className="sr-only"></DrawerTitle>
+                  <DrawerTrigger asChild>
+                    <button className="p-2.5 text-gray-300 hover:text-white hover:bg-gray-700 rounded-lg transition-all duration-200">
+                      <Menu className="w-5 h-5" />
+                    </button>
+                  </DrawerTrigger>
+                  <DrawerContent className="w-64 bg-white shadow-lg h-full flex flex-col transform transition-all duration-300 ease-in-out scale-0 opacity-0 data-[state=open]:scale-100 data-[state=open]:opacity-100">
+                    <div className="flex items-center justify-between p-4 border-b border-gray-200">
+                      <span className="font-bold text-lg text-gray-800">
+                        Menu
+                      </span>
+                      <DrawerClose asChild>
+                        <button className="p-2 text-gray-500 hover:text-gray-700">
+                          <X className="w-6 h-6" />
+                        </button>
+                      </DrawerClose>
+                    </div>
+                    <nav className="flex-1 flex flex-col gap-2 p-4 overflow-y-auto text-gray-700">
+                      <div className="border-b border-gray-200 pb-2 mb-2">
+                        <span className="font-bold text-sm uppercase text-black">
+                          Account
+                        </span>
+                        {navigationLinks.map((link) => (
+                          <Link
+                            key={link.label}
+                            href={link.href}
+                            className="block py-2 hover:text-blue-600"
+                          >
+                            {link.label}
+                          </Link>
+                        ))}
+                      </div>
+                      <div className="border-b border-gray-200 pb-2 mb-2">
+                        <button
+                          className="flex items-center justify-between w-full py-2 font-bold focus:outline-none text-black"
+                          onClick={() =>
+                            setMobileCategoriesOpen(!mobileCategoriesOpen)
+                          }
+                        >
+                          <span>Our Categories</span>
+                          <ChevronDown
+                            className={`w-4 h-4 transition-transform ${
+                              mobileCategoriesOpen ? "rotate-180" : ""
+                            }`}
+                          />
+                        </button>
+                        {mobileCategoriesOpen && (
+                          <div className="pl-4 flex flex-col gap-1 mt-2">
+                            {categoriesLoading ? (
+                              <span className="text-gray-400 text-sm py-1">
+                                Loading...
+                              </span>
+                            ) : (
+                              categories.map((category) => (
+                                <Link
+                                  key={category.id}
+                                  href={`/products?category=${category.id}`}
+                                  className="py-1 text-gray-600 hover:text-orange-600"
+                                >
+                                  {category.name}
+                                </Link>
+                              ))
+                            )}
+                          </div>
+                        )}
+                      </div>
+                      <div className="border-b border-gray-200 pb-2 mb-2">
+                        <span className="font-bold text-sm uppercase text-black">
+                          Help Center
+                        </span>
+                        <ul className="mt-2 space-y-2">
+                          <li className="py-1">
+                            <span>Email Support: </span>
+                            <a
+                              href="mailto:support@mostreon.com"
+                              className="text-blue-600 hover:underline"
+                            >
+                              support@mostreon.com
+                            </a>
+                          </li>
+                          <li className="py-1">
+                            <span>Phone Support: </span>
+                            <a
+                              href="tel:+152617279139"
+                              className="text-blue-600 hover:underline"
+                            >
+                              +152617279139
+                            </a>
+                          </li>
+                          <li className="py-1">
+                            <a
+                              href="https://wa.me/1013918030"
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-green-600 hover:underline"
+                            >
+                              WhatsApp
+                            </a>
+                          </li>
+                        </ul>
+                      </div>
+                      <div className="border-b border-gray-200 pb-2 mb-2">
+                        <a
+                          href="/blog"
+                          className="block py-2 text-black font-bold hover:text-orange-600"
+                        >
+                          Blog
+                        </a>
+                      </div>
+                    </nav>
+                  </DrawerContent>
+                </Drawer>
               </div>
             </div>
           </div>
@@ -730,182 +840,10 @@ const NavBar = ({ onWishListClick }) => {
           </div>
         )}
 
-        {/* Enhanced Mobile Menu */}
-        {isMobileMenuOpen && (
-          <MobileMenu
-            categories={categories}
-            categoriesLoading={categoriesLoading}
-            navigationLinks={navigationLinks}
-            userInfo={userInfo}
-            isAuthenticated={isAuthenticated}
-            role={role}
-            router={router}
-            handleCategoryClick={handleCategoryClick}
-            navigateToProfile={navigateToProfile}
-            navigateToOrders={navigateToOrders}
-            navigateToDashboard={navigateToDashboard}
-            handleSignOut={handleSignOut}
-            setIsMobileMenuOpen={setIsMobileMenuOpen}
-            getIconForCategory={getIconForCategory}
-            formatCategoryItems={formatCategoryItems}
-            loading={loading}
-            initialized={initialized}
-            showAllCategories={showAllCategories}
-            setShowAllCategories={setShowAllCategories}
-          />
-        )}
+        {/* Sleek Mobile Sidebar Drawer (DrawerTrigger and DrawerContent must be siblings inside Drawer) */}
       </nav>
     </>
   );
 };
-
-// Memoized Components for Performance
-const MenuButton = memo(({ onClick, icon, label, className = "" }) => (
-  <button
-    onClick={onClick}
-    className={`flex items-center gap-3 w-full px-6 py-3 text-sm font-medium hover:bg-orange-50 hover:text-orange-600 transition-all duration-200 rounded-lg mx-2 ${className}`}
-  >
-    {icon}
-    <span>{label}</span>
-  </button>
-));
-
-const CategoryItem = memo(({ category, onClick, getIcon, formatItems }) => (
-  <button
-    onClick={onClick}
-    className="w-full flex items-start gap-4 px-6 py-4 text-left hover:bg-gradient-to-r hover:from-orange-50 hover:to-orange-100 transition-all duration-200 group rounded-xl mx-2"
-  >
-    <div className="mt-1 text-gray-500 group-hover:text-orange-600 transition-colors">
-      {getIcon(category.name)}
-    </div>
-    <div className="flex-1 min-w-0">
-      <div className="font-semibold text-sm text-gray-900 group-hover:text-orange-600 mb-1 transition-colors">
-        {category.name}
-      </div>
-      <div className="text-xs text-gray-500 leading-relaxed">
-        {formatItems(category.description).slice(0, 2).join(", ")}
-        {formatItems(category.description).length > 2 && "..."}
-      </div>
-    </div>
-  </button>
-));
-
-const CategorySkeleton = memo(() => (
-  <div className="px-6 py-2">
-    {Array.from({ length: 4 }).map((_, i) => (
-      <div key={i} className="flex items-center gap-4 py-3">
-        <div className="w-5 h-5 bg-gray-200 rounded animate-pulse" />
-        <div className="flex-1">
-          <div className="h-4 bg-gray-200 rounded w-24 mb-2 animate-pulse" />
-          <div className="h-3 bg-gray-200 rounded w-32 animate-pulse" />
-        </div>
-      </div>
-    ))}
-  </div>
-));
-
-const MobileMenu = memo(
-  ({
-    categories,
-    categoriesLoading,
-    router,
-    handleCategoryClick,
-    setIsMobileMenuOpen,
-    getIconForCategory,
-  }) => {
-    // Define menu items based on the handwritten design
-    const menuItems = [
-      {
-        section: "ACCOUNT",
-        items: [
-          { label: "Sign in", icon: null, href: "/sign-in", close: true },
-
-          { label: "Wishlist", icon: null, href: "/wishlist", close: true },
-          {
-            label: "Sell on mostore",
-            icon: null,
-            href: "/sign-up",
-            close: true,
-          },
-        ],
-      },
-      {
-        section: "OUR CATEGORIES",
-        items: categories.map((category) => ({
-          label: category.name,
-          icon: getIconForCategory(category.name),
-          href: `/products?category=${category.id}`,
-          close: true,
-        })),
-      },
-      {
-        section: "HELP CENTER",
-        items: [
-          { label: "Contact us", icon: null, href: null, close: false },
-          {
-            label: "Email support",
-            icon: null,
-            href: "mailto:support@mostore.com",
-            close: true,
-          },
-          {
-            label: "Phone support",
-            icon: null,
-            href: "tel:support",
-            close: true,
-          },
-          { label: "WhatsApp", icon: null, href: "whatsapp://", close: true },
-        ],
-      },
-      {
-        section: "BLOG",
-        items: [{ label: "-", icon: null, href: null, close: false }],
-      },
-    ];
-
-    return (
-      <div className="lg:hidden fixed inset-0 z-50 bg-white animate-in fade-in slide-in-from-top-2 duration-300 w-80 max-h-screen">
-        {/* Header with close button */}
-        <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-white">
-          <h2 className="text-lg font-bold text-gray-900">MENU</h2>
-          <button
-            onClick={() => setIsMobileMenuOpen(false)}
-            className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-all duration-200"
-          >
-            <X className="w-6 h-6" />
-          </button>
-        </div>
-
-        {/* Scrollable content */}
-        <div className="px-4 py-6 space-y-6 max-h-[calc(100vh-80px)] overflow-y-auto bg-white">
-          {menuItems.map((section, index) => (
-            <div key={index}>
-              <h3 className="text-sm font-semibold text-gray-700 mb-2">
-                {section.section}
-              </h3>
-              {section.items.map((item, idx) => (
-                <a
-                  key={idx}
-                  href={item.href}
-                  onClick={() => item.close && setIsMobileMenuOpen(false)}
-                  className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-100 rounded-lg transition-all duration-200"
-                >
-                  {item.icon && item.icon}
-                  <span className="text-sm">{item.label}</span>
-                </a>
-              ))}
-            </div>
-          ))}
-        </div>
-      </div>
-    );
-  }
-);
-
-// Add display names for better debugging
-MenuButton.displayName = "MenuButton";
-CategoryItem.displayName = "CategoryItem";
-CategorySkeleton.displayName = "CategorySkeleton";
-MobileMenu.displayName = "MobileMenu";
 
 export default NavBar;

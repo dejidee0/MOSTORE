@@ -51,97 +51,129 @@ _Sent from Mostore Help Center_
   };
 
   return (
-    <form
-      onSubmit={handleSubmit}
-      className="bg-white shadow-sm border border-gray-100 rounded-2xl p-6 space-y-5"
-    >
-      <h3 className="text-lg font-semibold text-gray-900 mb-2">
+    <div className="bg-white rounded-2xl shadow-lg p-6">
+      <h3 className="text-lg font-semibold text-gray-900 mb-4">
         Contact Support
       </h3>
-
-      {/* Select */}
-      <div className="relative">
-        <label className="text-xs text-gray-500 mb-1 block">Type</label>
-        <select
-          name="type"
-          value={formData.type}
-          onChange={handleChange}
-          className="w-full px-3 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 bg-gray-50 text-sm"
-          required
-        >
-          <option value="inquiry">General Inquiry</option>
-          <option value="complaint">Complaint</option>
-          <option value="suggestion">Suggestion</option>
-          <option value="order">Order Issue</option>
-          <option value="technical">Technical Support</option>
-        </select>
+      <div className="bg-orange-500 text-white p-4 rounded-t-2xl mb-4 text-center">
+        <h2 className="text-2xl font-bold">NEED HELP?</h2>
+        <p className="text-sm mt-2">
+          If you have inquiries or need assistance, do not hesitate to chat with
+          us.
+        </p>
+        <p className="text-sm mt-1">
+          <strong>Live Chat Hours:</strong> We are available Monday to Friday (8
+          am to 6 pm) and weekends (8 am to 5 pm). On Public Holidays, we are
+          available between 9 am and 5 pm.
+        </p>
       </div>
-
-      {/* Name + Email */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div className="flex justify-center mb-4">
+        <button className="bg-gray-200 text-gray-800 px-4 py-2 rounded-full flex items-center gap-2 hover:bg-gray-300 transition">
+          <MessageCircle className="w-4 h-4" /> Chat with us
+        </button>
+        <button className="bg-orange-500 text-white px-4 py-2 rounded-full flex items-center gap-2 ml-2 hover:bg-orange-600 transition">
+          <svg
+            className="w-4 h-4"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="2"
+              d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
+            ></path>
+          </svg>
+          Call
+        </button>
+      </div>
+      <p className="text-sm text-gray-600 mb-4 text-center">
+        You can also reach us on 02018881106 from Monday to Friday (8 am to 6
+        pm) and weekends (8 am to 5 pm). On Public Holidays, we are available
+        between 9 am and 5 pm.
+      </p>
+      <form onSubmit={handleSubmit} className="space-y-5">
         <div className="relative">
-          <label className="text-xs text-gray-500 mb-1 block">Name</label>
+          <label className="text-xs text-gray-500 mb-1 block">Type</label>
+          <select
+            name="type"
+            value={formData.type}
+            onChange={handleChange}
+            className="w-full px-3 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 bg-gray-50 text-sm"
+            required
+          >
+            <option value="inquiry">General Inquiry</option>
+            <option value="complaint">Complaint</option>
+            <option value="suggestion">Suggestion</option>
+            <option value="order">Order Issue</option>
+            <option value="technical">Technical Support</option>
+          </select>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="relative">
+            <label className="text-xs text-gray-500 mb-1 block">Name</label>
+            <input
+              type="text"
+              name="name"
+              placeholder="Your name"
+              value={formData.name}
+              onChange={handleChange}
+              className="w-full px-3 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 bg-gray-50 text-sm"
+              required
+            />
+          </div>
+          <div className="relative">
+            <label className="text-xs text-gray-500 mb-1 block">Email</label>
+            <input
+              type="email"
+              name="email"
+              placeholder="Your email"
+              value={formData.email}
+              onChange={handleChange}
+              className="w-full px-3 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 bg-gray-50 text-sm"
+              required
+            />
+          </div>
+        </div>
+
+        <div className="relative">
+          <label className="text-xs text-gray-500 mb-1 block">Subject</label>
           <input
             type="text"
-            name="name"
-            placeholder="Your name"
-            value={formData.name}
+            name="subject"
+            placeholder="Subject"
+            value={formData.subject}
             onChange={handleChange}
             className="w-full px-3 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 bg-gray-50 text-sm"
             required
           />
         </div>
+
         <div className="relative">
-          <label className="text-xs text-gray-500 mb-1 block">Email</label>
-          <input
-            type="email"
-            name="email"
-            placeholder="Your email"
-            value={formData.email}
+          <label className="text-xs text-gray-500 mb-1 block">Message</label>
+          <textarea
+            name="message"
+            placeholder="Tell us more about your inquiry..."
+            value={formData.message}
             onChange={handleChange}
-            className="w-full px-3 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 bg-gray-50 text-sm"
+            rows="4"
+            className="w-full px-3 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 bg-gray-50 text-sm resize-none"
             required
-          />
+          ></textarea>
         </div>
-      </div>
 
-      {/* Subject */}
-      <div className="relative">
-        <label className="text-xs text-gray-500 mb-1 block">Subject</label>
-        <input
-          type="text"
-          name="subject"
-          placeholder="Subject"
-          value={formData.subject}
-          onChange={handleChange}
-          className="w-full px-3 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 bg-gray-50 text-sm"
-          required
-        />
-      </div>
-
-      {/* Message */}
-      <div className="relative">
-        <label className="text-xs text-gray-500 mb-1 block">Message</label>
-        <textarea
-          name="message"
-          placeholder="Tell us more about your inquiry..."
-          value={formData.message}
-          onChange={handleChange}
-          rows="4"
-          className="w-full px-3 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 bg-gray-50 text-sm resize-none"
-          required
-        ></textarea>
-      </div>
-
-      {/* WhatsApp button */}
-      <button
-        type="submit"
-        className="w-full bg-[#25D366] text-white py-3 px-4 rounded-xl font-medium hover:bg-[#1ebe5c] transition-colors duration-200 text-sm flex items-center justify-center gap-2 shadow-md"
-      >
-        <MessageCircle className="w-4 h-4" />
-        Send via WhatsApp
-      </button>
-    </form>
+        <button
+          type="submit"
+          className="w-full bg-[#25D366] text-white py-3 px-4 rounded-xl font-medium hover:bg-[#1ebe5c] transition-colors duration-200 text-sm flex items-center justify-center gap-2 shadow-md"
+        >
+          <MessageCircle className="w-4 h-4" />
+          Send via WhatsApp
+        </button>
+      </form>
+    </div>
   );
 };
 
@@ -212,7 +244,6 @@ const FAQ = () => {
 
   return (
     <div className="bg-gray-50 min-h-screen py-12">
-      {/* Header */}
       <div className="text-center mb-12">
         <h1 className="text-4xl font-bold text-gray-900">Help Center</h1>
         <p className="text-lg text-gray-600 mt-2">
@@ -221,9 +252,7 @@ const FAQ = () => {
       </div>
 
       <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-10 px-4">
-        {/* Left: FAQ */}
         <div>
-          {/* Search */}
           <div className="mb-6">
             <div className="relative">
               <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
@@ -237,7 +266,6 @@ const FAQ = () => {
             </div>
           </div>
 
-          {/* FAQ Section */}
           <div className="space-y-3">
             {filteredFAQs.map((faq, index) => (
               <div
@@ -288,7 +316,6 @@ const FAQ = () => {
           </div>
         </div>
 
-        {/* Right: Contact Form */}
         <ContactForm />
       </div>
     </div>

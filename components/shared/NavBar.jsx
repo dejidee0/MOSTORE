@@ -48,6 +48,7 @@ import { Laptop } from "lucide-react";
 import { BsGear } from "react-icons/bs";
 import { FaOilCan } from "react-icons/fa";
 import { Ship } from "lucide-react";
+import { Baby } from "lucide-react";
 
 const NavBar = ({ onWishListClick }) => {
   const router = useRouter();
@@ -119,6 +120,7 @@ const NavBar = ({ onWishListClick }) => {
     if (name.includes("autopart") || name.includes("accessories"))
       return <Wrench className="w-4 h-4" />;
     if (name.includes("boating")) return <Ship className="w-4 h-4" />;
+    if (name.includes("kids")) return <Baby className="w-4 h-4" />;
     return <BsGear className="w-4 h-4" />;
   }, []);
 
@@ -726,7 +728,7 @@ const NavBar = ({ onWishListClick }) => {
                           <Link
                             key={link.label}
                             href={link.href}
-                            className="block py-2 hover:text-blue-600"
+                            className="block py-2 pl-2 hover:text-blue-600"
                           >
                             {link.label}
                           </Link>

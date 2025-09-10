@@ -6,16 +6,20 @@ import { useRouter } from "next/navigation";
 // ✅ Category image mapping
 const getCategoryImage = (name) => {
   const lower = name?.toLowerCase() || "";
-  if (lower.includes("electronics"))
-    return "https://images.unsplash.com/photo-1558618047-3c8c76ca7d13?w=400&h=300&fit=crop";
-  if (lower.includes("general household"))
-    return "https://images.unsplash.com/photo-1586953208448-b95a79798f07?w=400&h=300&fit=crop";
-  if (lower.includes("motorcycles"))
-    return "https://images.unsplash.com/photo-1598032892972-3585a84b21d1?w=400&h=300&fit=crop";
+  if (lower.includes("tech"))
+    return "https://images.unsplash.com/photo-1468495244123-6c6c332eeece?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8M3x8Z2FkZ2V0fGVufDB8fDB8fHww";
+  if (lower.includes("used"))
+    return "https://plus.unsplash.com/premium_photo-1678402542628-3d0ccf1224b7?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MXx8aG91c2Vob2xkJTIwaXRlbXN8ZW58MHx8MHx8fDA%3D";
+  if (lower.includes("electric"))
+    return "https://images.unsplash.com/photo-1635560019796-e256b3737dc2?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8N3x8ZWxlY3RyaWMlMjBiaWtlc3xlbnwwfHwwfHx8MA%3D%3D";
   if (lower.includes("automobiles"))
     return "https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=400&h=300&fit=crop";
-  if (lower.includes("general parts"))
-    return "https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?w=400&h=300&fit=crop";
+  if (lower.includes("autopart"))
+    return "https://images.unsplash.com/photo-1519752594763-2633d8d4ea29?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8M3x8YXV0b3BhcnRzfGVufDB8fDB8fHww";
+  if (lower.includes("boating"))
+    return "https://images.unsplash.com/photo-1666223193806-a1f66ec15b00?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MjR8fHdhdGVyY3JhZnR8ZW58MHx8MHx8fDA%3D";
+  if (lower.includes("fluid"))
+    return "https://images.unsplash.com/photo-1746014995761-bf045dc83b0a?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MjF8fG1vdG9yJTIwb2lsfGVufDB8fDB8fHww";
 
   // Default fallback
   return "https://images.unsplash.com/photo-1558618047-3c8c76ca7d13?w=400&h=300&fit=crop";
@@ -38,7 +42,7 @@ const CategoriesSection = ({ categories = [], categoriesLoading = false }) => {
   const displayCategories = categories.slice(0, 10); // Limit to 10 categories max
 
   return (
-    <section className="py-6 bg-white ">
+    <section className="py-4 bg-white ">
       <div className="max-w-7xl mx-auto px-4">
         {/* Header */}
         <div className="mb-8">

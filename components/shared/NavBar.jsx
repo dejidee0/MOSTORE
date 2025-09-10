@@ -33,6 +33,13 @@ import {
 import { useCart } from "@/lib/cart";
 import Link from "next/link";
 import { useWishlist } from "@/hooks/useWishlist";
+import { Gift } from "lucide-react";
+import { HeartPulse } from "lucide-react";
+import { FaChildDress } from "react-icons/fa6";
+import { Laptop } from "lucide-react";
+import { BsGear } from "react-icons/bs";
+import { FaOilCan } from "react-icons/fa";
+import { Ship } from "lucide-react";
 
 const NavBar = ({ onWishListClick }) => {
   const router = useRouter();
@@ -58,7 +65,6 @@ const NavBar = ({ onWishListClick }) => {
   const [showAllCategories, setShowAllCategories] = useState(false);
 
   const role = user?.user_metadata?.role;
-  const wishList = []; // Mock data
 
   // Memoized user info
   const userInfo = useMemo(() => {
@@ -95,18 +101,16 @@ const NavBar = ({ onWishListClick }) => {
   // Memoized category icons
   const getIconForCategory = useCallback((categoryName) => {
     const name = categoryName.toLowerCase();
-    if (name.includes("vehicles") && name.includes("mobility"))
-      return <Car className="w-4 h-4" />;
-    if (name.includes("bike") || name.includes("motorcycle"))
+    if (name.includes("automobiles")) return <Car className="w-4 h-4" />;
+    if (name.includes("electric") || name.includes("motorcycle"))
       return <Bike className="w-4 h-4" />;
-    if (name.includes("electric") || name.includes("battery"))
-      return <Battery className="w-4 h-4" />;
-    if (name.includes("electronics")) return <Smartphone className="w-4 h-4" />;
-    if (name.includes("home") || name.includes("appliances"))
-      return <Monitor className="w-4 h-4" />;
-    if (name.includes("parts") || name.includes("accessories"))
+    if (name.includes("fitters")) return <FaOilCan className="w-4 h-4" />;
+    if (name.includes("tech")) return <Smartphone className="w-4 h-4" />;
+    if (name.includes("used")) return <Monitor className="w-4 h-4" />;
+    if (name.includes("autopart") || name.includes("accessories"))
       return <Wrench className="w-4 h-4" />;
-    return <Package className="w-4 h-4" />;
+    if (name.includes("boating")) return <Ship className="w-4 h-4" />;
+    return <BsGear className="w-4 h-4" />;
   }, []);
 
   // Memoized category description formatting
@@ -516,7 +520,7 @@ const NavBar = ({ onWishListClick }) => {
                             </span>
                           </div>
                         </div>
-                        
+
                         {/* Hover tooltip */}
                         <div className="absolute -top-10 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white text-xs px-3 py-2 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
                           Coming Soon
@@ -804,35 +808,66 @@ const MobileMenu = memo(
   ({
     categories,
     categoriesLoading,
-    navigationLinks,
-    userInfo,
-    isAuthenticated,
-    role,
     router,
     handleCategoryClick,
-    navigateToProfile,
-    navigateToOrders,
-    navigateToDashboard,
-    handleSignOut,
     setIsMobileMenuOpen,
     getIconForCategory,
-    formatCategoryItems,
-    loading,
-    initialized,
-    showAllCategories,
-    setShowAllCategories,
   }) => {
-    // Show only first 4 categories initially
-    const displayedCategories = showAllCategories
-      ? categories
-      : categories.slice(0, 4);
-    const hasMoreCategories = categories.length > 4;
+    // Define menu items based on the handwritten design
+    const menuItems = [
+      {
+        section: "ACCOUNT",
+        items: [
+          { label: "Sign in", icon: null, href: "/sign-in", close: true },
+
+          { label: "Wishlist", icon: null, href: "/wishlist", close: true },
+          {
+            label: "Sell on mostore",
+            icon: null,
+            href: "/sign-up",
+            close: true,
+          },
+        ],
+      },
+      {
+        section: "OUR CATEGORIES",
+        items: categories.map((category) => ({
+          label: category.name,
+          icon: getIconForCategory(category.name),
+          href: `/products?category=${category.id}`,
+          close: true,
+        })),
+      },
+      {
+        section: "HELP CENTER",
+        items: [
+          { label: "Contact us", icon: null, href: null, close: false },
+          {
+            label: "Email support",
+            icon: null,
+            href: "mailto:support@mostore.com",
+            close: true,
+          },
+          {
+            label: "Phone support",
+            icon: null,
+            href: "tel:support",
+            close: true,
+          },
+          { label: "WhatsApp", icon: null, href: "whatsapp://", close: true },
+        ],
+      },
+      {
+        section: "BLOG",
+        items: [{ label: "-", icon: null, href: null, close: false }],
+      },
+    ];
 
     return (
-      <div className="lg:hidden fixed inset-0 z-50 bg-white animate-in fade-in slide-in-from-top-2 duration-300">
+      <div className="lg:hidden fixed inset-0 z-50 bg-white animate-in fade-in slide-in-from-top-2 duration-300 w-80 max-h-screen">
         {/* Header with close button */}
         <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-white">
-          <h2 className="text-lg font-bold text-gray-900">Menu</h2>
+          <h2 className="text-lg font-bold text-gray-900">MENU</h2>
           <button
             onClick={() => setIsMobileMenuOpen(false)}
             className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-all duration-200"
@@ -842,211 +877,25 @@ const MobileMenu = memo(
         </div>
 
         {/* Scrollable content */}
-        <div className="px-6 py-6 space-y-8 max-h-[calc(100vh-80px)] overflow-y-auto bg-white">
-          {/* Navigation */}
-          <div>
-            <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-4">
-              Navigation
-            </h3>
-            <nav className="space-y-2">
-              {navigationLinks.map((link) => (
-                <button
-                  key={link.label}
-                  onClick={() => {
-                    router.push(link.href);
-                    setIsMobileMenuOpen(false);
-                  }}
-                  className="flex items-center gap-3 w-full px-4 py-3 rounded-xl text-gray-700 font-medium hover:bg-orange-50 hover:text-orange-600 transition-all duration-200"
+        <div className="px-4 py-6 space-y-6 max-h-[calc(100vh-80px)] overflow-y-auto bg-white">
+          {menuItems.map((section, index) => (
+            <div key={index}>
+              <h3 className="text-sm font-semibold text-gray-700 mb-2">
+                {section.section}
+              </h3>
+              {section.items.map((item, idx) => (
+                <a
+                  key={idx}
+                  href={item.href}
+                  onClick={() => item.close && setIsMobileMenuOpen(false)}
+                  className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-100 rounded-lg transition-all duration-200"
                 >
-                  {link.label === "Home" && (
-                    <Home className="w-5 h-5 text-gray-500" />
-                  )}
-                  {link.label}
-                </button>
+                  {item.icon && item.icon}
+                  <span className="text-sm">{item.label}</span>
+                </a>
               ))}
-              
-              {/* Help Center in Mobile Menu */}
-              <button
-                onClick={() => {
-                  router.push("/help");
-                  setIsMobileMenuOpen(false);
-                }}
-                className="flex items-center gap-3 w-full px-4 py-3 rounded-xl text-gray-700 font-medium hover:bg-orange-50 hover:text-orange-600 transition-all duration-200"
-              >
-                <HelpCircle className="w-5 h-5 text-gray-500" />
-                Help Center
-              </button>
-            </nav>
-          </div>
-
-          {/* Categories */}
-          <div>
-            <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-4">
-              Categories
-            </h3>
-            <div className="space-y-2">
-              {categoriesLoading
-                ? Array.from({ length: 4 }).map((_, i) => (
-                    <div
-                      key={i}
-                      className="h-16 bg-gray-200 rounded-xl animate-pulse"
-                    />
-                  ))
-                : categories.map((category) => (
-                    <button
-                      key={category.id}
-                      onClick={() =>
-                        handleCategoryClick(category.id, category.name)
-                      }
-                      className="flex items-center gap-4 w-full px-4 py-4 rounded-xl text-gray-700 font-medium hover:bg-orange-50 hover:text-orange-600 transition-all duration-200 group"
-                    >
-                      <span className="text-gray-500 group-hover:text-orange-600 transition-colors">
-                        {getIconForCategory(category.name)}
-                      </span>
-                      <div className="flex-1 text-left">
-                        <p className="font-semibold text-sm">{category.name}</p>
-                        <p className="text-xs text-gray-500 truncate">
-                          {formatCategoryItems(category.description)
-                            .slice(0, 2)
-                            .join(", ")}
-                        </p>
-                      </div>
-                    </button>
-                  ))}
-              <button
-                onClick={() => {
-                  router.push("/products");
-                  setIsMobileMenuOpen(false);
-                }}
-                className="flex items-center gap-4 w-full px-4 py-4 rounded-xl text-orange-600 font-semibold hover:bg-orange-50 transition-all duration-200"
-              >
-                <Package className="w-5 h-5" />
-                <span>All Products</span>
-              </button>
             </div>
-          </div>
-
-          {/* Account Section */}
-          <div>
-            <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-4">
-              Account
-            </h3>
-            <div className="space-y-2">
-              {isAuthenticated() ? (
-                <>
-                  <div className="px-4 py-4 bg-gradient-to-r from-orange-50 to-orange-100 rounded-xl border border-orange-200">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-gradient-to-r from-orange-400 to-orange-600 rounded-full flex items-center justify-center text-white font-bold shadow-lg">
-                        {userInfo?.initial}
-                      </div>
-                      <div className="flex-1">
-                        <p className="text-xs text-gray-600">Signed in as</p>
-                        <p className="text-sm font-semibold text-gray-900 truncate">
-                          {userInfo?.email}
-                        </p>
-                        {role !== "customer" && (
-                          <p className="text-xs text-orange-600 font-medium">
-                            {role} Account
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-
-                  <button
-                    onClick={() => {
-                      navigateToProfile();
-                      setIsMobileMenuOpen(false);
-                    }}
-                    className="flex items-center gap-4 w-full px-4 py-4 rounded-xl text-gray-700 font-medium hover:bg-orange-50 hover:text-orange-600 transition-all duration-200"
-                  >
-                    <User className="w-5 h-5" />
-                    <span>My Profile</span>
-                  </button>
-
-                  <button
-                    onClick={() => {
-                      navigateToOrders();
-                      setIsMobileMenuOpen(false);
-                    }}
-                    className="flex items-center gap-4 w-full px-4 py-4 rounded-xl text-gray-700 font-medium hover:bg-orange-50 hover:text-orange-600 transition-all duration-200"
-                  >
-                    <Package className="w-5 h-5" />
-                    <span>My Orders</span>
-                  </button>
-
-                  {(role === "supplier" || role === "admin") && (
-                    <button
-                      onClick={() => {
-                        navigateToDashboard(role);
-                        setIsMobileMenuOpen(false);
-                      }}
-                      className="flex items-center gap-4 w-full px-4 py-4 rounded-xl text-gray-700 font-medium hover:bg-orange-50 hover:text-orange-600 transition-all duration-200"
-                    >
-                      <Home className="w-5 h-5" />
-                      <span>My Dashboard</span>
-                    </button>
-                  )}
-
-                  <button
-                    onClick={() => {
-                      handleSignOut();
-                      setIsMobileMenuOpen(false);
-                    }}
-                    className="flex items-center gap-4 w-full px-4 py-4 rounded-xl text-red-600 font-medium hover:bg-red-50 transition-all duration-200"
-                  >
-                    <LogOut className="w-5 h-5" />
-                    <span>Sign Out</span>
-                  </button>
-                </>
-              ) : (
-                <button
-                  onClick={() => {
-                    router.push("/sign-in");
-                    setIsMobileMenuOpen(false);
-                  }}
-                  className="flex items-center gap-4 w-full px-4 py-4 rounded-xl text-gray-700 font-medium hover:bg-orange-50 hover:text-orange-600 transition-all duration-200"
-                >
-                  <User className="w-5 h-5" />
-                  <span>Sign In</span>
-                  {loading && !initialized && (
-                    <div className="w-4 h-4 border-2 border-orange-300 border-t-orange-600 rounded-full animate-spin ml-auto"></div>
-                  )}
-                </button>
-              )}
-            </div>
-          </div>
-
-          {/* Help Section for Mobile */}
-          <div>
-            <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-4">
-              Need Help?
-            </h3>
-            <div className="space-y-3">
-              {/* Call for Orders */}
-              <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
-                <div className="flex items-center gap-3 mb-2">
-                  <Headphones className="w-5 h-5 text-blue-600" />
-                  <span className="font-semibold text-blue-900">Need to Order?</span>
-                </div>
-                <p className="text-blue-700 font-bold text-lg">+33 753 602 218</p>
-                <p className="text-blue-600 text-sm">Mon-Fri: 9AM-6PM CET</p>
-              </div>
-
-              {/* Email Support */}
-              <div className="bg-gray-50 border border-gray-200 rounded-xl p-4">
-                <p className="text-sm text-gray-600">
-                  Email us at{" "}
-                  <a
-                    href="mailto:support@mostore.com"
-                    className="text-orange-600 font-medium"
-                  >
-                    support@mostore.com
-                  </a>
-                </p>
-              </div>
-            </div>
-          </div>
+          ))}
         </div>
       </div>
     );

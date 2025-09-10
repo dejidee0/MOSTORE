@@ -30,7 +30,7 @@ const ServiceFeatures = () => {
   ];
 
   return (
-    <section className="py-8 bg-white">
+    <section className="py-4 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-8 lg:px-16">
         {/* Mobile: Single Row with Horizontal Scroll */}
         <div className="block md:hidden">
@@ -44,7 +44,7 @@ const ServiceFeatures = () => {
                 return (
                   <div
                     key={i}
-                    className="flex-shrink-0 w-64 p-6 rounded-xl border border-gray-200 hover:shadow-lg transition-all duration-300 hover:border-gray-300 bg-white"
+                    className="flex-shrink-0 w-32 md:w-64 p-4 md:p-6 rounded-xl border border-gray-200 hover:shadow-lg transition-all duration-300 hover:border-gray-300 bg-white"
                   >
                     {/* Icon */}
                     <div

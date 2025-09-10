@@ -1,13 +1,6 @@
 import React, { useEffect, useState } from "react";
-import { ProductCard } from "@/components/ProductCard";
-import { ScrollableSection } from "./ScrollableSection";
-import { SectionHeader } from "./SectionHeader";
-import { motion } from "framer-motion";
-import { Clock } from "lucide-react";
-import {
-  dealOfTheDayProduct,
-  recentlyAddedProducts,
-} from "@/lib/data/products";
+
+import { recentlyAddedProducts } from "@/lib/data/products";
 import ProductGrid from "@/components/ProductGrid";
 
 export default function ProductSections() {
@@ -18,10 +11,7 @@ export default function ProductSections() {
   useEffect(() => {
     const fetchAll = async () => {
       try {
-        const [deal, recent] = await Promise.all([
-          dealOfTheDayProduct(),
-          recentlyAddedProducts(),
-        ]);
+        const [deal, recent] = await Promise.all([recentlyAddedProducts()]);
 
         setDealProduct(deal);
         setRecentProducts(recent);

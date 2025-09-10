@@ -1,17 +1,17 @@
-"use client"
+"use client";
 
-import { motion } from "framer-motion"
-import { Zap, Star, Clock, Gift, TrendingUp, Award } from "lucide-react"
+import { motion } from "framer-motion";
+import { Zap, Star, Clock, Gift, TrendingUp, Award } from "lucide-react";
 
 export default function CategoryGrid() {
   const categories = [
     { name: "Best Seller", icon: Star, color: "bg-blue-500" },
-    { name: "Deal of the Day", icon: Clock, color: "bg-red-500" },
+
     { name: "New Arrivals", icon: Zap, color: "bg-green-500" },
     { name: "Gift Ideas", icon: Gift, color: "bg-purple-500" },
     { name: "Trending", icon: TrendingUp, color: "bg-orange-500" },
     { name: "Premium", icon: Award, color: "bg-yellow-500" },
-  ]
+  ];
 
   return (
     <section className="py-16 px-4 bg-gray-50">
@@ -22,13 +22,17 @@ export default function CategoryGrid() {
           transition={{ duration: 0.6 }}
           className="text-center mb-12"
         >
-          <h2 className="text-3xl font-bold text-gray-800 mb-4">Popular Categories</h2>
-          <p className="text-gray-600 text-lg">Find exactly what you're looking for</p>
+          <h2 className="text-3xl font-bold text-gray-800 mb-4">
+            Popular Categories
+          </h2>
+          <p className="text-gray-600 text-lg">
+            Find exactly what you're looking for
+          </p>
         </motion.div>
 
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
           {categories.map((category, index) => {
-            const IconComponent = category.icon
+            const IconComponent = category.icon;
             return (
               <motion.div
                 key={category.name}
@@ -45,10 +49,10 @@ export default function CategoryGrid() {
                 </div>
                 <h3 className="font-semibold text-gray-800">{category.name}</h3>
               </motion.div>
-            )
+            );
           })}
         </div>
       </div>
     </section>
-  )
+  );
 }

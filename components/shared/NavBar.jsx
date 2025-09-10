@@ -195,7 +195,6 @@ const NavBar = ({ onWishListClick }) => {
   const handleCategoryClick = useCallback(
     (categoryId, categoryName) => {
       router.push(`/products?category=${categoryId}`);
-      setIsMobileMenuOpen(false);
       setIsCategoryDropdownOpen(false);
     },
     [router]
@@ -744,13 +743,18 @@ const NavBar = ({ onWishListClick }) => {
                             </span>
                           ) : (
                             categories.map((category) => (
-                              <Link
+                              <button
                                 key={category.id}
-                                href={`/products?category=${category.id}`}
-                                className="py-1 text-gray-600 hover:text-orange-600"
+                                onClick={() =>
+                                  handleCategoryClick(
+                                    category.id,
+                                    category.name
+                                  )
+                                }
+                                className="py-1 text-left text-gray-600 hover:text-orange-600 w-full"
                               >
                                 {category.name}
-                              </Link>
+                              </button>
                             ))
                           )}
                         </div>
@@ -767,9 +771,23 @@ const NavBar = ({ onWishListClick }) => {
                               </a>
                             </span>
                           </li>
+                          <li className="py-1">
+                            <span>
+                              <a href="/help" className="hover:text-orange-600">
+                                Contact Us
+                              </a>
+                            </span>
+                          </li>
+                          <li className="py-1">
+                            <span>
+                              <a href="/help" className="hover:text-orange-600">
+                                Need Help?
+                              </a>
+                            </span>
+                          </li>
                         </ul>
                       </div>
-                      <div className="border-b border-gray-200 pb-2 mb-2">
+                      <div className=" pb-2 mb-2">
                         <a
                           href="/blog"
                           className="block py-2 text-black font-bold hover:text-orange-600"

@@ -237,7 +237,7 @@ const NavBar = ({ onWishListClick }) => {
   const navigationLinks = useMemo(
     () => [
       !user && { label: "Sign in", href: "/sign-in" },
-
+      !user && { label: "Order", href: "#" },
       { label: "Wishlist", href: "/wishlist" },
       { label: "Sell on Mostore", href: "/sign-up" },
     ],
@@ -773,32 +773,11 @@ const NavBar = ({ onWishListClick }) => {
                         </span>
                         <ul className="mt-2 space-y-2">
                           <li className="py-1">
-                            <span>Email Support: </span>
-                            <a
-                              href="mailto:support@mostreon.com"
-                              className="text-blue-600 hover:underline"
-                            >
-                              support@mostreon.com
-                            </a>
-                          </li>
-                          <li className="py-1">
-                            <span>Phone Support: </span>
-                            <a
-                              href="tel:+152617279139"
-                              className="text-blue-600 hover:underline"
-                            >
-                              +152617279139
-                            </a>
-                          </li>
-                          <li className="py-1">
-                            <a
-                              href="https://wa.me/1013918030"
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-green-600 hover:underline"
-                            >
-                              WhatsApp
-                            </a>
+                            <span>
+                              <a href="/help" className="hover:text-orange-600">
+                                Need Help?
+                              </a>
+                            </span>
                           </li>
                         </ul>
                       </div>

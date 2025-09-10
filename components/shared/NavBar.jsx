@@ -775,15 +775,11 @@ const NavBar = ({ onWishListClick }) => {
                           </li>
                           <li className="py-1">
                             <span>
-                              <a href="/help" className="hover:text-orange-600">
+                              <a
+                                href="/contact"
+                                className="hover:text-orange-600"
+                              >
                                 Contact Us
-                              </a>
-                            </span>
-                          </li>
-                          <li className="py-1">
-                            <span>
-                              <a href="/help" className="hover:text-orange-600">
-                                Need Help?
                               </a>
                             </span>
                           </li>

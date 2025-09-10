@@ -1,3 +1,17 @@
+"use client";
+import React, { useState } from "react";
+import {
+  ChevronDown,
+  Search,
+  HelpCircle,
+  Package,
+  Truck,
+  CreditCard,
+  RefreshCw,
+  Shield,
+  MessageCircle,
+} from "lucide-react";
+
 const ContactPage = () => {
   return (
     <div
@@ -92,7 +106,7 @@ const ContactPage = () => {
         </div>
 
         <img
-          src="https://images.unsplash.com/photo-1664290601473-947b5d9c595a?auto=format&fit=crop&q=80&w=800"
+          src="https://images.unsplash.com/photo-1714079761488-e0c9b9ac4138?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTN8fGN1c3RvbWVyJTIwc2VydmljZXxlbnwwfHwwfHx8Mg%3D%3D"
           alt="Customer support representative"
           style={{
             width: "100%",

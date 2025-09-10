@@ -734,38 +734,26 @@ const NavBar = ({ onWishListClick }) => {
                         ))}
                       </div>
                       <div className="border-b border-gray-200 pb-2 mb-2">
-                        <button
-                          className="flex items-center justify-between w-full py-2 font-bold focus:outline-none text-black"
-                          onClick={() =>
-                            setMobileCategoriesOpen(!mobileCategoriesOpen)
-                          }
-                        >
-                          <span>Our Categories</span>
-                          <ChevronDown
-                            className={`w-4 h-4 transition-transform ${
-                              mobileCategoriesOpen ? "rotate-180" : ""
-                            }`}
-                          />
-                        </button>
-                        {mobileCategoriesOpen && (
-                          <div className="pl-4 flex flex-col gap-1 mt-2">
-                            {categoriesLoading ? (
-                              <span className="text-gray-400 text-sm py-1">
-                                Loading...
-                              </span>
-                            ) : (
-                              categories.map((category) => (
-                                <Link
-                                  key={category.id}
-                                  href={`/products?category=${category.id}`}
-                                  className="py-1 text-gray-600 hover:text-orange-600"
-                                >
-                                  {category.name}
-                                </Link>
-                              ))
-                            )}
-                          </div>
-                        )}
+                        <span className="font-bold text-sm uppercase text-black block mb-2">
+                          Our Categories
+                        </span>
+                        <div className="pl-2 flex flex-col gap-1">
+                          {categoriesLoading ? (
+                            <span className="text-gray-400 text-sm py-1">
+                              Loading...
+                            </span>
+                          ) : (
+                            categories.map((category) => (
+                              <Link
+                                key={category.id}
+                                href={`/products?category=${category.id}`}
+                                className="py-1 text-gray-600 hover:text-orange-600"
+                              >
+                                {category.name}
+                              </Link>
+                            ))
+                          )}
+                        </div>
                       </div>
                       <div className="border-b border-gray-200 pb-2 mb-2">
                         <span className="font-bold text-sm uppercase text-black">

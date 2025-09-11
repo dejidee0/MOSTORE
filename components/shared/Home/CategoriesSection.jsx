@@ -48,7 +48,7 @@ const CategoriesSection = ({ categories = [], categoriesLoading = false }) => {
       <div className="max-w-7xl mx-auto px-4">
         {/* Header */}
         <div className="md:mb-8 mb-2 flex flex-col ">
-          <h2 className="text-2xl font-black text-gray-900 mb-2">
+          <h2 className="text-2xl font-black text-gray-900 mb-0 md:mb-2">
             Featured <span className="text-orange-500">Categories</span>
           </h2>
           <p className="text-sm">International Online Shopping Made Easy</p>
@@ -85,7 +85,7 @@ const CategoriesSection = ({ categories = [], categoriesLoading = false }) => {
                   className="group cursor-pointer"
                 >
                   {/* Image */}
-                  <div className="relative mb-3">
+                  <div className="relative mb-1 md:mb-3">
                     <div className="relative w-full aspect-[4/3] rounded-xl overflow-hidden bg-gray-100 shadow-sm group-hover:shadow-md transition-shadow duration-300">
                       <Image
                         src={getCategoryImage(category.name)}

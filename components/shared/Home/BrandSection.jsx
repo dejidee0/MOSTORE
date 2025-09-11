@@ -6,7 +6,7 @@ const BusinessPartners = () => {
   const duplicatedBrands = [...brands, ...brands];
 
   return (
-    <section className="py-16 bg-white overflow-hidden">
+    <section className="py-16 overflow-hidden">
       <div className="max-w-7xl mx-auto px-4 ">
         {/* Header */}
         <div className="text-center mb-12">

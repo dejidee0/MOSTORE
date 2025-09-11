@@ -44,7 +44,7 @@ const CategoriesSection = ({ categories = [], categoriesLoading = false }) => {
   const displayCategories = categories.slice(0, 10); // Limit to 10 categories max
 
   return (
-    <section className="py-4 bg-white ">
+    <section className="py-4 ">
       <div className="max-w-7xl mx-auto px-4">
         {/* Header */}
         <div className="mb-8">

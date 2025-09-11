@@ -29,12 +29,14 @@ export default function ProductGrid() {
   }, []);
 
   return (
-    <section className="bg-white py-4">
+    <section className=" bg-orange-50 py-4">
       <div className="max-w-7xl mx-auto px-3">
         {loading && (
           <div className="flex justify-center items-center py-12">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500"></div>
-            <span className="ml-3 text-gray-600 text-sm">Loading products...</span>
+            <span className="ml-3 text-gray-600 text-sm">
+              Loading products...
+            </span>
           </div>
         )}
 

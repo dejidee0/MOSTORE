@@ -62,7 +62,7 @@ const BlogLandingSection = () => {
 
   if (isLoading) {
     return (
-      <section className="py-8 bg-white">
+      <section className="py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center mb-8">
             <div className="h-8 bg-gray-200 rounded w-48 animate-pulse"></div>
@@ -82,7 +82,7 @@ const BlogLandingSection = () => {
   }
 
   return (
-    <section className="py-8 bg-white">
+    <section className="py-8 ">
       <div className="max-w-7xl mx-auto px-4">
         {/* Header */}
         <div className="flex justify-between items-center mb-8 border-b border-gray-300">

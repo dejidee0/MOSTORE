@@ -30,7 +30,7 @@ const ServiceFeatures = () => {
   ];
 
   return (
-    <section className="py-4 bg-white">
+    <section className="py-4">
       <div className="max-w-7xl mx-auto px-4 sm:px-8 lg:px-16">
         {/* Mobile: Single Row with Horizontal Scroll */}
         <div className="block md:hidden">

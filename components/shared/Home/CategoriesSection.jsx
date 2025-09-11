@@ -51,7 +51,7 @@ const CategoriesSection = ({ categories = [], categoriesLoading = false }) => {
           <h2 className="text-2xl font-black text-gray-900 mb-2">
             Featured <span className="text-orange-500">Categories</span>
           </h2>
-          <p className="text-sm">International Shopping Made Easy Online</p>
+          <p className="text-sm">International Online Shopping Made Easy</p>
         </div>
 
         {categoriesLoading ? (

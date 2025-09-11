@@ -63,11 +63,11 @@ const NavBar = ({ onWishListClick }) => {
   const [isClient, setIsClient] = useState(false);
   const { totalItems: wishlistCount } = useWishlist();
   const [isSearchOpen, setIsSearchOpen] = useState(false);
-  // Removed sidebarOpen state; Drawer will manage its own open state
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false); // New state for drawer
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
   const [isCategoryDropdownOpen, setIsCategoryDropdownOpen] = useState(false);
   const [mobileCategoriesOpen, setMobileCategoriesOpen] = useState(false);
-  const [isHelpDropdownOpen, setIsHelpDropdownOpen] = useState(false); // New help dropdown state
+  const [isHelpDropdownOpen, setIsHelpDropdownOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [categories, setCategories] = useState([]);
   const [categoriesLoading, setCategoriesLoading] = useState(true);
@@ -95,6 +95,19 @@ const NavBar = ({ onWishListClick }) => {
   useEffect(() => {
     setIsClient(true);
   }, []);
+
+  // Close drawer on route change
+  useEffect(() => {
+    const handleRouteChangeComplete = () => {
+      setIsDrawerOpen(false); // Close drawer when navigation completes
+    };
+
+    router.events?.on("routeChangeComplete", handleRouteChangeComplete);
+
+    return () => {
+      router.events?.off("routeChangeComplete", handleRouteChangeComplete);
+    };
+  }, [router]);
 
   const loadCategories = useCallback(async () => {
     try {
@@ -198,6 +211,7 @@ const NavBar = ({ onWishListClick }) => {
     (categoryId, categoryName) => {
       router.push(`/products?category=${categoryId}`);
       setIsCategoryDropdownOpen(false);
+      setIsDrawerOpen(false); // Close drawer on category click
     },
     [router]
   );
@@ -228,7 +242,7 @@ const NavBar = ({ onWishListClick }) => {
 
   const closeAllDropdowns = useCallback(() => {
     setIsSearchOpen(false);
-    setIsMobileMenuOpen(false);
+    setIsDrawerOpen(false);
     setIsProfileDropdownOpen(false);
     setIsCategoryDropdownOpen(false);
     setIsHelpDropdownOpen(false);
@@ -236,13 +250,14 @@ const NavBar = ({ onWishListClick }) => {
 
   // Navigation links
   const navigationLinks = useMemo(
-    () => [
-      !user && { label: "Sign in", href: "/sign-in" },
-      !user && { label: "Order", href: "#" },
-      { label: "Wishlist", href: "/wishlist" },
-      { label: "Sell on Mostore", href: "/sign-up" },
-    ],
-    []
+    () =>
+      [
+        !user && { label: "Sign in", href: "/sign-in" },
+        !user && { label: "Order", href: "#" },
+        { label: "Wishlist", href: "/wishlist" },
+        { label: "Sell on Mostore", href: "/sign-up" },
+      ].filter(Boolean),
+    [user]
   );
 
   if (!isClient) return null;
@@ -305,7 +320,7 @@ const NavBar = ({ onWishListClick }) => {
       {/* Main Navigation - Enhanced */}
       <nav className="sticky top-0 z-50 bg-gray-900 backdrop-blur-md border-b border-gray-200 shadow-lg">
         <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16 lg:h-18  px-4 lg:px-6 shadow-lg">
+          <div className="flex items-center justify-between h-16 lg:h-18 px-4 lg:px-6 shadow-lg">
             {/* Logo Section */}
             <div
               className="flex-shrink-0 flex items-center cursor-pointer group transition-all duration-300"
@@ -700,9 +715,13 @@ const NavBar = ({ onWishListClick }) => {
                     </span>
                   )}
                 </button>
-                {/* Sidebar Drawer is now rendered here for mobile */}
-                <Drawer direction="left">
-                  <DrawerTitle className="sr-only"></DrawerTitle>
+                {/* Sidebar Drawer */}
+                <Drawer
+                  direction="left"
+                  open={isDrawerOpen}
+                  onOpenChange={setIsDrawerOpen}
+                >
+                  <DrawerTitle className="sr-only">Navigation Menu</DrawerTitle>
                   <DrawerTrigger asChild>
                     <button className="p-2.5 text-gray-300 hover:text-white hover:bg-gray-700 rounded-lg transition-all duration-200">
                       <Menu className="w-5 h-5" />
@@ -728,6 +747,7 @@ const NavBar = ({ onWishListClick }) => {
                           <Link
                             key={link.label}
                             href={link.href}
+                            onClick={() => setIsDrawerOpen(false)} // Close drawer on click
                             className="block py-2 pl-2 hover:text-blue-600"
                           >
                             {link.label}
@@ -735,9 +755,19 @@ const NavBar = ({ onWishListClick }) => {
                         ))}
                       </div>
                       <div className="border-b border-gray-200 pb-2 mb-2">
-                        <span className="font-bold text-sm uppercase text-black block mb-2">
-                          Our Categories
-                        </span>
+                        <div className="flex justify-between items-center">
+                          <span className="font-bold text-sm uppercase text-black">
+                            Our Categories
+                          </span>
+                          <Link
+                            href="/products"
+                            prefetch
+                            onClick={() => setIsDrawerOpen(false)} // Close drawer on click
+                          >
+                            <span className="text-orange-500">See all</span>
+                          </Link>
+                        </div>
+
                         <div className="pl-2 flex flex-col gap-1">
                           {categoriesLoading ? (
                             <span className="text-gray-400 text-sm py-1">
@@ -747,12 +777,13 @@ const NavBar = ({ onWishListClick }) => {
                             categories.map((category) => (
                               <button
                                 key={category.id}
-                                onClick={() =>
+                                onClick={() => {
                                   handleCategoryClick(
                                     category.id,
                                     category.name
-                                  )
-                                }
+                                  );
+                                  setIsDrawerOpen(false); // Close drawer on click
+                                }}
                                 className="py-1 text-left text-gray-600 hover:text-orange-600 w-full"
                               >
                                 {category.name}
@@ -765,29 +796,31 @@ const NavBar = ({ onWishListClick }) => {
                         <span className="font-bold text-sm uppercase text-black">
                           Help Center
                         </span>
-                        <ul className="mt-2 space-y-2">
+                        <ul className="mt-2 pl-2 space-y-2">
                           <li className="py-1">
-                            <span>
-                              <a href="/help" className="hover:text-orange-600">
-                                Need Help?
-                              </a>
-                            </span>
+                            <a
+                              href="/help"
+                              onClick={() => setIsDrawerOpen(false)} // Close drawer on click
+                              className="hover:text-orange-600"
+                            >
+                              Need Help?
+                            </a>
                           </li>
                           <li className="py-1">
-                            <span>
-                              <a
-                                href="/contact"
-                                className="hover:text-orange-600"
-                              >
-                                Contact Us
-                              </a>
-                            </span>
+                            <a
+                              href="/contact"
+                              onClick={() => setIsDrawerOpen(false)} // Close drawer on click
+                              className="hover:text-orange-600"
+                            >
+                              Contact Us
+                            </a>
                           </li>
                         </ul>
                       </div>
-                      <div className=" pb-2 mb-2">
+                      <div className="pb-2 mb-2">
                         <a
                           href="/blog"
+                          onClick={() => setIsDrawerOpen(false)} // Close drawer on click
                           className="block py-2 text-black font-bold hover:text-orange-600"
                         >
                           Blog
@@ -822,8 +855,6 @@ const NavBar = ({ onWishListClick }) => {
             </div>
           </div>
         )}
-
-        {/* Sleek Mobile Sidebar Drawer (DrawerTrigger and DrawerContent must be siblings inside Drawer) */}
       </nav>
     </>
   );

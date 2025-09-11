@@ -47,10 +47,11 @@ const CategoriesSection = ({ categories = [], categoriesLoading = false }) => {
     <section className="py-4 ">
       <div className="max-w-7xl mx-auto px-4">
         {/* Header */}
-        <div className="mb-8">
+        <div className="md:mb-8 mb-0 flex flex-col md:flex-row">
           <h2 className="text-2xl font-black text-gray-900 mb-2">
             Featured <span className="text-orange-500">Categories</span>
           </h2>
+          <p className="text-sm">International Shopping Made Easy Online</p>
         </div>
 
         {categoriesLoading ? (

@@ -131,7 +131,9 @@ const HomePage = () => {
               <h2 className="text-2xl font-black text-gray-900 ">
                 Featured <span className="text-orange-500">Products</span>
               </h2>
-              <p className="text-sm">International Shopping Made Easy</p>
+              <p className="text-sm">
+                Explore premium products from worldwide stores
+              </p>
             </div>
           </motion.div>
           <ProductGrid />

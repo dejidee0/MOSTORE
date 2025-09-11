@@ -247,7 +247,26 @@ const NavBar = ({ onWishListClick }) => {
     setIsCategoryDropdownOpen(false);
     setIsHelpDropdownOpen(false);
   }, []);
-
+  const CategoryItem = ({ category, onClick, getIcon, formatItems }) => {
+    return (
+      <button
+        onClick={onClick}
+        className="w-full flex items-center gap-3 px-6 py-4 text-left hover:bg-orange-50 transition-all duration-200 text-gray-700"
+      >
+        <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center">
+          {getIcon(category.name)}
+        </div>
+        <div className="flex-1">
+          <p className="font-semibold text-sm text-gray-900">{category.name}</p>
+          {formatItems(category.description).map((item, index) => (
+            <p key={index} className="text-xs text-gray-500">
+              {item}
+            </p>
+          ))}
+        </div>
+      </button>
+    );
+  };
   // Navigation links
   const navigationLinks = useMemo(
     () =>

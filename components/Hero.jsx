@@ -52,7 +52,7 @@ const Hero = () => {
   }
 
   return (
-    <section className="relative w-full h-screen bg-black overflow-hidden">
+    <section className="relative w-full  h-[80vh] md:h-screen bg-black overflow-hidden">
       {/* Background */}
       <div className="absolute inset-0">
         <Image

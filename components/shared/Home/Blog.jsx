@@ -86,7 +86,7 @@ const BlogLandingSection = () => {
       <div className="max-w-7xl mx-auto px-4">
         {/* Header */}
         <div className="flex justify-between items-center mb-8 border-b border-gray-300">
-          <div className="flex flex-col md:flex-row">
+          <div className="flex flex-col">
             <h2 className=" text-xl md:text-3xl font-bold text-gray-900 ">
               Our Latest News
             </h2>

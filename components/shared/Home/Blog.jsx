@@ -87,12 +87,9 @@ const BlogLandingSection = () => {
         {/* Header */}
         <div className="flex justify-between items-center mb-8 border-b border-gray-300">
           <div className="flex gap-2">
-            <h2 className=" text-2xl md:text-3xl font-bold text-gray-900 mb-2">
+            <h2 className=" text-xl md:text-3xl font-bold text-gray-900 mb-2">
               Our Latest News
             </h2>
-            <p className="text-gray-500 text-sm md:text-base pt-2">
-              Don't miss out on this week's deals
-            </p>
           </div>
           <Link href="/blog">
             <motion.div

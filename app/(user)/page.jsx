@@ -127,7 +127,7 @@ const HomePage = () => {
             viewport={{ once: true }}
             className="mb-8"
           >
-            <div className="flex flex-col md:flex-row">
+            <div className="flex flex-col ">
               <h2 className="text-2xl font-black text-gray-900 ">
                 Featured <span className="text-orange-500">Products</span>
               </h2>

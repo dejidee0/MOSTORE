@@ -32,7 +32,7 @@ export default function ProductSections() {
 
         {/* Recently Added Section */}
         <section className="max-w-7xl mx-auto">
-          <div className="flex flex-col md:flex-row">
+          <div className="flex flex-col ">
             <h2 className="text-2xl lg:text-3xl font-black ">
               Recently <span className="text-orange-500">Added</span>
             </h2>

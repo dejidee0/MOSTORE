@@ -86,10 +86,13 @@ const BlogLandingSection = () => {
       <div className="max-w-7xl mx-auto px-4">
         {/* Header */}
         <div className="flex justify-between items-center mb-8 border-b border-gray-300">
-          <div className="flex gap-2">
-            <h2 className=" text-xl md:text-3xl font-bold text-gray-900 mb-2">
+          <div className="flex flex-col md:flex-row">
+            <h2 className=" text-xl md:text-3xl font-bold text-gray-900 ">
               Our Latest News
             </h2>
+            <p className="text-gray-500 text-sm md:text-base">
+              Don't miss out on this week's deals
+            </p>
           </div>
           <Link href="/blog">
             <motion.div

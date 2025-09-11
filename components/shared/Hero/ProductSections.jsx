@@ -32,10 +32,14 @@ export default function ProductSections() {
 
         {/* Recently Added Section */}
         <section className="max-w-7xl mx-auto">
-          <h2 className="text-2xl lg:text-3xl font-black mb-6">
-            Recently <span className="text-orange-500">Added</span>
-          </h2>
-
+          <div className="flex flex-col md:flex-row">
+            <h2 className="text-2xl lg:text-3xl font-black ">
+              Recently <span className="text-orange-500">Added</span>
+            </h2>
+            <p className="text-gray-500 text-sm md:text-base">
+              Don't miss out on this week's deals
+            </p>
+          </div>
           {loading ? (
             <div className="flex gap-4 overflow-x-auto py-4">
               {[1, 2, 3, 4, 5, 6].map((i) => (

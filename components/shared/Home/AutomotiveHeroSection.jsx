@@ -1,6 +1,7 @@
 import React from "react";
 import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
+import Link from "next/link";
 
 const AutomotiveHeroSection = () => {
   return (
@@ -70,23 +71,25 @@ const AutomotiveHeroSection = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.8 }}
             >
-              <motion.button
-                whileHover={{
-                  scale: 1.05,
-                  boxShadow: "0 20px 40px rgba(255, 255, 255, 0.1)",
-                }}
-                whileTap={{ scale: 0.98 }}
-                className="group inline-flex items-center gap-3 rounded-lg bg-white px-6 py-3 sm:px-8 sm:py-4 text-base sm:text-lg font-semibold text-black transition-all duration-300 hover:bg-gray-100 focus:outline-none focus:ring-4 focus:ring-white/20"
-              >
-                Shop Now
-                <motion.div
-                  initial={{ x: 0 }}
-                  whileHover={{ x: 5 }}
-                  transition={{ duration: 0.2 }}
+              <Link href="/products?category=1">
+                <motion.button
+                  whileHover={{
+                    scale: 1.05,
+                    boxShadow: "0 20px 40px rgba(255, 255, 255, 0.1)",
+                  }}
+                  whileTap={{ scale: 0.98 }}
+                  className="group inline-flex items-center gap-3 rounded-lg bg-white px-6 py-3 sm:px-8 sm:py-4 text-base sm:text-lg font-semibold text-black transition-all duration-300 hover:bg-gray-100 focus:outline-none focus:ring-4 focus:ring-white/20"
                 >
-                  <ArrowRight className="h-4 w-4 sm:h-5 sm:w-5" />
-                </motion.div>
-              </motion.button>
+                  Shop Now
+                  <motion.div
+                    initial={{ x: 0 }}
+                    whileHover={{ x: 5 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <ArrowRight className="h-4 w-4 sm:h-5 sm:w-5" />
+                  </motion.div>
+                </motion.button>
+              </Link>
             </motion.div>
           </div>
         </div>

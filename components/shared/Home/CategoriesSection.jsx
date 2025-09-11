@@ -48,7 +48,7 @@ const CategoriesSection = ({ categories = [], categoriesLoading = false }) => {
       <div className="max-w-7xl mx-auto px-4">
         {/* Header */}
         <div className="mb-8">
-          <h2 className="text-4xl lg:text-2xl font-black text-gray-900 mb-2">
+          <h2 className="text-2xl font-black text-gray-900 mb-2">
             Featured <span className="text-orange-500">Categories</span>
           </h2>
         </div>

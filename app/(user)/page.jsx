@@ -16,14 +16,14 @@ import BusinessPartners from "@/components/shared/Home/BrandSection";
 import { FaWhatsapp } from "react-icons/fa";
 
 // Lazy-load heavy sections
-const ProductShowcaseSection = dynamic(
-  () => import("@/components/shared/Hero/ProductShowCase")
+const ProductShowcaseSection = dynamic(() =>
+  import("@/components/shared/Hero/ProductShowCase")
 );
-const ProductSections = dynamic(
-  () => import("@/components/shared/Hero/ProductSections")
+const ProductSections = dynamic(() =>
+  import("@/components/shared/Hero/ProductSections")
 );
-const BlogLandingSection = dynamic(
-  () => import("@/components/shared/Home/Blog")
+const BlogLandingSection = dynamic(() =>
+  import("@/components/shared/Home/Blog")
 );
 
 const HomePage = () => {
@@ -127,7 +127,7 @@ const HomePage = () => {
             viewport={{ once: true }}
             className="mb-8"
           >
-            <h2 className="text-4xl lg:text-2xl font-black text-gray-900 mb-2">
+            <h2 className="text-2xl font-black text-gray-900 mb-2">
               Featured <span className="text-orange-500">Products</span>
             </h2>
           </motion.div>

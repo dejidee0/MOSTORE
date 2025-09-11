@@ -36,7 +36,7 @@ const ServiceFeatures = () => {
         <div className="block md:hidden">
           <div className="overflow-x-auto">
             <div
-              className="flex space-x-4 pb-4"
+              className="flex space-x-2 pb-2"
               style={{ width: "max-content" }}
             >
               {features.map((f, i) => {
@@ -44,14 +44,14 @@ const ServiceFeatures = () => {
                 return (
                   <div
                     key={i}
-                    className="flex-shrink-0 w-32 md:w-64 p-4 md:p-6 rounded-xl border border-gray-200 hover:shadow-lg transition-all duration-300 hover:border-gray-300 bg-white"
+                    className="flex-shrink-0 w-44 md:w-64 px-2 py-1 md:p-6 rounded-xl border border-gray-200 hover:shadow-lg transition-all duration-300 hover:border-gray-300 bg-white"
                   >
                     {/* Icon */}
                     <div
-                      className={`${f.bgColor} w-14 h-14 rounded-full flex items-center justify-center mb-4`}
+                      className={`${f.bgColor} w-10 h-10 md:w-14 md:h-14 rounded-full flex items-center justify-center mb-4`}
                     >
                       <Icon
-                        className="w-7 h-7 text-gray-700"
+                        className="w-4 h-4 md:w-7 md:h-7 text-gray-700"
                         strokeWidth={1.5}
                       />
                     </div>

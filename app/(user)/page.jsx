@@ -54,7 +54,6 @@ const HomePage = () => {
     setIsWhatsAppOpen(!isWhatsAppOpen);
   };
 
-  // Motion variants for cleaner animation
   const cardVariants = {
     hidden: { opacity: 0, y: 50 },
     visible: (i) => ({
@@ -83,7 +82,6 @@ const HomePage = () => {
     },
   };
 
-  // Bouncy animation for the WhatsApp button (two keyframes)
   const bouncyButtonVariants = {
     idle: {
       y: [0, -8],

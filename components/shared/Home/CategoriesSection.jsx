@@ -47,13 +47,14 @@ const CategoriesSection = ({ categories = [], categoriesLoading = false }) => {
     <section className="py-4 ">
       <div className="max-w-7xl mx-auto px-4">
         {/* Header */}
-        <div className="md:mb-8 mb-2 flex flex-col ">
+        <div className="md:mb-8 mb-2 flex flex-col">
           <h2 className="text-2xl font-black text-gray-900 mb-0 md:mb-2">
             Featured <span className="text-orange-500">Categories</span>
           </h2>
-          <p className="text-sm">International Online Shopping Made Easy</p>
+          <p className="text-sm m-0 leading-tight">
+            International Online Shopping Made Easy
+          </p>
         </div>
-
         {categoriesLoading ? (
           // 🔹 Skeleton Loader - Responsive
           <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 2xl:grid-cols-6 gap-4 lg:gap-6 animate-pulse">

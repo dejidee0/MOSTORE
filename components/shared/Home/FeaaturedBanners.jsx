@@ -5,7 +5,7 @@ export default function FeaturedBanners() {
   const router = useRouter();
 
   return (
-    <section className="py-2 px-4 sm:px-8 lg:px-16 ">
+    <section className="py-0 md:py-4 px-4 sm:px-8 lg:px-16 ">
       <div className="max-w-7xl mx-auto">
         {/* Mobile: Single Row with Horizontal Scroll */}
         <div className="block md:hidden">
@@ -72,13 +72,6 @@ export default function FeaturedBanners() {
                 </div>
               ))}
             </div>
-          </div>
-
-          {/* Mobile scroll indicator */}
-          <div className="flex justify-center space-x-2 mt-2">
-            <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
-            <div className="w-2 h-2 bg-gray-300 rounded-full"></div>
-            <div className="w-2 h-2 bg-gray-300 rounded-full"></div>
           </div>
         </div>
 

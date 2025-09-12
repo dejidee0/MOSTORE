@@ -91,7 +91,8 @@ const BlogLandingSection = () => {
               Our Latest News
             </h2>
             <p className="text-gray-500 text-sm md:text-base">
-              Don't miss out on this week's deals
+              Stay updated with the latest trends, reviews and insights from our
+              blog.
             </p>
           </div>
           <Link href="/blog">

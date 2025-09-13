@@ -1,15 +1,13 @@
 import React, { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Heart, ShoppingCart } from "lucide-react";
-import { useCart } from "@/lib/cart";
+import { Heart } from "lucide-react";
 import { useWishlist } from "@/hooks/useWishlist";
 
 export const JumiaStyleProductCard = ({ product }) => {
   if (!product) return null;
 
   const [isImageLoaded, setIsImageLoaded] = useState(false);
-  const { addItem } = useCart();
   const { isInWishlist, toggleItem } = useWishlist();
 
   const isWishlisted = isInWishlist(product.id);
@@ -41,23 +39,6 @@ export const JumiaStyleProductCard = ({ product }) => {
     await toggleItem(wishlistProduct);
   };
 
-  const handleAddToCart = async (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-
-    if (product.stock_quantity === 0) return;
-
-    await addItem(
-      {
-        ...product,
-        id: product.id.toString(),
-        price: parseFloat(discountedPrice),
-        image: product.images?.[0],
-      },
-      1
-    );
-  };
-
   return (
     <Link href={`/products/${product.slug || product.id}`}>
       <div className="bg-white rounded-lg border border-gray-100 hover:shadow-md transition-shadow duration-200 overflow-hidden group cursor-pointer">
@@ -80,7 +61,7 @@ export const JumiaStyleProductCard = ({ product }) => {
 
           {/* Discount Badge */}
           {product.discount && (
-            <div className="absolute top-1 left-1 bg-orange-500 text-white text-xs font-bold px-1.5 py-0.5 rounded">
+            <div className="absolute top-1 left-1 bg-orange-500 text-white text-xs font-bold px-1 py-0.5 rounded">
               -{product.discount}%
             </div>
           )}
@@ -88,7 +69,7 @@ export const JumiaStyleProductCard = ({ product }) => {
           {/* Wishlist Heart - Visible by default on md screens, hidden on mobile until hover */}
           <button
             onClick={handleWishlistClick}
-            className="absolute top-1 right-1 p-1.5 bg-white/80 rounded-full opacity-0 md:opacity-100 group-hover:opacity-100 transition-opacity duration-200 hover:bg-white"
+            className="absolute top-1 right-1 p-1 bg-white/80 rounded-full opacity-0 md:opacity-100 group-hover:opacity-100 transition-opacity duration-200 hover:bg-white"
           >
             <Heart
               className={`w-3.5 h-3.5 ${
@@ -99,9 +80,9 @@ export const JumiaStyleProductCard = ({ product }) => {
         </div>
 
         {/* Product Info */}
-        <div className="p-2 space-y-1">
+        <div className="p-1 space-y-0.5">
           {/* Product Name - 2 lines max */}
-          <h3 className="text-xs font-medium text-gray-900 line-clamp-2 leading-tight min-h-[2.5rem]">
+          <h3 className="text-xs font-medium text-gray-900 line-clamp-2 leading-tight">
             {product.name}
           </h3>
 
@@ -121,15 +102,6 @@ export const JumiaStyleProductCard = ({ product }) => {
               </div>
             )}
           </div>
-
-          {/* Add to Cart Button - Visible by default on md screens, hidden on mobile until hover */}
-          <button
-            onClick={handleAddToCart}
-            disabled={product.stock_quantity === 0}
-            className="w-full mt-2 bg-orange-500 text-white text-xs font-medium py-1.5 rounded opacity-0 md:opacity-100 group-hover:opacity-100 transition-opacity duration-200 hover:bg-orange-600 disabled:bg-gray-300 disabled:cursor-not-allowed"
-          >
-            {product.stock_quantity === 0 ? "Out of Stock" : "Add to Cart"}
-          </button>
         </div>
       </div>
     </Link>

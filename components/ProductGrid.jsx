@@ -29,8 +29,8 @@ export default function ProductGrid() {
   }, []);
 
   return (
-    <section className=" bg-orange-50 py-4">
-      <div className="max-w-7xl mx-auto px-3">
+    <section className=" bg-orange-50 ">
+      <div className="max-w-7xl mx-auto">
         {loading && (
           <div className="flex justify-center items-center py-12">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500"></div>

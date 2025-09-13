@@ -2,8 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Star, ShoppingCart, Eye, Heart } from "lucide-react";
-import { useCart } from "@/lib/cart";
+import { Star, Heart } from "lucide-react";
 import { useWishlist } from "@/hooks/useWishlist";
 import { supabase } from "@/lib/supabase-client";
 import Link from "next/link";
@@ -11,7 +10,6 @@ import Image from "next/image";
 
 export default function ProductShowcaseSection() {
   const router = useRouter();
-  const { addItem } = useCart();
   const { isInWishlist, toggleItem } = useWishlist();
   const [products, setProducts] = useState([]);
 
@@ -55,20 +53,6 @@ export default function ProductShowcaseSection() {
     await toggleItem(wishlistProduct);
   };
 
-  const handleAddToCart = async (product, e) => {
-    e.preventDefault();
-    e.stopPropagation();
-
-    await addItem(
-      {
-        ...product,
-        id: product.id.toString(),
-        image: product.images?.[0],
-      },
-      1
-    );
-  };
-
   const renderStars = (rating) =>
     Array.from({ length: 5 }, (_, index) => (
       <Star
@@ -82,7 +66,7 @@ export default function ProductShowcaseSection() {
     ));
 
   return (
-    <section className="w-full  py-4">
+    <section className="w-full py-4">
       <div className="max-w-7xl mx-auto px-3">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
           {/* Left Promotional Banner */}
@@ -152,7 +136,7 @@ export default function ProductShowcaseSection() {
 
                       {/* Discount Badge */}
                       {product.discount && (
-                        <div className="absolute top-1 left-1 bg-orange-500 text-white text-xs font-bold px-1.5 py-0.5 rounded">
+                        <div className="absolute top-1 left-1 bg-orange-500 text-white text-xs font-bold px-1 py-0.5 rounded">
                           -{product.discount}%
                         </div>
                       )}
@@ -160,7 +144,7 @@ export default function ProductShowcaseSection() {
                       {/* Wishlist Heart */}
                       <button
                         onClick={(e) => handleWishlistClick(product, e)}
-                        className="absolute top-1 right-1 p-1.5 bg-white/80 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-white"
+                        className="absolute top-1 right-1 p-1 bg-white/80 rounded-full opacity-0 md:opacity-100 group-hover:opacity-100 transition-opacity duration-200 hover:bg-white"
                       >
                         <Heart
                           className={`w-3.5 h-3.5 ${
@@ -173,9 +157,9 @@ export default function ProductShowcaseSection() {
                     </div>
 
                     {/* Product Info */}
-                    <div className="p-2 space-y-1">
+                    <div className="p-1 space-y-0.5">
                       {/* Product Name */}
-                      <h3 className="text-xs font-medium text-gray-900 line-clamp-2 leading-tight min-h-[2.5rem]">
+                      <h3 className="text-xs font-medium text-gray-900 line-clamp-2 leading-tight">
                         {product.name}
                       </h3>
 
@@ -203,14 +187,6 @@ export default function ProductShowcaseSection() {
                           </div>
                         )}
                       </div>
-
-                      {/* Add to Cart Button - Hidden on mobile, shown on hover */}
-                      <button
-                        onClick={(e) => handleAddToCart(product, e)}
-                        className="w-full mt-2 bg-orange-500 text-white text-xs font-medium py-1.5 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-orange-600"
-                      >
-                        Add to Cart
-                      </button>
                     </div>
                   </div>
                 </Link>

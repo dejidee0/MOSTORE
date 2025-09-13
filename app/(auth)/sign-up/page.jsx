@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase-client";
 import { motion, AnimatePresence } from "framer-motion";
+import { CheckCircle } from "lucide-react";
 
 const SignUpPage = () => {
   const router = useRouter();
@@ -165,9 +166,10 @@ const SignUpPage = () => {
 
       if (error) throw error;
       setSuccess(
-        "Account created successfully! Please check your email to confirm your account."
+        "Account created successfully! Please check your email to verify your account."
       );
-      router.push("/sign-in");
+      // Delay redirect to show success UI
+      setTimeout(() => router.push("/sign-in"), 5000);
     } catch (err) {
       console.error("Sign-up error:", err);
       setError(err.message || "Sign-up failed. Please try again.");
@@ -336,8 +338,35 @@ const SignUpPage = () => {
     }),
   };
 
+  const successVariants = {
+    hidden: { opacity: 0, scale: 0.8 },
+    visible: {
+      opacity: 1,
+      scale: 1,
+      transition: {
+        duration: 0.5,
+        type: "spring",
+        stiffness: 100,
+        damping: 15,
+      },
+    },
+    exit: { opacity: 0, scale: 0.8, transition: { duration: 0.3 } },
+  };
+
+  const checkmarkVariants = {
+    hidden: { pathLength: 0 },
+    visible: {
+      pathLength: 1,
+      transition: {
+        duration: 0.8,
+        ease: "easeInOut",
+        delay: 0.2,
+      },
+    },
+  };
+
   return (
-    <div className="min-h-screen flex flex-col md:flex-row font-raleway bg-white">
+    <div className="min-h-screen flex flex-col md:flex-row font-raleway bg-gradient-to-br from-gray-100 to-white">
       <div className="hidden md:flex md:w-1/2 relative">
         <Image
           src="/auth.png"
@@ -371,11 +400,47 @@ const SignUpPage = () => {
               {error}
             </div>
           )}
-          {success && (
-            <div className="text-green-600 bg-green-50 border border-green-200 text-sm text-center p-3 rounded-md">
-              {success}
-            </div>
-          )}
+          <AnimatePresence>
+            {success && (
+              <motion.div
+                key="success-modal"
+                className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+              >
+                <motion.div
+                  className="bg-white rounded-lg p-8 max-w-md w-full text-center shadow-2xl"
+                  variants={successVariants}
+                  initial="hidden"
+                  animate="visible"
+                  exit="exit"
+                >
+                  <motion.div
+                    className="w-16 h-16 mx-auto mb-4"
+                    variants={checkmarkVariants}
+                    initial="hidden"
+                    animate="visible"
+                  >
+                    <CheckCircle className="w-full h-full text-green-500" />
+                  </motion.div>
+                  <h3 className="text-2xl font-bold text-gray-800 mb-2">
+                    Success!
+                  </h3>
+                  <p className="text-gray-600 mb-4">
+                    A verification email has been sent to {form.email}. Please
+                    verify your account before logging in.
+                  </p>
+                  <button
+                    onClick={() => router.push("/sign-in")}
+                    className="bg-orange-500 text-white py-2 px-6 rounded-md hover:bg-orange-600 transition-colors"
+                  >
+                    Go to Sign In
+                  </button>
+                </motion.div>
+              </motion.div>
+            )}
+          </AnimatePresence>
           <div className="relative">
             <AnimatePresence custom={direction} mode="wait">
               {step === 1 && (

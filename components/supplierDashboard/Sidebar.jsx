@@ -5,7 +5,7 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import logo from "../../public/assets/Mostore logo 2.png";
 
-const navLinks = ["Dashboard", "Products"];
+const navLinks = ["Products"];
 
 export default function Sidebar({ isOpen, toggleSidebar }) {
   const pathname = usePathname();
@@ -39,7 +39,9 @@ export default function Sidebar({ isOpen, toggleSidebar }) {
         {/* Navigation */}
         <nav className="flex flex-col gap-2 p-4">
           {navLinks.map((label) => {
-            const route = `/supplier/dashboard/${label.toLowerCase().replace(/ & | /g, "-")}`;
+            const route = `/supplier/dashboard/${label
+              .toLowerCase()
+              .replace(/ & | /g, "-")}`;
             const isActive = pathname === route;
 
             return (

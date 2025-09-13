@@ -50,6 +50,19 @@ import { FaOilCan } from "react-icons/fa";
 import { Ship } from "lucide-react";
 import { Baby } from "lucide-react";
 
+const MenuButton = ({ onClick, icon, label, className = "" }) => {
+  return (
+    <button
+      onClick={onClick}
+      className={`w-full flex items-center gap-3 px-6 py-3 text-left hover:bg-orange-50 transition-all duration-200 text-gray-700 ${className}`}
+    >
+      <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center">
+        {icon}
+      </div>
+      <span className="font-semibold text-sm">{label}</span>
+    </button>
+  );
+};
 const NavBar = ({ onWishListClick }) => {
   const router = useRouter();
 

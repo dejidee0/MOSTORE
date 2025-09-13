@@ -5,7 +5,7 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import logo from "../../public/assets/Mostore logo 2.png";
 
-const navLinks = ["Dashboard", "Products", "Order", "Suppliers", "Blog"];
+const navLinks = ["Products", "Order", "Suppliers", "Blog"];
 
 export default function Sidebar({ isOpen, toggleSidebar }) {
   const pathname = usePathname();
@@ -45,11 +45,13 @@ export default function Sidebar({ isOpen, toggleSidebar }) {
             const route =
               label === "Dashboard"
                 ? "/admin/dashboard"
-                : `/admin/dashboard/${label.toLowerCase().replace(/ & | /g, "-")}`;
+                : `/admin/dashboard/${label
+                    .toLowerCase()
+                    .replace(/ & | /g, "-")}`;
 
             const isActive =
               pathname === route ||
-              (label === "Dashboard" && pathname === "/admin/dashboard");
+              (label === "Products" && pathname === "/admin/dashboard");
 
             return (
               <Link

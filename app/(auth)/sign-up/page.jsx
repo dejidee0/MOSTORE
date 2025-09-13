@@ -14,23 +14,19 @@ const SignUpPage = () => {
     username: "",
     password: "",
     confirmPassword: "",
-    // Supplier fields
     isSupplier: false,
     phoneNumber: "",
     address: "",
     bankAccountNumber: "",
     bankName: "",
-
     acceptedTerms: false,
   });
   const [isLoading, setIsLoading] = useState(false);
+  const [isCheckingUsername, setIsCheckingUsername] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [showTermsModal, setShowTermsModal] = useState(false);
-
-  // step: 1 = basic (compulsory), 2 = supplier (conditional)
   const [step, setStep] = useState(1);
-  // direction for animation: 1 => forward (slide from right), -1 => back (slide from left)
   const [direction, setDirection] = useState(1);
 
   const handleChange = (e) => {
@@ -46,7 +42,6 @@ const SignUpPage = () => {
     setForm((prev) => ({
       ...prev,
       isSupplier: isChecked,
-      // Reset supplier fields if unchecked
       ...(isChecked
         ? {}
         : {
@@ -54,14 +49,11 @@ const SignUpPage = () => {
             address: "",
             bankAccountNumber: "",
             bankName: "",
-            bankRoutingNumber: "",
-            bankSwift: "",
             acceptedTerms: false,
           }),
     }));
   };
 
-  // Basic-only validation (used when moving from step 1 -> step 2 or direct submit if not supplier)
   const validateBasicFields = () => {
     setError("");
     if (
@@ -74,24 +66,19 @@ const SignUpPage = () => {
       setError("All basic fields are required.");
       return false;
     }
-
     if (form.password !== form.confirmPassword) {
       setError("Passwords do not match.");
       return false;
     }
-
     if (form.password.length < 6) {
       setError("Password must be at least 6 characters long.");
       return false;
     }
-
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(form.email)) {
       setError("Please enter a valid email address.");
       return false;
     }
-
-    // Username validation
     const usernameRegex = /^[a-zA-Z0-9_]{3,20}$/;
     if (!usernameRegex.test(form.username)) {
       setError(
@@ -99,79 +86,9 @@ const SignUpPage = () => {
       );
       return false;
     }
-
     return true;
   };
 
-  // Original validateForm (keeps supplier checks as you originally had)
-  const validateForm = () => {
-    setError("");
-    if (
-      !form.fullName ||
-      !form.email ||
-      !form.username ||
-      !form.password ||
-      !form.confirmPassword
-    ) {
-      setError("All basic fields are required.");
-      return false;
-    }
-
-    if (form.password !== form.confirmPassword) {
-      setError("Passwords do not match.");
-      return false;
-    }
-
-    if (form.password.length < 6) {
-      setError("Password must be at least 6 characters long.");
-      return false;
-    }
-
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(form.email)) {
-      setError("Please enter a valid email address.");
-      return false;
-    }
-
-    // Username validation
-    const usernameRegex = /^[a-zA-Z0-9_]{3,20}$/;
-    if (!usernameRegex.test(form.username)) {
-      setError(
-        "Username must be 3-20 characters long and contain only letters, numbers, and underscores."
-      );
-      return false;
-    }
-
-    // Supplier validation
-    if (form.isSupplier) {
-      if (
-        !form.phoneNumber ||
-        !form.address ||
-        !form.bankAccountNumber ||
-        !form.bankName
-      ) {
-        setError("All supplier fields are required.");
-        return false;
-      }
-
-      if (!form.acceptedTerms) {
-        setError("You must accept the supplier terms and conditions.");
-        return false;
-      }
-
-      // Phone number validation (international-ish)
-      const cleanedPhone = form.phoneNumber.replace(/[\s.-]/g, "");
-      const phoneRegex = /^[+]?[1-9][\d]{6,15}$/; // basic international length check
-      if (!phoneRegex.test(cleanedPhone)) {
-        setError("Please enter a valid phone number.");
-        return false;
-      }
-    }
-
-    return true;
-  };
-
-  // Check if username is available by querying 'profiles' table (kept as you had it)
   const checkUsernameAvailability = async (username) => {
     try {
       const { data, error } = await supabase
@@ -179,13 +96,7 @@ const SignUpPage = () => {
         .select("id")
         .eq("username", username)
         .limit(1);
-
-      if (error) {
-        console.error("Username check error:", error);
-        return false;
-      }
-
-      // If data array is empty => username available
+      if (error) throw error;
       return !(Array.isArray(data) && data.length > 0);
     } catch (err) {
       console.error("Username check error:", err);
@@ -198,11 +109,32 @@ const SignUpPage = () => {
     setError("");
     setSuccess("");
 
-    if (!validateForm()) return;
+    if (form.isSupplier) {
+      if (
+        !form.phoneNumber ||
+        !form.address ||
+        !form.bankAccountNumber ||
+        !form.bankName
+      ) {
+        setError("All supplier fields are required.");
+        return;
+      }
+      if (!form.acceptedTerms) {
+        setError("You must accept the supplier terms and conditions.");
+        return;
+      }
+      const cleanedPhone = form.phoneNumber.replace(/[\s.-]/g, "");
+      const phoneRegex = /^[+]?[1-9][\d]{6,15}$/;
+      if (!phoneRegex.test(cleanedPhone)) {
+        setError("Please enter a valid phone number.");
+        return;
+      }
+    }
+
+    if (!validateBasicFields()) return;
     setIsLoading(true);
 
     try {
-      // Check username availability in profiles table now
       const isUsernameAvailable = await checkUsernameAvailability(
         form.username
       );
@@ -216,7 +148,7 @@ const SignUpPage = () => {
         full_name: form.fullName,
         username: form.username,
         is_supplier: form.isSupplier,
-        role: form.isSupplier ? "supplier" : "customer",
+        role: "admin",
         phone: form.isSupplier ? form.phoneNumber : null,
         address: form.isSupplier ? form.address : null,
         bank_account_number: form.isSupplier ? form.bankAccountNumber : null,
@@ -232,12 +164,10 @@ const SignUpPage = () => {
       });
 
       if (error) throw error;
-      if (data) {
-        router.push("/sign-in");
-      }
       setSuccess(
         "Account created successfully! Please check your email to confirm your account."
       );
+      router.push("/sign-in");
     } catch (err) {
       console.error("Sign-up error:", err);
       setError(err.message || "Sign-up failed. Please try again.");
@@ -246,19 +176,29 @@ const SignUpPage = () => {
     }
   };
 
-  // Move from step 1 -> next (either step 2 or sign up directly if not supplier)
   const handleNext = async (e) => {
     e.preventDefault();
     setError("");
     if (!validateBasicFields()) return;
 
-    if (form.isSupplier) {
-      setDirection(1);
-      setStep(2);
-      // do not submit yet - supplier info required
-    } else {
-      // Not a supplier -> submit immediately using the existing sign-up flow
-      await handleSignUp();
+    setIsCheckingUsername(true);
+    try {
+      const isUsernameAvailable = await checkUsernameAvailability(
+        form.username
+      );
+      if (!isUsernameAvailable) {
+        setError("Username is already taken. Please choose another one.");
+        return;
+      }
+
+      if (form.isSupplier) {
+        setDirection(1);
+        setStep(2);
+      } else {
+        await handleSignUp();
+      }
+    } finally {
+      setIsCheckingUsername(false);
     }
   };
 
@@ -285,7 +225,6 @@ const SignUpPage = () => {
                 ✕
               </button>
             </div>
-
             <div className="space-y-4 text-sm text-gray-700">
               <section>
                 <h4 className="font-semibold mb-2">1. ACCEPTANCE OF TERMS</h4>
@@ -294,7 +233,6 @@ const SignUpPage = () => {
                   by these terms and conditions.
                 </p>
               </section>
-
               <section>
                 <h4 className="font-semibold mb-2">2. PAYMENT MANAGEMENT</h4>
                 <p>
@@ -312,7 +250,6 @@ const SignUpPage = () => {
                   <li>No ongoing customer complaints</li>
                 </ul>
               </section>
-
               <section>
                 <h4 className="font-semibold mb-2">3. TRANSFER TIMEFRAMES</h4>
                 <p>
@@ -321,7 +258,6 @@ const SignUpPage = () => {
                   team.
                 </p>
               </section>
-
               <section>
                 <h4 className="font-semibold mb-2">4. COMMISSIONS</h4>
                 <p>
@@ -330,7 +266,6 @@ const SignUpPage = () => {
                   customer support.
                 </p>
               </section>
-
               <section>
                 <h4 className="font-semibold mb-2">5. SUPPLIER OBLIGATIONS</h4>
                 <ul className="list-disc ml-5">
@@ -341,7 +276,6 @@ const SignUpPage = () => {
                   <li>Comply with applicable laws and regulations</li>
                 </ul>
               </section>
-
               <section>
                 <h4 className="font-semibold mb-2">6. TERMINATION</h4>
                 <p>
@@ -350,7 +284,6 @@ const SignUpPage = () => {
                   fraudulent activity.
                 </p>
               </section>
-
               <section>
                 <h4 className="font-semibold mb-2">7. DATA PROTECTION</h4>
                 <p>
@@ -360,7 +293,6 @@ const SignUpPage = () => {
                   activity on Mostore.
                 </p>
               </section>
-
               <section>
                 <h4 className="font-semibold mb-2">8. APPLICABLE LAW</h4>
                 <p>
@@ -369,7 +301,6 @@ const SignUpPage = () => {
                 </p>
               </section>
             </div>
-
             <div className="flex justify-end mt-6 pt-4 border-t">
               <button
                 onClick={() => setShowTermsModal(false)}
@@ -383,7 +314,6 @@ const SignUpPage = () => {
       </div>
     ) : null;
 
-  // animation variants for sliding steps
   const slideVariants = {
     initial: (dir) => ({
       x: dir > 0 ? "100%" : "-100%",
@@ -408,7 +338,6 @@ const SignUpPage = () => {
 
   return (
     <div className="min-h-screen flex flex-col md:flex-row font-raleway bg-white">
-      {/* Left Side Image / Auth Banner */}
       <div className="hidden md:flex md:w-1/2 relative">
         <Image
           src="/auth.png"
@@ -418,11 +347,8 @@ const SignUpPage = () => {
           className="object-contain md:object-cover"
         />
       </div>
-
-      {/* Right Side Form */}
       <div className="flex w-full md:w-1/2 items-center justify-center p-6 sm:p-10">
         <div className="w-full max-w-md bg-white shadow-xl rounded-lg p-8 md:p-10 space-y-6 relative overflow-hidden">
-          {/* Mobile Logo */}
           <div className="md:hidden flex justify-center">
             <Image
               src="/assets/Mostore Logo Icon.png"
@@ -432,8 +358,6 @@ const SignUpPage = () => {
               priority
             />
           </div>
-
-          {/* Header / Auth Banner inside form */}
           <div className="text-center">
             <h2 className="text-3xl font-semibold text-gray-800">
               Create Account
@@ -442,21 +366,16 @@ const SignUpPage = () => {
               Start your journey with us
             </p>
           </div>
-
-          {/* Error/Success Messages */}
           {error && (
             <div className="text-red-600 bg-red-50 border border-red-200 text-sm text-center p-3 rounded-md">
               {error}
             </div>
           )}
-
           {success && (
             <div className="text-green-600 bg-green-50 border border-green-200 text-sm text-center p-3 rounded-md">
               {success}
             </div>
           )}
-
-          {/* Animated Multi-step Form */}
           <div className="relative">
             <AnimatePresence custom={direction} mode="wait">
               {step === 1 && (
@@ -470,7 +389,6 @@ const SignUpPage = () => {
                   onSubmit={handleNext}
                   className="space-y-5"
                 >
-                  {/* Basic Fields (same as original) */}
                   <div>
                     <label
                       htmlFor="fullName"
@@ -489,7 +407,6 @@ const SignUpPage = () => {
                       className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
                     />
                   </div>
-
                   <div>
                     <label
                       htmlFor="email"
@@ -508,7 +425,6 @@ const SignUpPage = () => {
                       className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
                     />
                   </div>
-
                   <div>
                     <label
                       htmlFor="username"
@@ -530,7 +446,6 @@ const SignUpPage = () => {
                       3-20 characters, letters, numbers, and underscores only
                     </p>
                   </div>
-
                   <div>
                     <label
                       htmlFor="password"
@@ -552,7 +467,6 @@ const SignUpPage = () => {
                       Must be at least 6 characters
                     </p>
                   </div>
-
                   <div>
                     <label
                       htmlFor="confirmPassword"
@@ -571,8 +485,6 @@ const SignUpPage = () => {
                       className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
                     />
                   </div>
-
-                  {/* Supplier Toggle */}
                   <div className="border-t pt-4">
                     <div className="flex items-center">
                       <input
@@ -594,23 +506,23 @@ const SignUpPage = () => {
                       Sell your products on our platform
                     </p>
                   </div>
-
                   <button
                     type="submit"
-                    disabled={isLoading}
+                    disabled={isLoading || isCheckingUsername}
                     className="w-full bg-primary hover:bg-primary-dark disabled:bg-gray-400 disabled:cursor-not-allowed text-white py-2 px-4 rounded-md transition-all duration-200"
                   >
                     {isLoading
                       ? form.isSupplier
                         ? "Creating Supplier Account..."
                         : "Creating Account..."
+                      : isCheckingUsername
+                      ? "Checking Username..."
                       : form.isSupplier
-                        ? "Next"
-                        : "Create Account"}
+                      ? "Next"
+                      : "Create Account"}
                   </button>
                 </motion.form>
               )}
-
               {step === 2 && (
                 <motion.form
                   key="step2"
@@ -622,12 +534,10 @@ const SignUpPage = () => {
                   onSubmit={handleSignUp}
                   className="space-y-5"
                 >
-                  {/* Supplier Fields (exactly as original) */}
                   <div className="space-y-4 bg-gray-50 p-4 rounded-md border">
                     <h3 className="text-sm font-semibold text-gray-800 mb-3">
                       Supplier Information
                     </h3>
-
                     <div>
                       <label
                         htmlFor="phoneNumber"
@@ -646,7 +556,6 @@ const SignUpPage = () => {
                         className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
                       />
                     </div>
-
                     <div>
                       <label
                         htmlFor="address"
@@ -665,7 +574,6 @@ const SignUpPage = () => {
                         className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
                       />
                     </div>
-
                     <div>
                       <label
                         htmlFor="bankName"
@@ -684,7 +592,6 @@ const SignUpPage = () => {
                         className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
                       />
                     </div>
-
                     <div>
                       <label
                         htmlFor="bankAccountNumber"
@@ -703,8 +610,6 @@ const SignUpPage = () => {
                         className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
                       />
                     </div>
-
-                    {/* Terms Acceptance */}
                     <div className="flex items-start space-x-2">
                       <input
                         id="acceptedTerms"
@@ -728,7 +633,6 @@ const SignUpPage = () => {
                       </div>
                     </div>
                   </div>
-
                   <div className="flex gap-3">
                     <button
                       type="button"
@@ -751,8 +655,6 @@ const SignUpPage = () => {
               )}
             </AnimatePresence>
           </div>
-
-          {/* Footer */}
           <p className="text-center text-sm text-gray-500">
             Already have an account?{" "}
             <button
@@ -765,8 +667,6 @@ const SignUpPage = () => {
           </p>
         </div>
       </div>
-
-      {/* Terms Modal */}
       <TermsModal />
     </div>
   );

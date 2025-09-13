@@ -85,10 +85,10 @@ export const JumiaStyleProductCard = ({ product }) => {
             </div>
           )}
 
-          {/* Wishlist Heart - Only on hover for mobile */}
+          {/* Wishlist Heart - Visible by default on md screens, hidden on mobile until hover */}
           <button
             onClick={handleWishlistClick}
-            className="absolute top-1 right-1 p-1.5 bg-white/80 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-white"
+            className="absolute top-1 right-1 p-1.5 bg-white/80 rounded-full opacity-0 md:opacity-100 group-hover:opacity-100 transition-opacity duration-200 hover:bg-white"
           >
             <Heart
               className={`w-3.5 h-3.5 ${
@@ -122,11 +122,11 @@ export const JumiaStyleProductCard = ({ product }) => {
             )}
           </div>
 
-          {/* Add to Cart Button - Hidden on mobile, shown on hover */}
+          {/* Add to Cart Button - Visible by default on md screens, hidden on mobile until hover */}
           <button
             onClick={handleAddToCart}
             disabled={product.stock_quantity === 0}
-            className="w-full mt-2 bg-orange-500 text-white text-xs font-medium py-1.5 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-orange-600 disabled:bg-gray-300 disabled:cursor-not-allowed"
+            className="w-full mt-2 bg-orange-500 text-white text-xs font-medium py-1.5 rounded opacity-0 md:opacity-100 group-hover:opacity-100 transition-opacity duration-200 hover:bg-orange-600 disabled:bg-gray-300 disabled:cursor-not-allowed"
           >
             {product.stock_quantity === 0 ? "Out of Stock" : "Add to Cart"}
           </button>

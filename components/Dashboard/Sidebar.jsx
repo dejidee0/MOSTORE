@@ -33,7 +33,7 @@ export default function Sidebar({ isOpen, toggleSidebar, closeSidebar }) {
       {/* Sidebar */}
       <aside
         className={`
-          fixed top-0 left-0 z-30 bg-white shadow-lg w-64 h-full
+          fixed top-0 left-0 z-30 bg-white shadow-lg w-64 h-screen
           flex flex-col
           transform transition-transform duration-300 ease-in-out
           ${isOpen ? "translate-x-0" : "-translate-x-full"}

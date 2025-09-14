@@ -662,16 +662,14 @@ const NavBar = ({ onWishListClick }) => {
                       </div>
 
                       <div className="py-2">
-                        <MenuButton
-                          onClick={navigateToOrders}
-                          icon={<Package className="w-5 h-5" />}
-                          label="My Orders"
-                        />
-                        <MenuButton
-                          onClick={navigateToSettings}
-                          icon={<Settings className="w-5 h-5" />}
-                          label="Settings"
-                        />
+                        {role !== "admin" && (
+                          <MenuButton
+                            onClick={navigateToOrders}
+                            icon={<Package className="w-5 h-5" />}
+                            label="My Orders"
+                          />
+                        )}
+
                         {(role === "supplier" || role === "admin") && (
                           <MenuButton
                             onClick={() => navigateToDashboard(role)}

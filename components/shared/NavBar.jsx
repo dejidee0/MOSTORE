@@ -663,11 +663,6 @@ const NavBar = ({ onWishListClick }) => {
 
                       <div className="py-2">
                         <MenuButton
-                          onClick={navigateToProfile}
-                          icon={<User className="w-5 h-5" />}
-                          label="My Profile"
-                        />
-                        <MenuButton
                           onClick={navigateToOrders}
                           icon={<Package className="w-5 h-5" />}
                           label="My Orders"

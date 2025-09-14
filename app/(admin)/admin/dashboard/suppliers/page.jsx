@@ -103,10 +103,10 @@ export default function SuppliersPage() {
   }
 
   return (
-    <div className="p-6 bg-gray-50 min-h-screen">
+    <div className="p-6 md:pt-10 bg-gray-50 min-h-screen">
       {/* Search and header */}
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold text-orange-500">Profiles</h1>{" "}
+        <h1 className="text-3xl font-bold text-orange-500">My Vendors</h1>{" "}
         {/* Updated to reflect all profiles */}
         <div className="relative w-64">
           <input

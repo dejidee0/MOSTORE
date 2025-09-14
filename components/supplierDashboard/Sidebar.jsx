@@ -1,14 +1,23 @@
 "use client";
 
 import Link from "next/link";
+import { LogOut } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { supabase } from "@/lib/supabase-client";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import logo from "../../public/assets/Mostore logo 2.png";
 
-const navLinks = ["Products"];
+const navLinks = ["Products", "My Profile"];
 
 export default function Sidebar({ isOpen, toggleSidebar }) {
   const pathname = usePathname();
+  const router = useRouter();
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    router.push("/sign-in");
+  };
 
   return (
     <>
@@ -25,6 +34,7 @@ export default function Sidebar({ isOpen, toggleSidebar }) {
       <aside
         className={`
           fixed top-0 left-0 z-30 bg-white shadow-lg w-64 h-full
+          flex flex-col
           transform transition-transform duration-300 ease-in-out
           ${isOpen ? "translate-x-0" : "-translate-x-full"}
           lg:translate-x-0 lg:static lg:shadow-none
@@ -37,13 +47,17 @@ export default function Sidebar({ isOpen, toggleSidebar }) {
         </div>
 
         {/* Navigation */}
-        <nav className="flex flex-col gap-2 p-4">
+        <nav className="flex flex-col gap-2 p-4 flex-1">
           {navLinks.map((label) => {
-            const route = `/supplier/dashboard/${label
-              .toLowerCase()
-              .replace(/ & | /g, "-")}`;
+            let route;
+            if (label === "My Profile") {
+              route = "/supplier/dashboard/my-profile";
+            } else {
+              route = `/supplier/dashboard/${label
+                .toLowerCase()
+                .replace(/ & | /g, "-")}`;
+            }
             const isActive = pathname === route;
-
             return (
               <Link
                 key={label}
@@ -59,6 +73,14 @@ export default function Sidebar({ isOpen, toggleSidebar }) {
             );
           })}
         </nav>
+        {/* Logout Button */}
+        <button
+          onClick={handleLogout}
+          className="flex items-center gap-2 px-4 py-3 m-4 mt-auto rounded-md text-base font-bold text-red-600 hover:bg-red-50 transition-all"
+        >
+          <LogOut className="w-5 h-5" />
+          Logout
+        </button>
       </aside>
     </>
   );

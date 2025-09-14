@@ -26,7 +26,7 @@ export default function ProductSections() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-orange-50">
+    <div className="min-h-max bg-orange-50">
       <div className="max-w-7xl mx-auto px-4 space-y-3 py-6">
         {/* Deal of the Day Section */}
 

@@ -18,6 +18,7 @@ const MyProfile = () => {
     address: "",
     bank_account_number: "",
     bank_name: "",
+    is_active: true, // Add account status to form state
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [message, setMessage] = useState({ type: "", text: "" });
@@ -29,7 +30,7 @@ const MyProfile = () => {
         const { data, error } = await supabase
           .from("profiles")
           .select(
-            "full_name,username,phone,address,bank_account_number,bank_name"
+            "full_name,username,phone,address,bank_account_number,bank_name,is_active"
           )
           .eq("id", user.id)
           .single();
@@ -53,9 +54,13 @@ const MyProfile = () => {
     e.preventDefault();
     setIsSubmitting(true);
     setMessage({ type: "", text: "" });
+
+    // Remove is_active from the update data as users shouldn't be able to change their own status
+    const { is_active, ...updateData } = profileForm;
+
     const { error } = await supabase
       .from("profiles")
-      .update(profileForm)
+      .update(updateData)
       .eq("id", user.id);
     if (error) {
       setMessage({ type: "error", text: error.message });
@@ -71,7 +76,7 @@ const MyProfile = () => {
         const { data } = await supabase
           .from("profiles")
           .select(
-            "full_name,username,phone,address,bank_account_number,bank_name"
+            "full_name,username,phone,address,bank_account_number,bank_name,is_active"
           )
           .eq("id", user.id)
           .single();
@@ -100,6 +105,7 @@ const MyProfile = () => {
       >
         <h2 className="text-2xl font-bold mb-2 text-gray-800">My Profile</h2>
         <p className="mb-6 text-gray-500">View and update your information</p>
+
         {message.text && (
           <div
             className={`flex items-center gap-2 p-3 rounded mb-4 ${
@@ -116,7 +122,41 @@ const MyProfile = () => {
             <span>{message.text}</span>
           </div>
         )}
+
         <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Account Status Display */}
+          <div className="bg-gray-50 rounded-lg p-4 mb-4">
+            <h3 className="text-sm font-medium text-gray-900 mb-2">
+              Account Status
+            </h3>
+            <div className="flex items-center gap-2">
+              <span
+                className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                  profileForm.is_active !== false
+                    ? "bg-green-100 text-green-800"
+                    : "bg-red-100 text-red-800"
+                }`}
+              >
+                {profileForm.is_active !== false ? (
+                  <>
+                    <CheckCircle className="w-3 h-3 mr-1" />
+                    Active
+                  </>
+                ) : (
+                  <>
+                    <AlertCircle className="w-3 h-3 mr-1" />
+                    Disabled
+                  </>
+                )}
+              </span>
+              {profileForm.is_active === false && (
+                <span className="text-xs text-red-600">
+                  Contact support if you believe this is an error
+                </span>
+              )}
+            </div>
+          </div>
+
           <div>
             <label className="block text-sm font-medium mb-1">Full Name</label>
             <input

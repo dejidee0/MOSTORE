@@ -5,15 +5,17 @@ import { supabase } from "@/lib/supabase-client";
 import { FixedSizeList as List } from "react-window";
 
 export default function SuppliersPage() {
-  const [profiles, setProfiles] = useState([]); // Renamed to profiles to reflect all data
+  const [profiles, setProfiles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [productsCount, setProductsCount] = useState({});
-  const [selectedProfile, setSelectedProfile] = useState(null); // Renamed to match profiles
+  const [selectedProfile, setSelectedProfile] = useState(null);
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [showProductsModal, setShowProductsModal] = useState(false);
-  const [profileProducts, setProfileProducts] = useState([]); // Renamed to match profiles
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [profileProducts, setProfileProducts] = useState([]);
   const [productsLoading, setProductsLoading] = useState(false);
+  const [actionLoading, setActionLoading] = useState(false);
 
   useEffect(() => {
     const fetchProfiles = async () => {
@@ -22,7 +24,7 @@ export default function SuppliersPage() {
         let query = supabase
           .from("profiles")
           .select("*", { count: "exact" })
-          .eq("role", "supplier"); // Fetch all rows
+          .eq("role", "supplier");
 
         if (searchTerm) {
           query = query.or(
@@ -36,12 +38,11 @@ export default function SuppliersPage() {
 
         setProfiles(data || []);
 
-        // Fetch product counts for all profiles (optional, adjust based on need)
         if (data?.length) {
           const { data: counts } = await supabase.rpc(
             "get_products_count_by_supplier",
             {
-              supplier_ids: data.map((p) => p.id), // Use all profile IDs
+              supplier_ids: data.map((p) => p.id),
             }
           );
 
@@ -63,7 +64,7 @@ export default function SuppliersPage() {
     };
 
     fetchProfiles();
-  }, [searchTerm]); // Removed currentPage since no pagination
+  }, [searchTerm]);
 
   const fetchProfileProducts = async (profileId) => {
     setProductsLoading(true);
@@ -83,6 +84,91 @@ export default function SuppliersPage() {
     }
   };
 
+  const toggleVendorStatus = async (vendorId, currentStatus) => {
+    setActionLoading(true);
+    try {
+      const { error } = await supabase
+        .from("profiles")
+        .update({ is_active: !currentStatus })
+        .eq("id", vendorId);
+
+      if (error) throw error;
+
+      // Update local state
+      setProfiles(
+        profiles.map((profile) =>
+          profile.id === vendorId
+            ? { ...profile, is_active: !currentStatus }
+            : profile
+        )
+      );
+
+      // Update selected profile if it's the one being modified
+      if (selectedProfile?.id === vendorId) {
+        setSelectedProfile({ ...selectedProfile, is_active: !currentStatus });
+      }
+
+      alert(`Vendor ${!currentStatus ? "enabled" : "disabled"} successfully!`);
+    } catch (error) {
+      console.error("Error updating vendor status:", error);
+      alert("Error updating vendor status. Please try again.");
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const deleteVendor = async (vendorId) => {
+    setActionLoading(true);
+    try {
+      // First, check if vendor has products
+      const productCount = productsCount[vendorId] || 0;
+
+      if (productCount > 0) {
+        const confirmDelete = confirm(
+          `This vendor has ${productCount} products. Deleting the vendor will also remove all their products. Are you sure you want to proceed?`
+        );
+        if (!confirmDelete) {
+          setActionLoading(false);
+          return;
+        }
+
+        // Delete all products first
+        const { error: productsError } = await supabase
+          .from("products")
+          .delete()
+          .eq("supplier_id", vendorId);
+
+        if (productsError) throw productsError;
+      }
+
+      // Delete the vendor profile (this will cascade delete the auth user)
+      const { error } = await supabase
+        .from("profiles")
+        .delete()
+        .eq("id", vendorId);
+
+      if (error) throw error;
+
+      // Update local state
+      setProfiles(profiles.filter((profile) => profile.id !== vendorId));
+
+      // Close modals if the deleted vendor was selected
+      if (selectedProfile?.id === vendorId) {
+        setSelectedProfile(null);
+        setShowProfileModal(false);
+        setShowProductsModal(false);
+      }
+
+      setShowDeleteModal(false);
+      alert("Vendor deleted successfully!");
+    } catch (error) {
+      console.error("Error deleting vendor:", error);
+      alert("Error deleting vendor. Please try again.");
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
   const openProfileModal = (profile) => {
     setSelectedProfile(profile);
     setShowProfileModal(true);
@@ -92,6 +178,11 @@ export default function SuppliersPage() {
     setSelectedProfile(profile);
     await fetchProfileProducts(profile.id);
     setShowProductsModal(true);
+  };
+
+  const openDeleteModal = (profile) => {
+    setSelectedProfile(profile);
+    setShowDeleteModal(true);
   };
 
   if (loading) {
@@ -106,8 +197,7 @@ export default function SuppliersPage() {
     <div className="p-6 md:pt-10 bg-gray-50 min-h-screen">
       {/* Search and header */}
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold text-orange-500">My Vendors</h1>{" "}
-        {/* Updated to reflect all profiles */}
+        <h1 className="text-3xl font-bold text-orange-500">My Vendors</h1>
         <div className="relative w-64">
           <input
             type="text"
@@ -142,7 +232,9 @@ export default function SuppliersPage() {
           {profiles.map((profile) => (
             <div
               key={profile.id}
-              className="bg-white shadow-lg rounded-xl p-6 border border-gray-100 hover:shadow-xl transition-all duration-300 flex flex-col"
+              className={`bg-white shadow-lg rounded-xl p-6 border border-gray-100 hover:shadow-xl transition-all duration-300 flex flex-col ${
+                profile.is_active === false ? "opacity-60 bg-gray-50" : ""
+              }`}
             >
               <div className="flex items-center gap-4 mb-4">
                 <div className="relative w-15 h-15 shrink-0">
@@ -164,10 +256,20 @@ export default function SuppliersPage() {
                       </span>
                     </div>
                   )}
+                  {profile.is_active === false && (
+                    <div className="absolute -top-1 -right-1 w-6 h-6 bg-red-500 rounded-full flex items-center justify-center">
+                      <span className="text-white text-xs">!</span>
+                    </div>
+                  )}
                 </div>
                 <div className="min-w-0">
                   <h2 className="text-lg font-semibold text-gray-800 truncate">
                     {profile.full_name || "No Name"}
+                    {profile.is_active === false && (
+                      <span className="ml-2 text-xs bg-red-100 text-red-800 px-2 py-1 rounded-full">
+                        Disabled
+                      </span>
+                    )}
                   </h2>
                   <p className="text-sm text-gray-500 truncate">
                     {profile.email}
@@ -189,8 +291,16 @@ export default function SuppliersPage() {
                   {new Date(profile.created_at).toLocaleDateString()}
                 </p>
                 <p>
-                  <span className="font-medium text-orange-500">Role:</span>{" "}
-                  {profile.role || "—"}
+                  <span className="font-medium text-orange-500">Status:</span>{" "}
+                  <span
+                    className={`font-medium ${
+                      profile.is_active === false
+                        ? "text-red-600"
+                        : "text-green-600"
+                    }`}
+                  >
+                    {profile.is_active === false ? "Disabled" : "Active"}
+                  </span>
                 </p>
               </div>
 
@@ -204,10 +314,34 @@ export default function SuppliersPage() {
                 <button
                   onClick={() => openProductsModal(profile)}
                   className="w-full bg-white hover:bg-gray-50 text-orange-500 py-2 rounded-lg font-medium border border-orange-500 transition-colors"
-                  disabled={!profile.role || profile.role !== "supplier"} // Only enable for suppliers
+                  disabled={!profile.role || profile.role !== "supplier"}
                 >
                   View Products
                 </button>
+
+                {/* Action buttons */}
+                <div className="flex gap-2">
+                  <button
+                    onClick={() =>
+                      toggleVendorStatus(profile.id, profile.is_active)
+                    }
+                    disabled={actionLoading}
+                    className={`flex-1 py-2 rounded-lg font-medium transition-colors ${
+                      profile.is_active === false
+                        ? "bg-green-100 hover:bg-green-200 text-green-700 border border-green-300"
+                        : "bg-yellow-100 hover:bg-yellow-200 text-yellow-700 border border-yellow-300"
+                    } disabled:opacity-50`}
+                  >
+                    {profile.is_active === false ? "Enable" : "Disable"}
+                  </button>
+                  <button
+                    onClick={() => openDeleteModal(profile)}
+                    disabled={actionLoading}
+                    className="flex-1 bg-red-100 hover:bg-red-200 text-red-700 py-2 rounded-lg font-medium border border-red-300 transition-colors disabled:opacity-50"
+                  >
+                    Delete
+                  </button>
+                </div>
               </div>
             </div>
           ))}
@@ -221,6 +355,11 @@ export default function SuppliersPage() {
             <div className="sticky top-0 bg-white/80 backdrop-blur-lg px-6 py-4 border-b border-gray-200 flex justify-between items-center">
               <h2 className="text-2xl font-bold text-orange-500">
                 {selectedProfile.full_name || "Profile Details"}
+                {selectedProfile.is_active === false && (
+                  <span className="ml-3 text-sm bg-red-100 text-red-800 px-3 py-1 rounded-full">
+                    Disabled
+                  </span>
+                )}
               </h2>
               <button
                 onClick={() => setShowProfileModal(false)}
@@ -297,8 +436,18 @@ export default function SuppliersPage() {
                         {productsCount[selectedProfile.id] || 0}
                       </p>
                       <p>
-                        <span className="font-medium">Role:</span>{" "}
-                        {selectedProfile.role || "—"}
+                        <span className="font-medium">Status:</span>{" "}
+                        <span
+                          className={`font-medium ${
+                            selectedProfile.is_active === false
+                              ? "text-red-600"
+                              : "text-green-600"
+                          }`}
+                        >
+                          {selectedProfile.is_active === false
+                            ? "Disabled"
+                            : "Active"}
+                        </span>
                       </p>
                       <p>
                         <span className="font-medium">Member Since:</span>{" "}
@@ -310,7 +459,34 @@ export default function SuppliersPage() {
                   </div>
                 </div>
               </div>
-              <div className="mt-6 flex justify-end">
+              <div className="mt-6 flex justify-between">
+                <div className="flex gap-3">
+                  <button
+                    onClick={() =>
+                      toggleVendorStatus(
+                        selectedProfile.id,
+                        selectedProfile.is_active
+                      )
+                    }
+                    disabled={actionLoading}
+                    className={`px-4 py-2 rounded-lg font-medium transition-colors disabled:opacity-50 ${
+                      selectedProfile.is_active === false
+                        ? "bg-green-500 hover:bg-green-600 text-white"
+                        : "bg-yellow-500 hover:bg-yellow-600 text-white"
+                    }`}
+                  >
+                    {selectedProfile.is_active === false
+                      ? "Enable Vendor"
+                      : "Disable Vendor"}
+                  </button>
+                  <button
+                    onClick={() => openDeleteModal(selectedProfile)}
+                    disabled={actionLoading}
+                    className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors disabled:opacity-50"
+                  >
+                    Delete Vendor
+                  </button>
+                </div>
                 <button
                   onClick={() => setShowProfileModal(false)}
                   className="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors"
@@ -413,6 +589,47 @@ export default function SuppliersPage() {
                 className="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors"
               >
                 Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal && selectedProfile && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl p-6 max-w-md w-full">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">
+              Delete Vendor
+            </h3>
+            <p className="text-gray-600 mb-4">
+              Are you sure you want to delete{" "}
+              <strong>{selectedProfile.full_name || "this vendor"}</strong>?
+              This action cannot be undone.
+            </p>
+            {productsCount[selectedProfile.id] > 0 && (
+              <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-4">
+                <p className="text-red-700 text-sm">
+                  <strong>Warning:</strong> This vendor has{" "}
+                  {productsCount[selectedProfile.id]} products. Deleting the
+                  vendor will also remove all their products.
+                </p>
+              </div>
+            )}
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={() => setShowDeleteModal(false)}
+                disabled={actionLoading}
+                className="px-4 py-2 text-gray-600 hover:text-gray-800 disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => deleteVendor(selectedProfile.id)}
+                disabled={actionLoading}
+                className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors disabled:opacity-50"
+              >
+                {actionLoading ? "Deleting..." : "Delete"}
               </button>
             </div>
           </div>

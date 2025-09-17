@@ -108,7 +108,7 @@ export default function BlogAdmin() {
   async function fetchCategories() {
     try {
       const { data, error } = await supabase
-        .from("categories")
+        .from("blog_categories")
         .select("*")
         .order("name", { ascending: true });
 

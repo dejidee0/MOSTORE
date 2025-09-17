@@ -86,6 +86,26 @@ const ProductDashboard = () => {
   useEffect(() => {
     fetchProducts();
   }, []);
+  // At the top of ProductDashboard
+  useEffect(() => {
+    // Restore state from localStorage
+    const savedSearchTerm = localStorage.getItem("dashboardSearchTerm") || "";
+    const savedFilterCategory =
+      localStorage.getItem("dashboardFilterCategory") || "";
+    const savedPage =
+      parseInt(localStorage.getItem("dashboardCurrentPage")) || 1;
+
+    setSearchTerm(savedSearchTerm);
+    setFilterCategory(savedFilterCategory);
+    setCurrentPage(savedPage);
+  }, []);
+
+  // Update state in localStorage when it changes
+  useEffect(() => {
+    localStorage.setItem("dashboardSearchTerm", searchTerm);
+    localStorage.setItem("dashboardFilterCategory", filterCategory);
+    localStorage.setItem("dashboardCurrentPage", currentPage.toString());
+  }, [searchTerm, filterCategory, currentPage]);
 
   // Real-time subscription
   useEffect(() => {
@@ -93,9 +113,20 @@ const ProductDashboard = () => {
       .channel("products-changes")
       .on(
         "postgres_changes",
-        { event: "*", schema: "public", table: "products" },
+        {
+          event: "*", // Consider specifying 'INSERT', 'UPDATE', or 'DELETE'
+          schema: "public",
+          table: "products",
+        },
         (payload) => {
-          fetchProducts();
+          // Only fetch products if the change is relevant
+          if (
+            payload.eventType === "INSERT" ||
+            payload.eventType === "UPDATE" ||
+            payload.eventType === "DELETE"
+          ) {
+            fetchProducts();
+          }
         }
       )
       .subscribe();
@@ -104,7 +135,6 @@ const ProductDashboard = () => {
       subscription.unsubscribe();
     };
   }, []);
-
   const deleteProduct = async (productId) => {
     if (!confirm("Are you sure you want to delete this product?")) return;
 

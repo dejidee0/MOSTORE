@@ -21,8 +21,10 @@ import { supabase } from "@/lib/supabase-client";
 import ProductForm from "@/components/inputs/ProductsForm";
 import { Tag } from "lucide-react";
 import { Calendar } from "lucide-react";
+import useUserStore from "@/lib/stores/useUserStore";
 
 const ProductDashboard = () => {
+  const { user } = useUserStore();
   const [prodUpload, setProdUpload] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [editingProduct, setEditingProduct] = useState(null);
@@ -56,6 +58,7 @@ const ProductDashboard = () => {
           )
         `
         )
+        .eq("supplier_id", user.id)
         .order("created_at", { ascending: false });
 
       if (error) {

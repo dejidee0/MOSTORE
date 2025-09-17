@@ -1,5 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  experimental: {
+    revalidateOnFocus: false,
+  },
   images: {
     remotePatterns: [
       {

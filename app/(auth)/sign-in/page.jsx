@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import useUserStore from "@/lib/stores/useUserStore";
+import Image from "next/image";
 
 const SignInPage = () => {
   const router = useRouter();
@@ -153,7 +154,16 @@ const SignInPage = () => {
       ></div>
 
       {/* Right Side Form */}
-      <div className="flex w-full md:w-1/2 items-center justify-center p-8">
+      <div className="flex flex-col md:flex-row w-full md:w-1/2 items-center justify-center p-8">
+        <div className="md:hidden flex justify-center py-6">
+          <Image
+            src="/assets/Mostore Logo Icon.png"
+            width={80}
+            height={80}
+            alt="Logo"
+            priority
+          />
+        </div>
         <div className="w-full max-w-md">
           <h2 className="text-3xl font-semibold mb-6 text-center">Sign In</h2>
           {error && (

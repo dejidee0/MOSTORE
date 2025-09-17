@@ -1,13 +1,13 @@
 import Layout from "@/components/supplierDashboard/Layout";
 import { AuthInitializer } from "@/components/AuthInitializer";
-import "../../globals.css";
+import "../../../globals.css";
 import { ToastProvider } from "@/lib/toast";
 import ProtectedRoute from "@/components/ProtectedRoute";
 
 export default function SupplierLayout({ children }) {
   return (
     <html lang="en">
-      <body className="font-raleway antialiased">
+      <body className="">
         <ToastProvider>
           <AuthInitializer>
             <ProtectedRoute allowedRoles={["supplier"]}>

@@ -108,7 +108,7 @@ export default function BlogAdmin() {
   async function fetchCategories() {
     try {
       const { data, error } = await supabase
-        .from("blog_categories")
+        .from("categories")
         .select("*")
         .order("name", { ascending: true });
 
@@ -588,8 +588,8 @@ export default function BlogAdmin() {
                             post.status === "published"
                               ? "bg-green-100 text-green-800"
                               : post.status === "draft"
-                                ? "bg-yellow-100 text-yellow-800"
-                                : "bg-gray-100 text-gray-800"
+                              ? "bg-yellow-100 text-yellow-800"
+                              : "bg-gray-100 text-gray-800"
                           }`}
                         >
                           {post.status}
@@ -973,8 +973,8 @@ export default function BlogAdmin() {
                         {isLoading
                           ? "Saving..."
                           : editingPost
-                            ? "Update Post"
-                            : "Create Post"}
+                          ? "Update Post"
+                          : "Create Post"}
                       </button>
                     </div>
                   </form>

@@ -33,7 +33,7 @@ export default function Sidebar({ isOpen, toggleSidebar }) {
       {/* Sidebar */}
       <aside
         className={`
-          fixed top-0 left-0 z-30 bg-white shadow-lg w-64 h-full
+          fixed top-0 left-0 z-30 bg-white min-h-screen shadow-lg w-64 h-full
           flex flex-col
           transform transition-transform duration-300 ease-in-out
           ${isOpen ? "translate-x-0" : "-translate-x-full"}
@@ -52,6 +52,9 @@ export default function Sidebar({ isOpen, toggleSidebar }) {
             let route;
             if (label === "My Profile") {
               route = "/supplier/dashboard/my-profile";
+            } else if (label === "Products" || label === "Dashboard") {
+              // Set Products or Dashboard as the default route
+              route = "/products";
             } else {
               route = `/supplier/dashboard/${label
                 .toLowerCase()

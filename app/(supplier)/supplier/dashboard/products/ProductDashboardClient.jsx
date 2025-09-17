@@ -16,14 +16,14 @@ import {
   ChevronsRight,
   Check,
   X as XIcon,
+  Lock,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase-client";
 import ProductForm from "@/components/inputs/ProductsForm";
-import { Tag } from "lucide-react";
-import { Calendar } from "lucide-react";
+import { Tag, Calendar } from "lucide-react";
 import useUserStore from "@/lib/stores/useUserStore";
 
-const ProductDashboard = () => {
+const ProductDashboardClient = ({ isApproved, initialError }) => {
   const { user } = useUserStore();
   const [prodUpload, setProdUpload] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
@@ -35,28 +35,58 @@ const ProductDashboard = () => {
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState(initialError);
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
 
   // Fetch products from Supabase
-  console.log(user);
-  const fetchProducts = async () => {
+  const fetchProducts = async (
+    setProducts,
+    setCategories,
+    setLoading,
+    setError
+  ) => {
     try {
       setLoading(true);
       setError(null);
 
+      // Fetch the authenticated user's session
+      const {
+        data: { user },
+        error: authError,
+      } = await supabase.auth.getUser();
+
+      if (authError || !user) {
+        throw new Error("User is not authenticated. Please log in.");
+      }
+
+      // Check if the user is an approved supplier
+      const { data: profile, error: profileError } = await supabase
+        .from("profiles")
+        .select("role, is_approved")
+        .eq("id", user.id)
+        .single();
+
+      if (profileError) {
+        throw profileError;
+      }
+
+      if (profile.role !== "supplier" || !profile.is_approved) {
+        throw new Error("You must be an approved supplier to view products.");
+      }
+
+      // Fetch products for the authenticated supplier
       const { data, error } = await supabase
         .from("products")
         .select(
           `
-          *,
-          categories (
-            id,
-            name
-          )
+        *,
+        categories (
+          id,
+          name
+        )
         `
         )
         .eq("supplier_id", user.id)
@@ -88,26 +118,30 @@ const ProductDashboard = () => {
   };
 
   useEffect(() => {
-    fetchProducts();
-  }, []);
+    if (isApproved === true && user) {
+      fetchProducts();
+    }
+  }, [isApproved, user]);
 
   // Real-time subscription
   useEffect(() => {
-    const subscription = supabase
-      .channel("products-changes")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "products" },
-        (payload) => {
-          fetchProducts();
-        }
-      )
-      .subscribe();
+    if (isApproved === true && user) {
+      const subscription = supabase
+        .channel("products-changes")
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: "products" },
+          () => {
+            fetchProducts();
+          }
+        )
+        .subscribe();
 
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, []);
+      return () => {
+        subscription.unsubscribe();
+      };
+    }
+  }, [isApproved, user]);
 
   const deleteProduct = async (productId) => {
     if (!confirm("Are you sure you want to delete this product?")) return;
@@ -231,9 +265,7 @@ const ProductDashboard = () => {
               </div>
             </div>
             <div className="p-6 space-y-8">
-              {/* Product Images and Basic Info */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                {/* Images */}
                 <div className="space-y-4">
                   <div className="aspect-square rounded-2xl overflow-hidden bg-gray-100">
                     {product.images && product.images.length > 0 ? (
@@ -257,7 +289,7 @@ const ProductDashboard = () => {
                         >
                           <img
                             src={image}
-                            alt={` ₦{product.name}  ₦{index + 2}`}
+                            alt={`${product.name} ${index + 2}`}
                             className="w-full h-full object-cover"
                           />
                         </div>
@@ -265,8 +297,6 @@ const ProductDashboard = () => {
                     </div>
                   )}
                 </div>
-
-                {/* Basic Info */}
                 <div className="space-y-6">
                   <div>
                     <h1 className="text-3xl font-bold text-gray-900 mb-2">
@@ -276,8 +306,6 @@ const ProductDashboard = () => {
                       <p className="text-lg text-gray-600">{product.brand}</p>
                     )}
                   </div>
-
-                  {/* Price */}
                   <div className="flex items-center gap-4">
                     <span className="text-4xl font-bold text-gray-900">
                       {formatPrice(product.price)}
@@ -294,8 +322,6 @@ const ProductDashboard = () => {
                       </span>
                     )}
                   </div>
-
-                  {/* Rating */}
                   {product.rating && (
                     <div className="flex items-center gap-4">
                       <div className="flex items-center gap-1">
@@ -317,8 +343,6 @@ const ProductDashboard = () => {
                       </span>
                     </div>
                   )}
-
-                  {/* Stock Status */}
                   <div className="flex items-center gap-4">
                     <span className={stockStatus.class}>
                       {stockStatus.text}
@@ -327,8 +351,6 @@ const ProductDashboard = () => {
                       {product.stock_quantity} units available
                     </span>
                   </div>
-
-                  {/* SKU and Category */}
                   <div className="space-y-2">
                     <div className="flex items-center gap-2">
                       <Tag className="text-gray-400" size={16} />
@@ -361,8 +383,6 @@ const ProductDashboard = () => {
                   </div>
                 </div>
               </div>
-
-              {/* Description */}
               <div className="space-y-4">
                 <h3 className="text-xl font-semibold text-gray-900">
                   Description
@@ -378,8 +398,6 @@ const ProductDashboard = () => {
                   </p>
                 </div>
               </div>
-
-              {/* Colors and Sizes */}
               {(product.colors?.length > 0 || product.sizes?.length > 0) && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {product.colors?.length > 0 && (
@@ -418,8 +436,6 @@ const ProductDashboard = () => {
                   )}
                 </div>
               )}
-
-              {/* Status Badges */}
               <div className="flex flex-wrap gap-3">
                 <span
                   className={`px-3 py-1 rounded-lg text-sm font-medium ${
@@ -443,7 +459,6 @@ const ProductDashboard = () => {
     );
   };
 
-  // Mobile Product Card for responsive view
   const MobileProductCard = ({ product }) => {
     const stockStatus = getStockStatus(product.stock_quantity);
 
@@ -512,10 +527,30 @@ const ProductDashboard = () => {
     );
   };
 
+  // Access denied UI for unapproved suppliers
+  if (isApproved === false) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-orange-50 to-orange-100 flex items-center justify-center p-4">
+        <div className="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full text-center border border-orange-200">
+          <Lock className="mx-auto text-orange-500 mb-4" size={48} />
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">
+            Access Denied
+          </h1>
+          <p className="text-gray-600 mb-6">
+            Your supplier account is pending approval by an administrator. You
+            cannot manage products until your account is approved.
+          </p>
+          <p className="text-sm text-gray-500">
+            Please contact support or wait for admin approval.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <>
       <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-4 md:p-8">
-        {/* Header */}
         <div className="mb-8">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
@@ -547,17 +582,12 @@ const ProductDashboard = () => {
             </div>
           </div>
         </div>
-
-        {/* Error Display */}
         {error && (
           <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
             <p className="text-red-700">Error: {error}</p>
           </div>
         )}
-
-        {/* Search and Filters */}
         <div className="mb-8 space-y-4">
-          {/* Search Bar */}
           <div className="relative">
             <Search
               className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"
@@ -571,8 +601,6 @@ const ProductDashboard = () => {
               className="w-full pl-12 pr-4 py-3 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent shadow-sm"
             />
           </div>
-
-          {/* Filters */}
           <div className={`${showFilters ? "block" : "hidden"} sm:block`}>
             <div className="flex flex-col sm:flex-row gap-4">
               <select
@@ -587,7 +615,6 @@ const ProductDashboard = () => {
                   </option>
                 ))}
               </select>
-
               <select
                 value={itemsPerPage}
                 onChange={(e) => {
@@ -601,7 +628,6 @@ const ProductDashboard = () => {
                 <option value="20">20 per page</option>
                 <option value="50">50 per page</option>
               </select>
-
               <button
                 onClick={() => setShowFilters(!showFilters)}
                 className="sm:hidden flex items-center gap-2 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
@@ -612,8 +638,6 @@ const ProductDashboard = () => {
             </div>
           </div>
         </div>
-
-        {/* Products Table */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
           {loading ? (
             <div className="p-8 flex justify-center">
@@ -635,7 +659,6 @@ const ProductDashboard = () => {
             </div>
           ) : (
             <>
-              {/* Desktop Table */}
               <div className="hidden md:block overflow-x-auto">
                 <table className="min-w-full divide-y divide-gray-200">
                   <thead className="bg-gray-50">
@@ -778,15 +801,11 @@ const ProductDashboard = () => {
                   </tbody>
                 </table>
               </div>
-
-              {/* Mobile List */}
               <div className="md:hidden p-4">
                 {currentItems.map((product) => (
                   <MobileProductCard key={product.id} product={product} />
                 ))}
               </div>
-
-              {/* Pagination */}
               <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
                 <div className="flex-1 flex justify-between sm:hidden">
                   <button
@@ -902,15 +921,11 @@ const ProductDashboard = () => {
           )}
         </div>
       </div>
-
-      {/* Product Detail Modal */}
       <ProductDetailModal
         product={selectedProduct}
         isOpen={showProductModal}
         onClose={() => setShowProductModal(false)}
       />
-
-      {/* Product Form Modal */}
       {prodUpload && (
         <ProductForm
           user={user}
@@ -926,4 +941,4 @@ const ProductDashboard = () => {
   );
 };
 
-export default ProductDashboard;
+export default ProductDashboardClient;

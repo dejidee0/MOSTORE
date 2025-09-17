@@ -52,7 +52,7 @@ const SignInPage = () => {
           router.push("/admin/dashboard");
           break;
         case "supplier":
-          router.push("/supplier/dashboard");
+          router.push("/supplier/dashboard/products");
           break;
         default: // customer
           router.push("/");

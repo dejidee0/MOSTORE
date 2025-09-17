@@ -94,7 +94,6 @@ export default function SuppliersPage() {
 
       if (error) throw error;
 
-      // Update local state
       setProfiles(
         profiles.map((profile) =>
           profile.id === vendorId
@@ -103,7 +102,6 @@ export default function SuppliersPage() {
         )
       );
 
-      // Update selected profile if it's the one being modified
       if (selectedProfile?.id === vendorId) {
         setSelectedProfile({ ...selectedProfile, is_active: !currentStatus });
       }
@@ -117,10 +115,38 @@ export default function SuppliersPage() {
     }
   };
 
+  const approveVendor = async (vendorId) => {
+    setActionLoading(true);
+    try {
+      const { error } = await supabase
+        .from("profiles")
+        .update({ is_approved: true })
+        .eq("id", vendorId);
+
+      if (error) throw error;
+
+      setProfiles(
+        profiles.map((profile) =>
+          profile.id === vendorId ? { ...profile, is_approved: true } : profile
+        )
+      );
+
+      if (selectedProfile?.id === vendorId) {
+        setSelectedProfile({ ...selectedProfile, is_approved: true });
+      }
+
+      alert("Vendor approved successfully!");
+    } catch (error) {
+      console.error("Error approving vendor:", error);
+      alert("Error approving vendor. Please try again.");
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
   const deleteVendor = async (vendorId) => {
     setActionLoading(true);
     try {
-      // First, check if vendor has products
       const productCount = productsCount[vendorId] || 0;
 
       if (productCount > 0) {
@@ -132,7 +158,6 @@ export default function SuppliersPage() {
           return;
         }
 
-        // Delete all products first
         const { error: productsError } = await supabase
           .from("products")
           .delete()
@@ -141,7 +166,6 @@ export default function SuppliersPage() {
         if (productsError) throw productsError;
       }
 
-      // Delete the vendor profile (this will cascade delete the auth user)
       const { error } = await supabase
         .from("profiles")
         .delete()
@@ -149,10 +173,8 @@ export default function SuppliersPage() {
 
       if (error) throw error;
 
-      // Update local state
       setProfiles(profiles.filter((profile) => profile.id !== vendorId));
 
-      // Close modals if the deleted vendor was selected
       if (selectedProfile?.id === vendorId) {
         setSelectedProfile(null);
         setShowProfileModal(false);
@@ -195,7 +217,6 @@ export default function SuppliersPage() {
 
   return (
     <div className="p-6 md:pt-10 bg-gray-50 min-h-screen">
-      {/* Search and header */}
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold text-orange-500">My Vendors</h1>
         <div className="relative w-64">
@@ -217,12 +238,11 @@ export default function SuppliersPage() {
               strokeLinejoin="round"
               strokeWidth="2"
               d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-            ></path>
+            />
           </svg>
         </div>
       </div>
 
-      {/* Profile grid */}
       {profiles.length === 0 ? (
         <div className="text-gray-600 bg-white p-8 rounded-xl text-center">
           No profiles found. {searchTerm && "Try a different search term."}
@@ -256,8 +276,8 @@ export default function SuppliersPage() {
                       </span>
                     </div>
                   )}
-                  {profile.is_active === false && (
-                    <div className="absolute -top-1 -right-1 w-6 h-6 bg-red-500 rounded-full flex items-center justify-center">
+                  {profile.is_approved === false && (
+                    <div className="absolute -top-1 -right-1 w-6 h-6 bg-yellow-500 rounded-full flex items-center justify-center">
                       <span className="text-white text-xs">!</span>
                     </div>
                   )}
@@ -265,6 +285,11 @@ export default function SuppliersPage() {
                 <div className="min-w-0">
                   <h2 className="text-lg font-semibold text-gray-800 truncate">
                     {profile.full_name || "No Name"}
+                    {profile.is_approved === false && (
+                      <span className="ml-2 text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full">
+                        Pending Approval
+                      </span>
+                    )}
                     {profile.is_active === false && (
                       <span className="ml-2 text-xs bg-red-100 text-red-800 px-2 py-1 rounded-full">
                         Disabled
@@ -289,6 +314,20 @@ export default function SuppliersPage() {
                 <p>
                   <span className="font-medium text-orange-500">Joined:</span>{" "}
                   {new Date(profile.created_at).toLocaleDateString()}
+                </p>
+                <p>
+                  <span className="font-medium text-orange-500">Approval:</span>{" "}
+                  <span
+                    className={`font-medium ${
+                      profile.is_approved === false
+                        ? "text-yellow-600"
+                        : "text-green-600"
+                    }`}
+                  >
+                    {profile.is_approved === false
+                      ? "Pending Approval"
+                      : "Approved"}
+                  </span>
                 </p>
                 <p>
                   <span className="font-medium text-orange-500">Status:</span>{" "}
@@ -319,21 +358,30 @@ export default function SuppliersPage() {
                   View Products
                 </button>
 
-                {/* Action buttons */}
                 <div className="flex gap-2">
-                  <button
-                    onClick={() =>
-                      toggleVendorStatus(profile.id, profile.is_active)
-                    }
-                    disabled={actionLoading}
-                    className={`flex-1 py-2 rounded-lg font-medium transition-colors ${
-                      profile.is_active === false
-                        ? "bg-green-100 hover:bg-green-200 text-green-700 border border-green-300"
-                        : "bg-yellow-100 hover:bg-yellow-200 text-yellow-700 border border-yellow-300"
-                    } disabled:opacity-50`}
-                  >
-                    {profile.is_active === false ? "Enable" : "Disable"}
-                  </button>
+                  {profile.is_approved === false ? (
+                    <button
+                      onClick={() => approveVendor(profile.id)}
+                      disabled={actionLoading}
+                      className="flex-1 bg-green-100 hover:bg-green-200 text-green-700 py-2 rounded-lg font-medium border border-green-300 transition-colors disabled:opacity-50"
+                    >
+                      Approve
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() =>
+                        toggleVendorStatus(profile.id, profile.is_active)
+                      }
+                      disabled={actionLoading}
+                      className={`flex-1 py-2 rounded-lg font-medium transition-colors ${
+                        profile.is_active === false
+                          ? "bg-green-100 hover:bg-green-200 text-green-700 border border-green-300"
+                          : "bg-yellow-100 hover:bg-yellow-200 text-yellow-700 border border-yellow-300"
+                      } disabled:opacity-50`}
+                    >
+                      {profile.is_active === false ? "Enable" : "Disable"}
+                    </button>
+                  )}
                   <button
                     onClick={() => openDeleteModal(profile)}
                     disabled={actionLoading}
@@ -348,13 +396,17 @@ export default function SuppliersPage() {
         </div>
       )}
 
-      {/* Profile Modal */}
       {showProfileModal && selectedProfile && (
         <div className="fixed inset-0 bg-white/40 backdrop-blur-md flex items-center justify-center p-4 z-50">
           <div className="bg-white/90 backdrop-blur-xl shadow-2xl rounded-2xl border border-white/50 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div className="sticky top-0 bg-white/80 backdrop-blur-lg px-6 py-4 border-b border-gray-200 flex justify-between items-center">
               <h2 className="text-2xl font-bold text-orange-500">
                 {selectedProfile.full_name || "Profile Details"}
+                {selectedProfile.is_approved === false && (
+                  <span className="ml-3 text-sm bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full">
+                    Pending Approval
+                  </span>
+                )}
                 {selectedProfile.is_active === false && (
                   <span className="ml-3 text-sm bg-red-100 text-red-800 px-3 py-1 rounded-full">
                     Disabled
@@ -436,6 +488,20 @@ export default function SuppliersPage() {
                         {productsCount[selectedProfile.id] || 0}
                       </p>
                       <p>
+                        <span className="font-medium">Approval:</span>{" "}
+                        <span
+                          className={`font-medium ${
+                            selectedProfile.is_approved === false
+                              ? "text-yellow-600"
+                              : "text-green-600"
+                          }`}
+                        >
+                          {selectedProfile.is_approved === false
+                            ? "Pending Approval"
+                            : "Approved"}
+                        </span>
+                      </p>
+                      <p>
                         <span className="font-medium">Status:</span>{" "}
                         <span
                           className={`font-medium ${
@@ -461,24 +527,34 @@ export default function SuppliersPage() {
               </div>
               <div className="mt-6 flex justify-between">
                 <div className="flex gap-3">
-                  <button
-                    onClick={() =>
-                      toggleVendorStatus(
-                        selectedProfile.id,
-                        selectedProfile.is_active
-                      )
-                    }
-                    disabled={actionLoading}
-                    className={`px-4 py-2 rounded-lg font-medium transition-colors disabled:opacity-50 ${
-                      selectedProfile.is_active === false
-                        ? "bg-green-500 hover:bg-green-600 text-white"
-                        : "bg-yellow-500 hover:bg-yellow-600 text-white"
-                    }`}
-                  >
-                    {selectedProfile.is_active === false
-                      ? "Enable Vendor"
-                      : "Disable Vendor"}
-                  </button>
+                  {selectedProfile.is_approved === false ? (
+                    <button
+                      onClick={() => approveVendor(selectedProfile.id)}
+                      disabled={actionLoading}
+                      className="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg font-medium transition-colors disabled:opacity-50"
+                    >
+                      Approve Vendor
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() =>
+                        toggleVendorStatus(
+                          selectedProfile.id,
+                          selectedProfile.is_active
+                        )
+                      }
+                      disabled={actionLoading}
+                      className={`px-4 py-2 rounded-lg font-medium transition-colors disabled:opacity-50 ${
+                        selectedProfile.is_active === false
+                          ? "bg-green-500 hover:bg-green-600 text-white"
+                          : "bg-yellow-500 hover:bg-yellow-600 text-white"
+                      }`}
+                    >
+                      {selectedProfile.is_active === false
+                        ? "Enable Vendor"
+                        : "Disable Vendor"}
+                    </button>
+                  )}
                   <button
                     onClick={() => openDeleteModal(selectedProfile)}
                     disabled={actionLoading}
@@ -499,7 +575,6 @@ export default function SuppliersPage() {
         </div>
       )}
 
-      {/* Products Modal */}
       {showProductsModal && selectedProfile && (
         <div className="fixed inset-0 bg-white/40 backdrop-blur-md flex items-center justify-center p-4 z-50">
           <div className="bg-white/90 backdrop-blur-xl shadow-2xl rounded-2xl border border-white/50 max-w-4xl w-full max-h-[90vh] flex flex-col overflow-hidden">
@@ -595,7 +670,6 @@ export default function SuppliersPage() {
         </div>
       )}
 
-      {/* Delete Confirmation Modal */}
       {showDeleteModal && selectedProfile && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-2xl p-6 max-w-md w-full">

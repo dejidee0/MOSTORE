@@ -123,6 +123,8 @@ const SupplierSignUpPage = () => {
         full_name: form.fullName,
         username: form.username,
         is_supplier: true,
+        is_approved: false,
+        is_active: true,
         role: "supplier",
         phone: form.phoneNumber,
         address: form.address,

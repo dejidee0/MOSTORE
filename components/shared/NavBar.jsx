@@ -287,7 +287,7 @@ const NavBar = ({ onWishListClick }) => {
         !user && { label: "Sign in", href: "/sign-in" },
         !user && { label: "Order", href: "#" },
         { label: "Wishlist", href: "/wishlist" },
-        { label: "Sell on Mostore", href: "/sign-up" },
+        { label: "Sell on Mostore", href: "/supplier-sign" },
       ].filter(Boolean),
     [user]
   );

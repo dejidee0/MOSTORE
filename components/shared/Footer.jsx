@@ -113,7 +113,7 @@ export default function Footer() {
                 News
               </Link>
               <Link
-                href="/sell"
+                href="/supplier-sign"
                 className="text-gray-300 hover:text-orange-400 transition-colors"
               >
                 Sell on MOSTORE

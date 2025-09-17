@@ -35,7 +35,7 @@ export default function FeaturedBanners() {
                   title: "Start Selling With Us",
                   img: "/hero/supplier.jpg",
                   badge: "Join Us",
-                  link: "/sign-up",
+                  link: "/supplier-sign",
                   color: "bg-green-600",
                   desc: "Upload your products and start selling",
                 },

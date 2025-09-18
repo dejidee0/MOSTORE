@@ -171,8 +171,8 @@ export default function BlogAdmin() {
     }
 
     // Check file size (e.g., 5MB limit)
-    if (file.size > 5 * 1024 * 1024) {
-      alert("File size must be less than 5MB");
+    if (file.size > 10 * 1024 * 1024) {
+      alert("File size must be less than 10MB");
       return;
     }
 

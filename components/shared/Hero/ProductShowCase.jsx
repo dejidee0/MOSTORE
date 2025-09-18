@@ -32,7 +32,7 @@ export default function ProductShowcaseSection() {
     fetchProducts();
   }, []);
 
-  const formatPrice = (price) => `₦${parseFloat(price).toLocaleString()}`;
+  const formatPrice = (price) => `€${parseFloat(price).toLocaleString()}`;
 
   const handleWishlistClick = async (product, e) => {
     e.preventDefault();

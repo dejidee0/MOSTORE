@@ -18,7 +18,7 @@ export const JumiaStyleProductCard = ({ product }) => {
       ? (product.originalprice * (1 - product.discount / 100)).toFixed(2)
       : product?.price?.toFixed(2) || "0.00";
 
-  const formatPrice = (price) => `₦${parseFloat(price).toLocaleString()}`;
+  const formatPrice = (price) => `€${parseFloat(price).toLocaleString()}`;
 
   const handleWishlistClick = async (e) => {
     e.preventDefault();

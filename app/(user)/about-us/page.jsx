@@ -74,7 +74,7 @@ const About = () => {
             },
             {
               icon: <FaSackDollar size={28} />,
-              value: " ₦100M+",
+              value: " €100M+",
               label: "Annual Gross Sales",
             },
           ].map((item, index) => (

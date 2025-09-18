@@ -96,7 +96,7 @@ export default function CartPage() {
     }, 0);
 
     const tax = subtotal * 0.08; // 8% tax
-    const shipping = subtotal > 50000 ? 0 : 5990; // Free shipping over ₦50,000
+    const shipping = subtotal > 50000 ? 0 : 5990; // Free shipping over €50,000
     const total = subtotal + tax + shipping;
 
     return {
@@ -297,7 +297,7 @@ export default function CartPage() {
                             )}
                             {/* Price */}{" "}
                             <div className="text-gray-800 font-semibold text-lg">
-                              ₦{(itemPrice * itemQuantity).toLocaleString()}
+                              €{(itemPrice * itemQuantity).toLocaleString()}
                             </div>
                           </div>
 
@@ -360,20 +360,20 @@ export default function CartPage() {
 
             <div className="flex justify-between text-gray-600 mb-2">
               <span>Subtotal</span>
-              <span>₦{parseFloat(totals.subtotal).toLocaleString()}</span>
+              <span>€{parseFloat(totals.subtotal).toLocaleString()}</span>
             </div>
             <div className="flex justify-between text-gray-600 mb-2">
               <span>Tax (8%)</span>
-              <span>₦{parseFloat(totals.tax).toLocaleString()}</span>
+              <span>€{parseFloat(totals.tax).toLocaleString()}</span>
             </div>
             <div className="flex justify-between text-gray-600 mb-4">
               <span>Shipping</span>
-              <span>₦{parseFloat(totals.shipping).toLocaleString()}</span>
+              <span>€{parseFloat(totals.shipping).toLocaleString()}</span>
             </div>
 
             <div className="flex justify-between font-bold text-gray-900 text-lg mb-6">
               <span>Total</span>
-              <span>₦{parseFloat(totals.total).toLocaleString()}</span>
+              <span>€{parseFloat(totals.total).toLocaleString()}</span>
             </div>
 
             <button

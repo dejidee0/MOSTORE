@@ -283,7 +283,7 @@ const ProductDashboard = () => {
                         >
                           <img
                             src={image}
-                            alt={` ₦{product.name}  ₦{index + 2}`}
+                            alt={` €{product.name}  €{index + 2}`}
                             className="w-full h-full object-cover"
                           />
                         </div>

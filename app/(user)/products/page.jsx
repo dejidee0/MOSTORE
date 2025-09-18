@@ -111,11 +111,11 @@ const ListViewProductCard = memo(({ product }) => {
             <div className="flex flex-col sm:items-end gap-3 mt-4 sm:mt-0">
               <div className="flex items-center gap-2">
                 <span className="text-xl font-bold text-gray-900">
-                  ₦{product.price.toLocaleString()}
+                  €{product.price.toLocaleString()}
                 </span>
                 {product.originalprice && (
                   <span className="text-sm text-gray-500 line-through">
-                    ₦{product.originalprice.toLocaleString()}
+                    €{product.originalprice.toLocaleString()}
                   </span>
                 )}
               </div>

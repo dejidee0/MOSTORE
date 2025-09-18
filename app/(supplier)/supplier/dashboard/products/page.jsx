@@ -1,27 +1,29 @@
 import { createServerSupabaseClient } from "@supabase/auth-helpers-nextjs";
 import ProductDashboardClient from "./ProductDashboardClient";
 
-export default async function ProductDashboard() {
+export default async function ProductDashboard({ req }) {
   // Initialize Supabase server client
-  const supabase = createServerSupabaseClient({ req: {} });
+  const supabase = createServerSupabaseClient({ req });
 
   let isApproved = false;
   let initialError = null;
+  let user = null;
 
   try {
     // Get the authenticated user
     const {
-      data: { user },
+      data: { user: authUser },
     } = await supabase.auth.getUser();
 
-    if (!user) {
+    if (!authUser) {
       initialError = "User not authenticated";
     } else {
+      user = authUser; // Store user data
       // Check approval status
       const { data, error } = await supabase
         .from("profiles")
         .select("is_approved, role")
-        .eq("id", user.id)
+        .eq("id", authUser.id)
         .single();
 
       if (error) {
@@ -41,6 +43,7 @@ export default async function ProductDashboard() {
     <ProductDashboardClient
       isApproved={isApproved}
       initialError={initialError}
+      initialUser={user} // Pass user data to client component
     />
   );
 }

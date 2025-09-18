@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase-client";
 import { Upload, X, Loader2, Plus, Check, X as XIcon } from "lucide-react";
+import { v4 as uuidv4 } from "uuid";
 
 export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
   const [formData, setFormData] = useState({
@@ -37,6 +38,61 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [isEditMode, setIsEditMode] = useState(false);
+  const [authUser, setAuthUser] = useState(user);
+
+  // Fetch user session if user prop is missing
+  useEffect(() => {
+    const fetchUser = async () => {
+      if (!authUser) {
+        try {
+          const {
+            data: { user: fetchedUser },
+            error,
+          } = await supabase.auth.getUser();
+          if (error) {
+            console.error("Error fetching user in ProductForm:", error);
+            setError("Failed to authenticate user");
+            return;
+          }
+          if (fetchedUser) {
+            setAuthUser(fetchedUser);
+          } else {
+            setError("User not authenticated");
+          }
+        } catch (err) {
+          console.error("Client-side auth error in ProductForm:", err);
+          setError("Failed to authenticate user");
+        }
+      }
+    };
+
+    fetchUser();
+  }, [authUser]);
+
+  // Generate random SKU
+  const generateRandomSKU = async () => {
+    const prefix = "PRD";
+    const randomPart = uuidv4().split("-")[0].toUpperCase();
+    const potentialSKU = `${prefix}-${randomPart}`;
+
+    // Check if SKU already exists
+    const { data, error } = await supabase
+      .from("products")
+      .select("sku")
+      .eq("sku", potentialSKU);
+
+    if (error) {
+      console.error("Error checking SKU:", error.message);
+      return potentialSKU; // Fallback to generated SKU if check fails
+    }
+
+    if (data && data.length > 0) {
+      // If SKU exists, try again
+      return generateRandomSKU();
+    }
+
+    return potentialSKU;
+  };
 
   // Initialize form with product data if in edit mode
   useEffect(() => {
@@ -64,6 +120,10 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
     } else {
       setIsEditMode(false);
       resetForm();
+      // Generate SKU for new product
+      generateRandomSKU().then((sku) => {
+        setFormData((prev) => ({ ...prev, sku }));
+      });
     }
   }, [productToEdit]);
 
@@ -78,6 +138,7 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
 
           if (error) {
             console.error("Error fetching categories:", error.message);
+            setError("Failed to load categories");
             return;
           }
 
@@ -131,6 +192,11 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
         return;
       }
 
+      if (file.size > 10 * 1024 * 1024) {
+        setError("Each image must be less than 10MB");
+        return;
+      }
+
       const reader = new FileReader();
       reader.onload = (e) => {
         const newImage = {
@@ -150,7 +216,6 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
   };
 
   const removeImage = (imageId) => {
-    // Check if it's a new image or existing one
     const imageToRemove =
       images.find((img) => img.id === imageId) ||
       existingImages.find((img) => img.id === imageId);
@@ -256,35 +321,92 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
       return false;
     }
 
+    if (isNaN(Number(formData.price)) || Number(formData.price) <= 0) {
+      setError("Price must be a positive number");
+      return false;
+    }
+
+    if (
+      formData.originalprice &&
+      (isNaN(Number(formData.originalprice)) ||
+        Number(formData.originalprice) <= 0)
+    ) {
+      setError("Original price must be a positive number if provided");
+      return false;
+    }
+
+    if (
+      formData.discount &&
+      (isNaN(Number(formData.discount)) ||
+        Number(formData.discount) < 0 ||
+        Number(formData.discount) > 100)
+    ) {
+      setError("Discount must be between 0 and 100 if provided");
+      return false;
+    }
+
     return true;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    e.stopPropagation();
+
+    if (!authUser) {
+      setError("User not authenticated");
+      console.error("No authenticated user available");
+      return;
+    }
+
     setError("");
     setSuccess("");
 
-    if (!validateForm()) return;
+    if (!validateForm()) {
+      console.error("Form validation failed");
+      return;
+    }
 
     setIsLoading(true);
 
     try {
-      // 1. Upload new images to Supabase Storage and get public URLs
-      const uploadedImageUrls = [];
+      // 1. Check SKU uniqueness for new products
+      if (!isEditMode) {
+        const { data: existingSKU, error: skuError } = await supabase
+          .from("products")
+          .select("sku")
+          .eq("sku", formData.sku);
 
+        if (skuError) {
+          throw new Error("Error checking SKU: " + skuError.message);
+        }
+
+        if (existingSKU && existingSKU.length > 0) {
+          const newSKU = await generateRandomSKU();
+          setFormData((prev) => ({ ...prev, sku: newSKU }));
+          throw new Error("SKU already exists, generated a new one");
+        }
+      }
+
+      // 2. Upload new images to Supabase Storage
+      const uploadedImageUrls = [];
       for (const file of imageFiles) {
-        const fileName = `${Date.now()}-${file.name}`;
+        const fileName = `${Date.now()}-${uuidv4()}-${file.name}`;
         const { data, error } = await supabase.storage
           .from("product-images")
           .upload(fileName, file);
 
         if (error) {
+          console.error("Image upload error:", error);
           throw new Error("Image upload failed: " + error.message);
         }
 
         const { data: publicUrlData } = supabase.storage
           .from("product-images")
           .getPublicUrl(fileName);
+
+        if (!publicUrlData?.publicUrl) {
+          throw new Error("Failed to get public URL for uploaded image");
+        }
 
         uploadedImageUrls.push(publicUrlData.publicUrl);
       }
@@ -299,7 +421,7 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
       const productData = {
         name: formData.name,
         slug: formData.slug,
-        supplier_id: user.id,
+        supplier_id: authUser.id,
         description: formData.description,
         short_description: formData.short_description || null,
         price: Number(formData.price),
@@ -319,7 +441,7 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
         is_featured: formData.is_featured,
       };
 
-      // 2. Insert or update based on mode
+      // 3. Insert or update product
       let result;
       if (isEditMode) {
         const { data, error } = await supabase
@@ -328,7 +450,10 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
           .eq("id", productToEdit.id)
           .select();
 
-        if (error) throw error;
+        if (error) {
+          console.error("Update error:", error);
+          throw new Error("Failed to update product: " + error.message);
+        }
         result = data;
       } else {
         const { data, error } = await supabase
@@ -336,11 +461,14 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
           .insert([productData])
           .select();
 
-        if (error) throw error;
+        if (error) {
+          console.error("Insert error:", error);
+          throw new Error("Failed to add product: " + error.message);
+        }
         result = data;
       }
 
-      // 3. Reset + notify
+      // 4. Reset + notify
       setSuccess(`Product ${isEditMode ? "updated" : "added"} successfully!`);
       setTimeout(() => {
         onClose();
@@ -350,6 +478,7 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
       setError(
         err.message || `Failed to ${isEditMode ? "update" : "add"} product`
       );
+      console.error("Submit error:", err);
     } finally {
       setIsLoading(false);
     }
@@ -381,6 +510,10 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
     setSizeInput("");
     setError("");
     setSuccess("");
+    // Generate new SKU for next product
+    generateRandomSKU().then((sku) => {
+      setFormData((prev) => ({ ...prev, sku }));
+    });
   };
 
   if (!isOpen) return null;
@@ -415,7 +548,12 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
             </div>
           </div>
 
-          <form onSubmit={handleSubmit} className="p-6 space-y-6">
+          <form
+            onSubmit={handleSubmit}
+            method="POST"
+            action=""
+            className="p-6 space-y-6"
+          >
             {error && (
               <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md">
                 {error}
@@ -462,19 +600,22 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
                 />
               </div>
 
-              {/* SKU - Required */}
+              {/* SKU - Auto-generated */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  SKU <span className="text-orange-500">*</span>
+                  SKU <span className="text-orange-500">*</span>{" "}
+                  <span className="text-gray-400">
+                    ({isEditMode ? "Fixed" : "Auto-generated"})
+                  </span>
                 </label>
                 <input
                   type="text"
                   name="sku"
                   value={formData.sku}
                   onChange={handleInputChange}
-                  placeholder="Enter unique SKU (e.g., IPH15PM-256-BLK)"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                  disabled={isLoading || isEditMode} // Disable editing SKU in edit mode
+                  placeholder="Auto-generated SKU"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-gray-50"
+                  disabled={isLoading || true} // Always disabled as it's auto-generated
                   required
                 />
               </div>
@@ -620,7 +761,7 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
                 </label>
                 <input
                   type="number"
-                  name="originalPrice"
+                  name="originalprice"
                   value={formData.originalprice}
                   onChange={handleInputChange}
                   placeholder="149.99"
@@ -711,7 +852,6 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
               </div>
 
               {/* Image Previews */}
-              {/* Image Previews */}
               {(images.length > 0 || existingImages.length > 0) && (
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
                   {/* Existing images */}
@@ -797,7 +937,7 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
                 <div className="flex flex-wrap gap-2">
                   {formData.colors.map((color, index) => (
                     <span
-                      key={`color-${index}-${color}`} // Added unique key
+                      key={`color-${index}-${color}`}
                       className="inline-flex items-center gap-1 px-3 py-1 bg-orange-100 text-orange-800 rounded-full text-sm"
                     >
                       {color}
@@ -845,7 +985,7 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
                 <div className="flex flex-wrap gap-2">
                   {formData.sizes.map((size, index) => (
                     <span
-                      key={`size-${index}-${size}`} // Added unique key
+                      key={`size-${index}-${size}`}
                       className="inline-flex items-center gap-1 px-3 py-1 bg-orange-100 text-orange-800 rounded-full text-sm"
                     >
                       {size}
@@ -862,6 +1002,8 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
                 </div>
               </div>
             </div>
+
+            {/* Additional Options */}
 
             {/* Additional Options */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

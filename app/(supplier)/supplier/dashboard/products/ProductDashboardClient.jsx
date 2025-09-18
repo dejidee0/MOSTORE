@@ -23,8 +23,8 @@ import ProductForm from "@/components/inputs/ProductsForm";
 import { Tag, Calendar } from "lucide-react";
 import useUserStore from "@/lib/stores/useUserStore";
 
-const ProductDashboardClient = ({ isApproved, initialError }) => {
-  const { user } = useUserStore();
+const ProductDashboardClient = ({ isApproved, initialError, initialUser }) => {
+  const { user, setUser } = useUserStore();
   const [prodUpload, setProdUpload] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [editingProduct, setEditingProduct] = useState(null);
@@ -41,24 +41,49 @@ const ProductDashboardClient = ({ isApproved, initialError }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
 
+  // Initialize user store with server-side user data
+  useEffect(() => {
+    if (initialUser && !user) {
+      setUser(initialUser);
+    }
+  }, [initialUser, user, setUser]);
+
+  // Fetch user session on client side as fallback
+  useEffect(() => {
+    const fetchUserSession = async () => {
+      if (!user) {
+        try {
+          const {
+            data: { user: authUser },
+            error,
+          } = await supabase.auth.getUser();
+          if (error) {
+            console.error("Error fetching user session:", error);
+            setError("Failed to authenticate user");
+            return;
+          }
+          if (authUser) {
+            setUser(authUser);
+          } else {
+            setError("User not authenticated");
+          }
+        } catch (err) {
+          console.error("Client-side auth error:", err);
+          setError("Failed to authenticate user");
+        }
+      }
+    };
+
+    fetchUserSession();
+  }, [user, setUser]);
+
   // Fetch products from Supabase
-  const fetchProducts = async (
-    setProducts,
-    setCategories,
-    setLoading,
-    setError
-  ) => {
+  const fetchProducts = async () => {
     try {
       setLoading(true);
       setError(null);
 
-      // Fetch the authenticated user's session
-      const {
-        data: { user },
-        error: authError,
-      } = await supabase.auth.getUser();
-
-      if (authError || !user) {
+      if (!user) {
         throw new Error("User is not authenticated. Please log in.");
       }
 
@@ -82,12 +107,12 @@ const ProductDashboardClient = ({ isApproved, initialError }) => {
         .from("products")
         .select(
           `
-        *,
-        categories (
-          id,
-          name
-        )
-        `
+          *,
+          categories (
+            id,
+            name
+          )
+          `
         )
         .eq("supplier_id", user.id)
         .order("created_at", { ascending: false });
@@ -118,14 +143,14 @@ const ProductDashboardClient = ({ isApproved, initialError }) => {
   };
 
   useEffect(() => {
-    if (isApproved === true && user) {
+    if (isApproved && user) {
       fetchProducts();
     }
   }, [isApproved, user]);
 
   // Real-time subscription
   useEffect(() => {
-    if (isApproved === true && user) {
+    if (isApproved && user) {
       const subscription = supabase
         .channel("products-changes")
         .on(
@@ -527,8 +552,8 @@ const ProductDashboardClient = ({ isApproved, initialError }) => {
     );
   };
 
-  // Access denied UI for unapproved suppliers
-  if (isApproved === false) {
+  // Access denied UI for unapproved suppliers or unauthenticated users
+  if (!isApproved || !user) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-orange-50 to-orange-100 flex items-center justify-center p-4">
         <div className="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full text-center border border-orange-200">
@@ -537,11 +562,14 @@ const ProductDashboardClient = ({ isApproved, initialError }) => {
             Access Denied
           </h1>
           <p className="text-gray-600 mb-6">
-            Your supplier account is pending approval by an administrator. You
-            cannot manage products until your account is approved.
+            {user
+              ? "Your supplier account is pending approval by an administrator. You cannot manage products until your account is approved."
+              : "You must be logged in to manage products."}
           </p>
           <p className="text-sm text-gray-500">
-            Please contact support or wait for admin approval.
+            {user
+              ? "Please contact support or wait for admin approval."
+              : "Please log in to continue."}
           </p>
         </div>
       </div>

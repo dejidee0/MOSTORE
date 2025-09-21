@@ -3,6 +3,8 @@
 import React, { useState, useEffect, useCallback, useMemo, memo } from "react";
 import { supabase } from "@/lib/supabase-client";
 import { motion } from "framer-motion";
+import { v4 as uuidv4 } from "uuid";
+
 import Link from "next/link";
 import Image from "next/image";
 import {
@@ -31,7 +33,9 @@ const Comment = memo(({ comment, onCommentLike, onReply }) => (
         <User className="w-5 h-5 text-gray-500" />
       </div>
       <div>
-        <p className="font-medium text-gray-900 text-sm">{comment.author_name}</p>
+        <p className="font-medium text-gray-900 text-sm">
+          {comment.author_name}
+        </p>
         <p className="text-xs text-gray-500">
           {new Date(comment.created_at).toLocaleDateString("en-US", {
             day: "numeric",
@@ -41,13 +45,15 @@ const Comment = memo(({ comment, onCommentLike, onReply }) => (
         </p>
       </div>
     </div>
-    <p className="text-gray-700 text-sm mb-3 leading-relaxed">{comment.content}</p>
+    <p className="text-gray-700 text-sm mb-3 leading-relaxed">
+      {comment.content}
+    </p>
     <div className="flex items-center gap-4 text-xs text-gray-500">
       <button
         onClick={() => onCommentLike(comment.id)}
         className="flex items-center gap-1 hover:text-orange-600 transition-colors"
       >
-        <ThumbsUp className="w-4 h-4" /> 
+        <ThumbsUp className="w-4 h-4" />
         <span className="font-medium">{comment.likes_count || 0}</span>
       </button>
       <button
@@ -104,12 +110,13 @@ const CommentForm = memo(
       <h3 className="font-bold text-gray-900 text-lg mb-4">
         {replyingTo ? "Reply to Comment" : "Leave a Comment"}
       </h3>
-      
+
       {replyingTo && (
         <div className="bg-orange-50 border border-orange-200 rounded-xl p-3 mb-4">
           <div className="flex items-center justify-between">
             <p className="text-sm text-orange-700">
-              Replying to <span className="font-medium">{replyingTo.author_name}</span>
+              Replying to{" "}
+              <span className="font-medium">{replyingTo.author_name}</span>
             </p>
             <button
               onClick={() => setReplyingTo(null)}
@@ -120,16 +127,18 @@ const CommentForm = memo(
           </div>
         </div>
       )}
-      
+
       <textarea
         className="w-full p-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all resize-none"
-        placeholder={replyingTo ? "Write your reply..." : "Share your thoughts..."}
+        placeholder={
+          replyingTo ? "Write your reply..." : "Share your thoughts..."
+        }
         value={newComment}
         onChange={(e) => setNewComment(e.target.value)}
         disabled={isSubmitting}
         rows={4}
       />
-      
+
       <div className="flex justify-end mt-4">
         <motion.button
           whileHover={{ scale: 1.02 }}
@@ -192,9 +201,29 @@ export default function BlogPostDetail({ post }) {
         .from("blog_comments")
         .select(
           `
-          *,
-          replies:blog_comments!parent_id(*)
-        `
+        id,
+        post_id,
+        parent_id,
+        guest_id,
+        user_id,
+        author_name,
+        author_email,
+        content,
+        status,
+        created_at,
+        replies:blog_comments!parent_id(
+          id,
+          post_id,
+          parent_id,
+          guest_id,
+          user_id,
+          author_name,
+          author_email,
+          content,
+          status,
+          created_at
+        )
+      `
         )
         .eq("post_id", postId)
         .is("parent_id", null)
@@ -210,29 +239,42 @@ export default function BlogPostDetail({ post }) {
 
   // ✅ Optimized check user like with caching
   const checkUserLike = useCallback(async () => {
-    if (!user || !postId) return;
+    if (!postId) return;
 
     try {
-      const { data } = await supabase
+      let query = supabase
         .from("blog_likes")
         .select("id")
-        .eq("post_id", postId)
-        .eq("user_id", user.id)
-        .maybeSingle();
+        .eq("post_id", postId);
 
+      if (user) {
+        query = query.eq("user_id", user.id);
+      } else {
+        const guestId = getGuestId();
+        query = query.eq("guest_id", guestId);
+      }
+
+      const { data } = await query.maybeSingle();
       setIsLiked(!!data);
     } catch (error) {
-      console.error("Error checking user like:", error);
+      console.error("Error checking like:", error);
     }
   }, [user, postId]);
 
+  function getGuestId() {
+    let guestId = localStorage.getItem("guest_id");
+    if (!guestId) {
+      guestId = uuidv4();
+      localStorage.setItem("guest_id", guestId);
+    }
+    return guestId;
+  }
+
   // ✅ Optimized handle post like with optimistic updates
   const handleLike = useCallback(async () => {
-    if (!user) {
-      alert("Please log in to like posts.");
-      return;
-    }
     if (!postId) return;
+
+    const guestId = getGuestId();
 
     // Optimistic update
     const newLikedState = !isLiked;
@@ -244,26 +286,24 @@ export default function BlogPostDetail({ post }) {
           .from("blog_likes")
           .delete()
           .eq("post_id", postId)
-          .eq("user_id", user.id);
+          .eq("guest_id", guestId);
       } else {
         await supabase
           .from("blog_likes")
-          .insert({ post_id: postId, user_id: user.id });
+          .insert({ post_id: postId, guest_id: guestId });
       }
     } catch (error) {
       console.error("Error handling like:", error);
-      // Revert optimistic update on error
-      setIsLiked(isLiked);
+      setIsLiked(isLiked); // revert
     }
-  }, [user, postId, isLiked]);
+  }, [postId, isLiked]);
 
   // ✅ Optimized handle comment submit with loading state
   const handleCommentSubmit = useCallback(async () => {
     const trimmedComment = newComment.trim();
-    if (!trimmedComment || !user || !postId) {
-      if (!user) alert("Please log in to comment.");
-      return;
-    }
+    if (!trimmedComment || !postId) return;
+
+    const guestId = getGuestId();
 
     setIsSubmitting(true);
 
@@ -271,10 +311,8 @@ export default function BlogPostDetail({ post }) {
       const { error } = await supabase.from("blog_comments").insert({
         post_id: postId,
         parent_id: replyingTo?.id || null,
-        user_id: user.id,
-        author_name:
-          user.user_metadata?.full_name || user.email?.split("@")[0] || "Guest",
-        author_email: user.email,
+        guest_id: guestId,
+        author_name: "Guest User", // or prompt for a name
         content: trimmedComment,
         status: "approved",
       });
@@ -289,22 +327,19 @@ export default function BlogPostDetail({ post }) {
     } finally {
       setIsSubmitting(false);
     }
-  }, [newComment, user, postId, replyingTo, fetchComments]);
+  }, [newComment, postId, replyingTo, fetchComments]);
 
   // ✅ Optimized handle comment like with debouncing
   const handleCommentLike = useCallback(
     async (commentId) => {
-      if (!user) {
-        alert("Please log in to like comments.");
-        return;
-      }
+      const guestId = getGuestId();
 
       try {
         const { data: alreadyLiked } = await supabase
           .from("blog_comment_likes")
           .select("id")
           .eq("comment_id", commentId)
-          .eq("user_id", user.id)
+          .eq("guest_id", guestId)
           .maybeSingle();
 
         if (alreadyLiked) {
@@ -312,11 +347,11 @@ export default function BlogPostDetail({ post }) {
             .from("blog_comment_likes")
             .delete()
             .eq("comment_id", commentId)
-            .eq("user_id", user.id);
+            .eq("guest_id", guestId);
         } else {
           await supabase
             .from("blog_comment_likes")
-            .insert({ comment_id: commentId, user_id: user.id });
+            .insert({ comment_id: commentId, guest_id: guestId });
         }
 
         fetchComments();
@@ -324,7 +359,7 @@ export default function BlogPostDetail({ post }) {
         console.error("Error handling comment like:", error);
       }
     },
-    [user, fetchComments]
+    [fetchComments]
   );
 
   // Memoized handlers to prevent re-renders
@@ -405,7 +440,7 @@ export default function BlogPostDetail({ post }) {
           animate={{ opacity: 1, x: 0 }}
           className="mb-8"
         >
-          <Link 
+          <Link
             href="/blog"
             className="inline-flex items-center gap-2 text-gray-600 hover:text-orange-600 transition-colors text-sm font-medium"
           >

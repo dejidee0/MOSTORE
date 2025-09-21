@@ -58,8 +58,8 @@ const ServiceFeatures = () => {
   }, [features.length]);
 
   return (
-    <section className="py-8 bg-gray-50">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+    <section className="py-4 bg-orange-50">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-0">
         <div className="overflow-hidden">
           <div
             ref={sliderRef}
@@ -87,16 +87,6 @@ const ServiceFeatures = () => {
               );
             })}
           </div>
-        </div>
-        <div className="flex justify-center space-x-2 mt-4">
-          {features.map((_, i) => (
-            <div
-              key={i}
-              className={`w-2 h-2 rounded-full ${
-                i === currentIndex ? "bg-gray-600" : "bg-gray-300"
-              }`}
-            ></div>
-          ))}
         </div>
       </div>
     </section>

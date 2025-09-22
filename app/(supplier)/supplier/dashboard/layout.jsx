@@ -6,14 +6,12 @@ import ProtectedRoute from "@/components/ProtectedRoute";
 
 export default function SupplierLayout({ children }) {
   return (
-    <body className="">
-      <ToastProvider>
-        <AuthInitializer>
-          <ProtectedRoute allowedRoles={["supplier"]}>
-            <Layout>{children}</Layout>
-          </ProtectedRoute>
-        </AuthInitializer>
-      </ToastProvider>
-    </body>
+    <ToastProvider>
+      <AuthInitializer>
+        <ProtectedRoute allowedRoles={["supplier"]}>
+          <Layout>{children}</Layout>
+        </ProtectedRoute>
+      </AuthInitializer>
+    </ToastProvider>
   );
 }

@@ -15,6 +15,8 @@ const SignUpPage = () => {
     username: "",
     password: "",
     confirmPassword: "",
+    gender: "",
+    dateOfBirth: "",
   });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
@@ -35,7 +37,9 @@ const SignUpPage = () => {
       !form.email ||
       !form.username ||
       !form.password ||
-      !form.confirmPassword
+      !form.confirmPassword ||
+      !form.gender ||
+      !form.dateOfBirth
     ) {
       setError("All fields are required.");
       return false;
@@ -58,6 +62,11 @@ const SignUpPage = () => {
       setError(
         "Username must be 3-20 characters long and contain only letters, numbers, and underscores."
       );
+      return false;
+    }
+    const dob = new Date(form.dateOfBirth);
+    if (isNaN(dob.getTime())) {
+      setError("Please enter a valid date of birth.");
       return false;
     }
     return true;
@@ -100,6 +109,8 @@ const SignUpPage = () => {
       const userMetadata = {
         full_name: form.fullName,
         username: form.username,
+        gender: form.gender,
+        date_of_birth: form.dateOfBirth,
         is_supplier: false,
         role: "customer",
       };
@@ -230,7 +241,7 @@ const SignUpPage = () => {
                 value={form.fullName}
                 onChange={handleChange}
                 required
-                placeholder="John Doe"
+                placeholder="Enter your Full Name"
                 className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
             </div>
@@ -249,7 +260,7 @@ const SignUpPage = () => {
                 value={form.email}
                 onChange={handleChange}
                 required
-                placeholder="you@example.com"
+                placeholder="Enter your Email"
                 className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
             </div>
@@ -268,12 +279,54 @@ const SignUpPage = () => {
                 value={form.username}
                 onChange={handleChange}
                 required
-                placeholder="johndoe123"
+                placeholder="Enter your Username"
                 className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
               <p className="text-xs text-gray-500 mt-1">
                 3-20 characters, letters, numbers, and underscores only
               </p>
+            </div>
+
+            <div>
+              <label
+                htmlFor="gender"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
+                Gender
+              </label>
+              <select
+                id="gender"
+                name="gender"
+                value={form.gender}
+                onChange={handleChange}
+                required
+                className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              >
+                <option value="" disabled>
+                  Select your Gender
+                </option>
+                <option value="male">Male</option>
+                <option value="female">Female</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+
+            <div>
+              <label
+                htmlFor="dateOfBirth"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
+                Date of Birth
+              </label>
+              <input
+                id="dateOfBirth"
+                name="dateOfBirth"
+                type="date"
+                value={form.dateOfBirth}
+                onChange={handleChange}
+                required
+                className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              />
             </div>
 
             <div>
@@ -290,7 +343,7 @@ const SignUpPage = () => {
                 value={form.password}
                 onChange={handleChange}
                 required
-                placeholder="••••••••"
+                placeholder="Enter your Password"
                 className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
               <p className="text-xs text-gray-500 mt-1">
@@ -312,7 +365,7 @@ const SignUpPage = () => {
                 value={form.confirmPassword}
                 onChange={handleChange}
                 required
-                placeholder="••••••••"
+                placeholder="Confirm your Password"
                 className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
             </div>

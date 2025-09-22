@@ -15,16 +15,21 @@ import {
   RotateCcw,
 } from "lucide-react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import Footer from "@/components/shared/Footer";
 import NavBar from "@/components/shared/NavBar";
 import useUserStore from "@/lib/stores/useUserStore"; // Adjust path as needed
 import OrderHistory from "@/components/orderHistory";
 import { supabase } from "@/lib/supabase-client";
 
-const Breadcrumbs = () => {
+const Breadcrumbs = ({ activeTab }) => {
   const pathname = usePathname();
   const paths = pathname.split("/").filter(Boolean);
+  const tabDisplayNames = {
+    profile: "My Profile",
+    orders: "My Orders",
+    wishlist: "Wishlist",
+  };
 
   return (
     <nav className="flex mb-4 py-4 px-4 md:mb-6" aria-label="Breadcrumb">
@@ -38,29 +43,21 @@ const Breadcrumbs = () => {
             Home
           </Link>
         </li>
-
-        {paths.map((path, index) => {
-          const href = `/${paths.slice(0, index + 1).join("/")}`;
-          const isLast = index === paths.length - 1;
-
-          return (
-            <li key={path} className="inline-flex items-center">
-              <ChevronRight className="w-3 h-3 md:w-4 md:h-4 text-gray-400 mx-1" />
-              {isLast ? (
-                <span className="text-orange-500 font-medium text-xs md:text-sm capitalize">
-                  {path.replace(/-/g, " ")}
-                </span>
-              ) : (
-                <Link
-                  href={href}
-                  className="text-gray-500 hover:text-orange-500 transition-colors text-xs md:text-sm capitalize"
-                >
-                  {path.replace(/-/g, " ")}
-                </Link>
-              )}
-            </li>
-          );
-        })}
+        <li className="inline-flex items-center">
+          <ChevronRight className="w-3 h-3 md:w-4 md:h-4 text-gray-400 mx-1" />
+          <Link
+            href="/my-account"
+            className="text-gray-500 hover:text-orange-500 transition-colors text-xs md:text-sm capitalize"
+          >
+            My Account
+          </Link>
+        </li>
+        <li className="inline-flex items-center">
+          <ChevronRight className="w-3 h-3 md:w-4 md:h-4 text-gray-400 mx-1" />
+          <span className="text-orange-500 font-medium text-xs md:text-sm capitalize">
+            {tabDisplayNames[activeTab] || "My Profile"}
+          </span>
+        </li>
       </ol>
     </nav>
   );
@@ -82,6 +79,7 @@ const LoadingSpinner = ({ size = "sm" }) => {
 
 const MyProfile = () => {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const {
     user,
     loading,
@@ -102,7 +100,7 @@ const MyProfile = () => {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [message, setMessage] = useState({ type: "", text: "" });
-  const [activeTab, setActiveTab] = useState("profile"); // Add this line
+  const [activeTab, setActiveTab] = useState("profile");
 
   // Form State
   const [profileForm, setProfileForm] = useState({
@@ -110,6 +108,8 @@ const MyProfile = () => {
     lastName: "",
     email: "",
     phone: "",
+    gender: "",
+    dateOfBirth: "",
   });
 
   const [passwordForm, setPasswordForm] = useState({
@@ -117,6 +117,13 @@ const MyProfile = () => {
     newPassword: "",
     confirmPassword: "",
   });
+
+  // Set active tab based on query parameter
+  useEffect(() => {
+    const tab = searchParams.get("tab");
+    const validTabs = ["profile", "orders", "wishlist"];
+    setActiveTab(validTabs.includes(tab) ? tab : "profile");
+  }, [searchParams]);
 
   // Load user data when component mounts or user changes
   useEffect(() => {
@@ -127,6 +134,8 @@ const MyProfile = () => {
         lastName: metadata.lastName || metadata.last_name || "",
         email: getUserEmail() || "",
         phone: metadata.phone || "",
+        gender: metadata.gender || "",
+        dateOfBirth: metadata.date_of_birth || "",
       });
     }
   }, [user, getUserEmail, getUserMetadata]);
@@ -194,7 +203,8 @@ const MyProfile = () => {
         firstName: profileForm.firstName,
         lastName: profileForm.lastName,
         phone: profileForm.phone,
-        // Note: email updates typically require special handling in Supabase
+        gender: profileForm.gender,
+        date_of_birth: profileForm.dateOfBirth,
       };
 
       const { data, error } = await updateProfile(updates);
@@ -269,6 +279,8 @@ const MyProfile = () => {
         lastName: metadata.lastName || metadata.last_name || "",
         email: getUserEmail() || "",
         phone: metadata.phone || "",
+        gender: metadata.gender || "",
+        dateOfBirth: metadata.date_of_birth || "",
       });
     }
     setPasswordForm({
@@ -277,6 +289,15 @@ const MyProfile = () => {
       confirmPassword: "",
     });
     setMessage({ type: "", text: "" });
+  };
+
+  // Update URL with query parameter when changing tabs
+  const handleTabChange = (tab) => {
+    setActiveTab(tab);
+    setMobileMenuOpen(false);
+    const params = new URLSearchParams(searchParams);
+    params.set("tab", tab);
+    router.push(`/my-account?${params.toString()}`);
   };
 
   // Show loading screen while checking authentication
@@ -300,7 +321,7 @@ const MyProfile = () => {
     <>
       <div className="min-h-screen bg-gray-50 w-full overflow-hidden font-raleway flex flex-col">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex-1">
-          <Breadcrumbs />
+          <Breadcrumbs activeTab={activeTab} />
 
           <div className="flex flex-col lg:flex-row gap-6">
             {/* Mobile Menu Button */}
@@ -330,10 +351,7 @@ const MyProfile = () => {
                 <ul className="space-y-2">
                   <li>
                     <button
-                      onClick={() => {
-                        setActiveTab("profile");
-                        setMobileMenuOpen(false);
-                      }}
+                      onClick={() => handleTabChange("profile")}
                       className={`flex items-center py-2 px-3 w-full text-left rounded-lg transition-colors ${
                         activeTab === "profile"
                           ? "text-orange-500 font-medium bg-orange-50"
@@ -359,10 +377,7 @@ const MyProfile = () => {
                 <ul className="space-y-2">
                   <li>
                     <button
-                      onClick={() => {
-                        setActiveTab("orders");
-                        setMobileMenuOpen(false);
-                      }}
+                      onClick={() => handleTabChange("orders")}
                       className={`flex items-center py-2 px-3 w-full text-left rounded-lg transition-colors ${
                         activeTab === "orders"
                           ? "text-orange-500 font-medium bg-orange-50"
@@ -388,10 +403,7 @@ const MyProfile = () => {
                 <ul className="space-y-2">
                   <li>
                     <button
-                      onClick={() => {
-                        setActiveTab("wishlist");
-                        setMobileMenuOpen(false);
-                      }}
+                      onClick={() => handleTabChange("wishlist")}
                       className={`flex items-center py-2 px-3 w-full text-left rounded-lg transition-colors ${
                         activeTab === "wishlist"
                           ? "text-orange-500 font-medium bg-orange-50"
@@ -421,7 +433,6 @@ const MyProfile = () => {
             >
               {activeTab === "profile" && (
                 <>
-                  {/* Your existing profile form content goes here */}
                   <div className="flex items-center justify-between mb-6">
                     <div>
                       <h2 className="text-xl md:text-2xl font-semibold text-gray-800 mb-1">
@@ -519,6 +530,38 @@ const MyProfile = () => {
                           disabled={isSubmitting}
                           className="w-full px-3 py-2 md:px-4 md:py-3 text-sm md:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all disabled:bg-gray-50 disabled:cursor-not-allowed"
                           placeholder="+234 XXX XXX XXXX"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm md:text-base font-medium text-gray-700 mb-1 md:mb-2">
+                          Gender
+                        </label>
+                        <select
+                          name="gender"
+                          value={profileForm.gender}
+                          onChange={handleProfileChange}
+                          disabled={isSubmitting}
+                          className="w-full px-3 py-2 md:px-4 md:py-3 text-sm md:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all disabled:bg-gray-50 disabled:cursor-not-allowed"
+                        >
+                          <option value="" disabled>
+                            Select Gender
+                          </option>
+                          <option value="male">Male</option>
+                          <option value="female">Female</option>
+                          <option value="other">Other</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-sm md:text-base font-medium text-gray-700 mb-1 md:mb-2">
+                          Date of Birth
+                        </label>
+                        <input
+                          type="date"
+                          name="dateOfBirth"
+                          value={profileForm.dateOfBirth}
+                          onChange={handleProfileChange}
+                          disabled={isSubmitting}
+                          className="w-full px-3 py-2 md:px-4 md:py-3 text-sm md:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all disabled:bg-gray-50 disabled:cursor-not-allowed"
                         />
                       </div>
                     </div>

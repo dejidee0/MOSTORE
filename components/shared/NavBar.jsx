@@ -212,7 +212,7 @@ const NavBar = ({ onWishListClick }) => {
 
   const navigateToOrders = useCallback(() => {
     setIsProfileDropdownOpen(false);
-    router.push("/orders");
+    router.push("/my-account?tab=orders");
   }, [router]);
 
   const navigateToSettings = useCallback(() => {
@@ -675,6 +675,13 @@ const NavBar = ({ onWishListClick }) => {
                             onClick={() => navigateToDashboard(role)}
                             icon={<Home className="w-5 h-5" />}
                             label="My Dashboard"
+                          />
+                        )}
+                        {(role !== "supplier" || role !== "admin") && (
+                          <MenuButton
+                            onClick={() => router.push("/my-account")}
+                            icon={<Home className="w-5 h-5" />}
+                            label="My Account"
                           />
                         )}
                       </div>

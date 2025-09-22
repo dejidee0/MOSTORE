@@ -160,7 +160,7 @@ const Page = () => {
   }
 
   return (
-    <div className="min-h-screen overflow-x-hidden bg-white p-4 md:p-6 md:pt-10 flex flex-col lg:flex-col gap-6">
+    <div className="min-h-screen overflow-x-hidden bg-white p-4 md:p-6 flex flex-col lg:flex-col gap-6">
       <h1 className="text-3xl font-bold text-orange-500">Orders</h1>{" "}
       {/* Orders Table (Desktop) */}
       <div className="flex-1 overflow-auto">

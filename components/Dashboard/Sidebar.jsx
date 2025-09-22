@@ -1,14 +1,20 @@
 "use client";
 
 import Link from "next/link";
-import { LogOut } from "lucide-react";
+import { LogOut, Package, Truck, Users, BookOpen, User } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase-client";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import logo from "../../public/assets/Mostore logo 2.png";
 
-const navLinks = ["Products", "Order", "Suppliers", "Blog", "My Profile"];
+const navLinks = [
+  { label: "Products", icon: Package, route: "/admin/dashboard" },
+  { label: "Order", icon: Truck, route: "/admin/dashboard/order" },
+  { label: "Suppliers", icon: Users, route: "/admin/dashboard/suppliers" },
+  { label: "Blog", icon: BookOpen, route: "/admin/dashboard/blog" },
+  { label: "My Profile", icon: User, route: "/admin/dashboard/my-profile" },
+];
 
 export default function Sidebar({ isOpen, toggleSidebar, closeSidebar }) {
   const pathname = usePathname();
@@ -17,13 +23,14 @@ export default function Sidebar({ isOpen, toggleSidebar, closeSidebar }) {
   const handleLogout = async () => {
     await supabase.auth.signOut();
     router.push("/sign-in");
+    if (closeSidebar) closeSidebar();
   };
 
   return (
     <>
       {/* Mobile Overlay */}
       <div
-        className={`fixed inset-0 z-20 bg-white/65 blur-lg bg-opacity-30 lg:hidden transition-opacity duration-300 ${
+        className={`fixed inset-0 z-20 bg-gray-900/50 backdrop-blur-sm lg:hidden transition-opacity duration-300 ${
           isOpen ? "opacity-100 visible" : "opacity-0 invisible"
         }`}
         onClick={toggleSidebar}
@@ -33,34 +40,32 @@ export default function Sidebar({ isOpen, toggleSidebar, closeSidebar }) {
       {/* Sidebar */}
       <aside
         className={`
-          fixed top-0 left-0 z-30 bg-white shadow-lg w-64 h-screen
+          fixed top-0 left-0 z-30 bg-white w-64 h-screen
           flex flex-col
           transform transition-transform duration-300 ease-in-out
           ${isOpen ? "translate-x-0" : "-translate-x-full"}
           lg:translate-x-0 lg:static lg:shadow-none
+          shadow-lg border-r border-gray-100
         `}
         aria-label="Sidebar Navigation"
       >
         {/* Logo Section */}
-        <div className="flex items-center gap-2 px-4 py-6 border-b border-gray-200">
-          <Link href={"/"}>
-            <Image src={logo} width={200} height={200} alt="OnePoint Logo" />
+        <div className="flex items-center justify-center px-4 py-6 border-b border-gray-200">
+          <Link href="/">
+            <Image
+              src={logo}
+              width={160}
+              height={40}
+              alt="Mostore Logo"
+              className="object-contain"
+              priority
+            />
           </Link>
         </div>
 
         {/* Navigation */}
-        <nav className="flex flex-col gap-2 p-4 flex-1">
-          {navLinks.map((label) => {
-            let route;
-            if (label === "Dashboard") {
-              route = "/admin/dashboard";
-            } else if (label === "My Profile") {
-              route = "/admin/dashboard/my-profile";
-            } else {
-              route = `/admin/dashboard/${label
-                .toLowerCase()
-                .replace(/ & | /g, "-")}`;
-            }
+        <nav className="flex flex-col gap-1 p-4 flex-1">
+          {navLinks.map(({ label, icon: Icon, route }) => {
             const isActive =
               pathname === route ||
               (label === "Products" && pathname === "/admin/dashboard");
@@ -68,27 +73,38 @@ export default function Sidebar({ isOpen, toggleSidebar, closeSidebar }) {
               <Link
                 key={label}
                 href={route}
-                className={`px-3 py-2 rounded-md text-base font-bold transition-all ${
-                  isActive
-                    ? "bg-orange-500 text-white"
-                    : "text-gray-700 hover:bg-gray-100"
-                }`}
+                className={`
+                  flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium
+                  transition-all duration-200 ease-in-out
+                  ${
+                    isActive
+                      ? "bg-orange-100 text-orange-600"
+                      : "text-gray-600 hover:bg-gray-50 hover:text-orange-500"
+                  }
+                `}
                 onClick={() => {
                   if (window.innerWidth < 1024 && closeSidebar) closeSidebar();
                 }}
+                aria-current={isActive ? "page" : undefined}
               >
-                {label}
+                <Icon className="w-5 h-5" />
+                <span>{label}</span>
               </Link>
             );
           })}
         </nav>
+
         {/* Logout Button */}
         <button
           onClick={handleLogout}
-          className="flex items-center gap-2 px-4 py-3 m-4 mt-auto rounded-md text-base font-bold text-red-600 hover:bg-red-50 transition-all"
+          className="
+            flex items-center gap-3 px-4 py-3 m-4 mt-auto rounded-lg text-sm font-medium
+            text-red-600 hover:bg-red-50 hover:text-red-700
+            transition-all duration-200 ease-in-out
+          "
         >
           <LogOut className="w-5 h-5" />
-          Logout
+          <span>Logout</span>
         </button>
       </aside>
     </>

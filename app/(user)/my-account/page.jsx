@@ -1,6 +1,6 @@
 import { Suspense } from "react";
-import { LoadingSpinner } from "@/components/shared/user/LoadingSpinner";
 import MyProfileClient from "@/components/shared/user/MyProfileClient";
+import LoadingSpinner from "@/components/shared/user/LoadingSpinner";
 
 export default function MyAccountPage() {
   return (

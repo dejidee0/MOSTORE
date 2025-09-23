@@ -1,4 +1,5 @@
 "use client";
+
 import { useState, useEffect, useCallback, useMemo, memo } from "react";
 import {
   Drawer,
@@ -6,7 +7,6 @@ import {
   DrawerContent,
   DrawerClose,
   DrawerTitle,
-  DrawerHeader,
 } from "@/components/ui/drawer";
 import { useRouter } from "next/navigation";
 import useUserStore from "@/lib/stores/useUserStore";
@@ -41,14 +41,9 @@ import {
 import { useCart } from "@/lib/cart";
 import Link from "next/link";
 import { useWishlist } from "@/hooks/useWishlist";
-import { Gift } from "lucide-react";
-import { HeartPulse } from "lucide-react";
-import { FaChildDress } from "react-icons/fa6";
-import { Laptop } from "lucide-react";
+import { Gift, HeartPulse, Laptop, Ship, Baby } from "lucide-react";
+import { FaChildDress, FaOilCan } from "react-icons/fa6";
 import { BsGear } from "react-icons/bs";
-import { FaOilCan } from "react-icons/fa";
-import { Ship } from "lucide-react";
-import { Baby } from "lucide-react";
 
 const MenuButton = ({ onClick, icon, label, className = "" }) => {
   return (
@@ -63,33 +58,26 @@ const MenuButton = ({ onClick, icon, label, className = "" }) => {
     </button>
   );
 };
-const NavBar = ({ onWishListClick }) => {
-  const router = useRouter();
 
-  // User store
+const NavBar = () => {
+  const router = useRouter();
   const { user, loading, isAuthenticated, signOut, getUserEmail, initialized } =
     useUserStore();
-  // Cart hook - Get real cart data
   const { totalItems: cartItemCount } = useCart();
-
-  // State management
   const [isClient, setIsClient] = useState(false);
   const { totalItems: wishlistCount } = useWishlist();
   const [isSearchOpen, setIsSearchOpen] = useState(false);
-  const [isDrawerOpen, setIsDrawerOpen] = useState(false); // New state for drawer
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
   const [isCategoryDropdownOpen, setIsCategoryDropdownOpen] = useState(false);
-  const [mobileCategoriesOpen, setMobileCategoriesOpen] = useState(false);
   const [isHelpDropdownOpen, setIsHelpDropdownOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [categories, setCategories] = useState([]);
   const [categoriesLoading, setCategoriesLoading] = useState(true);
   const [searchFocused, setSearchFocused] = useState(false);
-  const [showAllCategories, setShowAllCategories] = useState(false);
 
   const role = user?.user_metadata?.role;
 
-  // Memoized user info
   const userInfo = useMemo(() => {
     if (!user) return null;
     const email = getUserEmail();
@@ -100,7 +88,6 @@ const NavBar = ({ onWishListClick }) => {
     };
   }, [user, getUserEmail]);
 
-  // Load categories on mount
   useEffect(() => {
     loadCategories();
   }, []);
@@ -109,14 +96,11 @@ const NavBar = ({ onWishListClick }) => {
     setIsClient(true);
   }, []);
 
-  // Close drawer on route change
   useEffect(() => {
     const handleRouteChangeComplete = () => {
-      setIsDrawerOpen(false); // Close drawer when navigation completes
+      setIsDrawerOpen(false);
     };
-
     router.events?.on("routeChangeComplete", handleRouteChangeComplete);
-
     return () => {
       router.events?.off("routeChangeComplete", handleRouteChangeComplete);
     };
@@ -134,7 +118,6 @@ const NavBar = ({ onWishListClick }) => {
     }
   }, []);
 
-  // Memoized category icons
   const getIconForCategory = useCallback((categoryName) => {
     const name = categoryName.toLowerCase();
     if (name.includes("automobiles")) return <Car className="w-4 h-4" />;
@@ -150,7 +133,6 @@ const NavBar = ({ onWishListClick }) => {
     return <BsGear className="w-4 h-4" />;
   }, []);
 
-  // Memoized category description formatting
   const formatCategoryItems = useCallback((description) => {
     if (!description) return [];
     return description
@@ -160,25 +142,18 @@ const NavBar = ({ onWishListClick }) => {
       .slice(0, 4);
   }, []);
 
-  // Close dropdowns when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (!event.target.closest(".profile-dropdown")) {
+      if (!event.target.closest(".profile-dropdown"))
         setIsProfileDropdownOpen(false);
-      }
-      if (!event.target.closest(".category-dropdown")) {
+      if (!event.target.closest(".category-dropdown"))
         setIsCategoryDropdownOpen(false);
-      }
-      if (!event.target.closest(".help-dropdown")) {
-        setIsHelpDropdownOpen(false);
-      }
+      if (!event.target.closest(".help-dropdown")) setIsHelpDropdownOpen(false);
     };
-
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Optimized event handlers
   const handleProfileClick = useCallback(() => {
     if (!isAuthenticated()) {
       router.push("/sign-in");
@@ -224,7 +199,7 @@ const NavBar = ({ onWishListClick }) => {
     (categoryId, categoryName) => {
       router.push(`/products?category=${categoryId}`);
       setIsCategoryDropdownOpen(false);
-      setIsDrawerOpen(false); // Close drawer on category click
+      setIsDrawerOpen(false);
     },
     [router]
   );
@@ -248,18 +223,12 @@ const NavBar = ({ onWishListClick }) => {
       if (e.key === "Escape") {
         setSearchQuery("");
         setSearchFocused(false);
+        setIsSearchOpen(false);
       }
     },
     [handleSearch, searchQuery]
   );
 
-  const closeAllDropdowns = useCallback(() => {
-    setIsSearchOpen(false);
-    setIsDrawerOpen(false);
-    setIsProfileDropdownOpen(false);
-    setIsCategoryDropdownOpen(false);
-    setIsHelpDropdownOpen(false);
-  }, []);
   const CategoryItem = ({ category, onClick, getIcon, formatItems }) => {
     return (
       <button
@@ -280,7 +249,7 @@ const NavBar = ({ onWishListClick }) => {
       </button>
     );
   };
-  // Navigation links
+
   const navigationLinks = useMemo(
     () =>
       [
@@ -297,11 +266,9 @@ const NavBar = ({ onWishListClick }) => {
 
   return (
     <>
-      {/* Top Info Bar - Enhanced */}
       <div className="bg-gradient-to-r from-orange-500 to-orange-600 text-white text-xs py-2 hidden lg:block shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between">
-            {/* Brand Slogan */}
             <div className="flex items-center ml-10">
               <h1 className="font-semibold text-sm text-white tracking-wide">
                 <span className="hidden sm:inline">
@@ -310,11 +277,6 @@ const NavBar = ({ onWishListClick }) => {
                 <span className="sm:hidden">Fast & Smart Shopping</span>
               </h1>
             </div>
-
-            {/* Contact & Location */}
-            <div className="flex items-end space-x-6 ml-10"></div>
-
-            {/* User Welcome & Settings */}
             <div className="flex items-center space-x-4">
               <div
                 className="flex items-center gap-2 hover:text-orange-100 transition-colors cursor-pointer group"
@@ -328,18 +290,11 @@ const NavBar = ({ onWishListClick }) => {
                   Call: +33753602218
                 </span>
               </div>
-
-              {/* Language Selector */}
-              <div className="relative group ml-3">
+              <div className="relative group">
                 <button className="flex items-center gap-2 text-xs hover:text-orange-100 transition-colors">
-                  <span className="flex items-center justify-center">
-                    Language:
-                  </span>
-                  <span>English</span>
+                  <span>Language: English</span>
                 </button>
               </div>
-
-              {/* Currency Selector */}
               <div className="relative group">
                 <button className="flex items-center gap-1 text-xs hover:text-orange-100 transition-colors">
                   <span>Currency: EUR</span>
@@ -349,12 +304,9 @@ const NavBar = ({ onWishListClick }) => {
           </div>
         </div>
       </div>
-
-      {/* Main Navigation - Enhanced */}
-      <nav className="sticky top-0 z-50 bg-gray-900 backdrop-blur-md border-b border-gray-200 shadow-lg">
+      <nav className="sticky top-0 z-50 bg-gray-900 backdrop-blur-md border-b border-gray-200 shadow-sm">
         <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16 lg:h-18 px-4 lg:px-6 shadow-lg">
-            {/* Logo Section */}
+          <div className="flex items-center justify-between h-16 lg:h-18">
             <div
               className="flex-shrink-0 flex items-center cursor-pointer group transition-all duration-300"
               onClick={() => router.push("/")}
@@ -367,16 +319,13 @@ const NavBar = ({ onWishListClick }) => {
                 />
               </div>
             </div>
-
-            {/* Main Navigation Section */}
             <div className="flex-1 flex items-center justify-center lg:justify-between ml-4 lg:ml-8">
-              {/* Categories Dropdown */}
               <div className="relative category-dropdown hidden lg:block">
                 <button
                   onClick={() =>
                     setIsCategoryDropdownOpen(!isCategoryDropdownOpen)
                   }
-                  className="flex items-center gap-3 px-6 py-3 rounded-xl bg-gradient-to-r from-orange-500 to-orange-600 text-white font-semibold hover:from-orange-600 hover:to-orange-700 transition-all duration-200 focus:outline-none shadow-lg hover:shadow-xl active:scale-[0.98]"
+                  className="flex items-center gap-3 px-6 py-3 rounded-xl bg-gradient-to-r from-orange-500 to-orange-600 text-white font-semibold hover:from-orange-600 hover:to-orange-700 transition-all duration-200 focus:outline-none shadow-sm hover:shadow-md"
                 >
                   <Package className="w-5 h-5" />
                   <span>All Categories</span>
@@ -386,8 +335,6 @@ const NavBar = ({ onWishListClick }) => {
                     }`}
                   />
                 </button>
-
-                {/* Enhanced Dropdown Menu */}
                 {isCategoryDropdownOpen && (
                   <div className="absolute top-full left-0 mt-3 w-96 bg-white rounded-2xl shadow-2xl border border-gray-100 py-4 z-50 animate-in slide-in-from-top-2 duration-200">
                     <div className="px-6 py-3 border-b border-gray-100">
@@ -396,9 +343,8 @@ const NavBar = ({ onWishListClick }) => {
                         Shop by Category
                       </h3>
                     </div>
-
                     {categoriesLoading ? (
-                      <CategorySkeleton />
+                      <div>Loading...</div>
                     ) : (
                       <div className="max-h-96 overflow-y-auto custom-scrollbar">
                         {categories.map((category) => (
@@ -412,7 +358,6 @@ const NavBar = ({ onWishListClick }) => {
                             formatItems={formatCategoryItems}
                           />
                         ))}
-
                         <div className="border-t border-gray-100 mt-2 pt-2">
                           <button
                             onClick={() => {
@@ -430,8 +375,6 @@ const NavBar = ({ onWishListClick }) => {
                   </div>
                 )}
               </div>
-
-              {/* Search Bar - Desktop */}
               <div className="hidden lg:flex items-center flex-1 max-w-2xl mx-8">
                 <div className="relative w-full group">
                   <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
@@ -441,7 +384,6 @@ const NavBar = ({ onWishListClick }) => {
                       }`}
                     />
                   </div>
-
                   <input
                     type="text"
                     placeholder="Search for products, brands, categories..."
@@ -452,7 +394,6 @@ const NavBar = ({ onWishListClick }) => {
                     onBlur={() => setSearchFocused(false)}
                     className="w-full pl-12 pr-4 py-3.5 bg-gray-50 border-2 border-transparent rounded-l-xl rounded-r-xl text-sm placeholder-gray-500 focus:bg-white focus:border-orange-200 focus:ring-4 focus:ring-orange-100 focus:outline-none transition-all duration-200 shadow-sm hover:shadow-md hover:bg-white"
                   />
-
                   {searchQuery && (
                     <button
                       onClick={() => setSearchQuery("")}
@@ -461,34 +402,26 @@ const NavBar = ({ onWishListClick }) => {
                       <X className="h-4 w-4" />
                     </button>
                   )}
-
                   <button
                     onClick={() => handleSearch(searchQuery)}
-                    className="absolute right-0 inset-y-0 px-6 bg-gradient-to-r from-orange-500 to-orange-600 text-white font-semibold rounded-r-xl hover:from-orange-600 hover:to-orange-700 transition-all duration-200 shadow-sm hover:shadow-md active:scale-[0.98]"
+                    className="absolute right-0 inset-y-0 px-6 bg-gradient-to-r from-orange-500 to-orange-600 text-white font-semibold rounded-r-xl hover:from-orange-600 hover:to-orange-700 transition-all duration-200 shadow-sm hover:shadow-md"
                   >
                     Search
                   </button>
                 </div>
               </div>
             </div>
-
-            {/* Action Buttons Section */}
             <div className="flex items-center space-x-2 lg:space-x-4">
-              {/* Supplier Button */}
               <Link href="/sign-up">
                 <button className="hidden lg:flex items-center text-white font-medium hover:text-orange-300 transition-colors duration-200 ml-2">
                   Sell
                 </button>
               </Link>
-
-              {/* Shop Link */}
               <Link href="/products">
                 <button className="hidden lg:flex items-center text-white font-medium hover:text-orange-300 transition-colors duration-200 ml-2">
                   Shop
                 </button>
               </Link>
-
-              {/* Help Dropdown */}
               <div className="relative help-dropdown hidden lg:block">
                 <button
                   onClick={() => setIsHelpDropdownOpen(!isHelpDropdownOpen)}
@@ -501,8 +434,6 @@ const NavBar = ({ onWishListClick }) => {
                     }`}
                   />
                 </button>
-
-                {/* Help Dropdown Menu */}
                 {isHelpDropdownOpen && (
                   <div className="absolute top-full right-0 mt-2 w-80 bg-white rounded-xl shadow-2xl border border-gray-100 py-3 z-50 animate-in slide-in-from-top-2 duration-200">
                     <div className="px-4 py-2 border-b border-gray-100">
@@ -511,9 +442,7 @@ const NavBar = ({ onWishListClick }) => {
                         How can we help you?
                       </h3>
                     </div>
-
                     <div className="py-2">
-                      {/* Help Center */}
                       <Link href="/help">
                         <button
                           onClick={() => setIsHelpDropdownOpen(false)}
@@ -532,8 +461,6 @@ const NavBar = ({ onWishListClick }) => {
                           </div>
                         </button>
                       </Link>
-
-                      {/* Need to Order */}
                       <div className="w-full flex items-center gap-3 px-4 py-3 text-gray-700 cursor-default">
                         <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
                           <Headphones className="w-5 h-5 text-blue-600" />
@@ -555,8 +482,6 @@ const NavBar = ({ onWishListClick }) => {
                           </div>
                         </div>
                       </div>
-
-                      {/* Track Package */}
                       <div
                         className="w-full flex items-center gap-3 px-4 py-3 text-gray-400 cursor-not-allowed relative group"
                         title="Coming Soon"
@@ -578,14 +503,11 @@ const NavBar = ({ onWishListClick }) => {
                             </span>
                           </div>
                         </div>
-
-                        {/* Hover tooltip */}
                         <div className="absolute -top-10 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white text-xs px-3 py-2 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
                           Coming Soon
                         </div>
                       </div>
                     </div>
-
                     <div className="px-4 py-2 border-t border-gray-100 bg-gray-50 rounded-b-xl">
                       <p className="text-xs text-gray-500 text-center">
                         Need immediate help? Email us at{" "}
@@ -600,10 +522,7 @@ const NavBar = ({ onWishListClick }) => {
                   </div>
                 )}
               </div>
-
-              {/* Desktop Action Icons */}
               <div className="hidden lg:flex items-center space-x-1 ml-4">
-                {/* Wishlist */}
                 <Link href="/wishlist">
                   <button
                     className="relative p-3 text-white hover:text-orange-300 hover:bg-gray-700 rounded-xl transition-all duration-200 group"
@@ -620,8 +539,6 @@ const NavBar = ({ onWishListClick }) => {
                     </span>
                   </button>
                 </Link>
-
-                {/* Account */}
                 <div className="relative profile-dropdown">
                   <button
                     onClick={handleProfileClick}
@@ -640,8 +557,6 @@ const NavBar = ({ onWishListClick }) => {
                       {isAuthenticated() ? "Account" : "Sign In"}
                     </span>
                   </button>
-
-                  {/* Profile Dropdown */}
                   {isProfileDropdownOpen && isAuthenticated() && (
                     <div className="absolute right-0 mt-3 w-80 bg-white rounded-2xl shadow-2xl border border-gray-100 py-4 z-50 animate-in slide-in-from-top-2 duration-200">
                       <div className="px-6 py-4 border-b border-gray-100">
@@ -661,7 +576,6 @@ const NavBar = ({ onWishListClick }) => {
                           </div>
                         </div>
                       </div>
-
                       <div className="py-2">
                         {role !== "admin" && (
                           <MenuButton
@@ -670,7 +584,6 @@ const NavBar = ({ onWishListClick }) => {
                             label="My Orders"
                           />
                         )}
-
                         {(role === "supplier" || role === "admin") && (
                           <MenuButton
                             onClick={() => navigateToDashboard(role)}
@@ -686,7 +599,6 @@ const NavBar = ({ onWishListClick }) => {
                           />
                         )}
                       </div>
-
                       <div className="border-t border-gray-100 pt-2">
                         <MenuButton
                           onClick={handleSignOut}
@@ -698,8 +610,6 @@ const NavBar = ({ onWishListClick }) => {
                     </div>
                   )}
                 </div>
-
-                {/* Cart */}
                 <button
                   onClick={() => router.push("/cart")}
                   className="relative p-3 text-white hover:text-orange-300 hover:bg-gray-700 rounded-xl transition-all duration-200 group"
@@ -716,8 +626,6 @@ const NavBar = ({ onWishListClick }) => {
                   </span>
                 </button>
               </div>
-
-              {/* Mobile Action Icons */}
               <div className="flex lg:hidden items-center space-x-2">
                 <button
                   onClick={() => setIsSearchOpen(!isSearchOpen)}
@@ -748,7 +656,6 @@ const NavBar = ({ onWishListClick }) => {
                     </span>
                   )}
                 </button>
-                {/* Sidebar Drawer */}
                 <Drawer
                   direction="left"
                   open={isDrawerOpen}
@@ -780,7 +687,7 @@ const NavBar = ({ onWishListClick }) => {
                           <Link
                             key={link.label}
                             href={link.href}
-                            onClick={() => setIsDrawerOpen(false)} // Close drawer on click
+                            onClick={() => setIsDrawerOpen(false)}
                             className="block py-2 pl-2 hover:text-blue-600"
                           >
                             {link.label}
@@ -795,12 +702,11 @@ const NavBar = ({ onWishListClick }) => {
                           <Link
                             href="/products"
                             prefetch
-                            onClick={() => setIsDrawerOpen(false)} // Close drawer on click
+                            onClick={() => setIsDrawerOpen(false)}
                           >
                             <span className="text-orange-500">See all</span>
                           </Link>
                         </div>
-
                         <div className="pl-2 flex flex-col gap-1">
                           {categoriesLoading ? (
                             <span className="text-gray-400 text-sm py-1">
@@ -815,7 +721,7 @@ const NavBar = ({ onWishListClick }) => {
                                     category.id,
                                     category.name
                                   );
-                                  setIsDrawerOpen(false); // Close drawer on click
+                                  setIsDrawerOpen(false);
                                 }}
                                 className="py-1 text-left text-gray-600 hover:text-orange-600 w-full"
                               >
@@ -833,7 +739,7 @@ const NavBar = ({ onWishListClick }) => {
                           <li className="py-1">
                             <a
                               href="/help"
-                              onClick={() => setIsDrawerOpen(false)} // Close drawer on click
+                              onClick={() => setIsDrawerOpen(false)}
                               className="hover:text-orange-600"
                             >
                               Need Help?
@@ -842,7 +748,7 @@ const NavBar = ({ onWishListClick }) => {
                           <li className="py-1">
                             <a
                               href="/contact"
-                              onClick={() => setIsDrawerOpen(false)} // Close drawer on click
+                              onClick={() => setIsDrawerOpen(false)}
                               className="hover:text-orange-600"
                             >
                               Contact Us
@@ -853,7 +759,7 @@ const NavBar = ({ onWishListClick }) => {
                       <div className="pb-2 mb-2">
                         <a
                           href="/blog"
-                          onClick={() => setIsDrawerOpen(false)} // Close drawer on click
+                          onClick={() => setIsDrawerOpen(false)}
                           className="block py-2 text-black font-bold hover:text-orange-600"
                         >
                           Blog
@@ -865,29 +771,27 @@ const NavBar = ({ onWishListClick }) => {
               </div>
             </div>
           </div>
-        </div>
-
-        {/* Enhanced Mobile Search */}
-        {isSearchOpen && (
-          <div className="lg:hidden border-t border-gray-100 bg-white animate-in slide-in-from-top-2 duration-200 shadow-lg">
-            <div className="px-4 py-4">
-              <div className="relative">
-                <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
-                  <Search className="h-5 w-5 text-gray-400" />
+          {isSearchOpen && (
+            <div className="lg:hidden border-t border-gray-100 bg-white animate-in slide-in-from-top-2 duration-200 shadow-sm">
+              <div className="px-4 py-4">
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
+                    <Search className="h-5 w-5 text-gray-400" />
+                  </div>
+                  <input
+                    type="text"
+                    placeholder="Search products..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onKeyDown={handleSearchKeyDown}
+                    className="w-full pl-12 pr-4 py-4 bg-gray-50 border-2 border-transparent rounded-xl text-sm placeholder-gray-500 focus:bg-white focus:border-orange-200 focus:ring-4 focus:ring-orange-100 focus:outline-none transition-all duration-200"
+                    autoFocus
+                  />
                 </div>
-                <input
-                  type="text"
-                  placeholder="Search products..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  onKeyDown={handleSearchKeyDown}
-                  className="w-full pl-12 pr-4 py-4 bg-gray-50 border-2 border-transparent rounded-xl text-sm placeholder-gray-500 focus:bg-white focus:border-orange-200 focus:ring-4 focus:ring-orange-100 focus:outline-none transition-all duration-200"
-                  autoFocus
-                />
               </div>
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </nav>
     </>
   );

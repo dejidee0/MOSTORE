@@ -21,13 +21,13 @@ export const metadata = {
     description: "Undergoing construction...",
     images: [
       {
-        url: "/logo.png", // Path to your logo in the public folder or an external URL
-        width: 1200, // Recommended width for OG images
-        height: 630, // Recommended height for OG images
+        url: "/logo.png",
+        width: 1200,
+        height: 630,
         alt: "MOSTORE Logo",
       },
     ],
-    url: "https://mostoreon.com", // Replace with your actual website URL
+    url: "https://mostoreon.com",
     type: "website",
   },
 };
@@ -35,12 +35,16 @@ export const metadata = {
 export default function UserLayout({ children }) {
   return (
     <html lang="en">
-      <body className={`${raleway.variable} font-raleway antialiased`}>
+      <body
+        className={`${raleway.variable} font-raleway antialiased bg-white min-h-[calc(100vh-4rem)] flex flex-col`}
+      >
         <AuthProvider>
           <CartProvider>
             <NavBar />
-            <ToastProvider>{children}</ToastProvider>
-            <Footer />
+            <main className="flex-1">{children}</main>
+            <ToastProvider>
+              <Footer />
+            </ToastProvider>
           </CartProvider>
         </AuthProvider>
       </body>

@@ -1,6 +1,43 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
+:root {
+  --header-height: 4rem; /* Mobile: 64px (h-16) */
+}
+
+@media (min-width: 1024px) {
+  :root {
+    --header-height: 6.5rem; /* Desktop: ~104px (top info bar ~32px + main nav 72px) */
+  }
+}
+
+body {
+  margin: 0;
+  padding: 0;
+}
+
+/* Adjust mobile dropdown margin when search bar is open */
+nav[data-search-open="true"] + div .dropdown-menu-content {
+  margin-top: 8rem; /* 4rem (navbar) + 4rem (search bar) */
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #f97316;
+  border-radius: 3px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #ea580c;
+}
 @theme {
   --color-primary: #ff6600;
 }

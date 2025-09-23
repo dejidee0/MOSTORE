@@ -7,13 +7,14 @@ import { supabase } from "@/lib/supabase-client";
 import useUserStore from "@/lib/stores/useUserStore";
 import Breadcrumbs from "@/components/shared/user/BreadCrumbs";
 import Sidebar from "@/components/shared/user/Sidebar";
+import WelcomePage from "@/components/shared/user/WelcomePage"; // New component
 import AccountView from "@/components/shared/user/AccountView";
 import AccountEdit from "@/components/shared/user/AccountEdit";
 import PasswordChange from "@/components/shared/user/PasswordChange";
 import DeleteAccountModal from "@/components/shared/user/DeleteAccountModal";
 import OrderHistory from "@/components/orderHistory";
 import LoadingSpinner from "@/components/shared/user/LoadingSpinner";
-import { Heart } from "lucide-react";
+import { Heart, LogOut } from "lucide-react";
 
 const MyProfileClient = () => {
   const router = useRouter();
@@ -40,11 +41,11 @@ const MyProfileClient = () => {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [message, setMessage] = useState({ type: "", text: "" });
-  const [activeTab, setActiveTab] = useState("account");
+  const [activeTab, setActiveTab] = useState("welcome"); // Default to "welcome"
+  console.log(user);
 
   const [profileForm, setProfileForm] = useState({
-    firstName: "",
-    lastName: "",
+    fullName: "",
     email: "",
     phone: "",
     gender: "",
@@ -59,16 +60,15 @@ const MyProfileClient = () => {
 
   useEffect(() => {
     const tab = searchParams.get("tab");
-    const validTabs = ["account", "orders", "wishlist"];
-    setActiveTab(validTabs.includes(tab) ? tab : "account");
+    const validTabs = ["welcome", "account", "orders", "wishlist"];
+    setActiveTab(validTabs.includes(tab) ? tab : "welcome"); // Default to "welcome"
   }, [searchParams]);
 
   useEffect(() => {
     if (user) {
       const metadata = getUserMetadata();
       setProfileForm({
-        firstName: metadata.firstName || metadata.first_name || "",
-        lastName: metadata.lastName || metadata.last_name || "",
+        fullName: metadata.full_name || "",
         email: getUserEmail() || "",
         phone: metadata.phone || "",
         gender: metadata.gender || "",
@@ -130,8 +130,7 @@ const MyProfileClient = () => {
 
     try {
       await updateProfile({
-        firstName: profileForm.firstName,
-        lastName: profileForm.lastName,
+        fullName: profileForm.fullName,
         phone: profileForm.phone,
         gender: profileForm.gender,
         dateOfBirth: profileForm.dateOfBirth,
@@ -181,8 +180,7 @@ const MyProfileClient = () => {
     if (user) {
       const metadata = getUserMetadata();
       setProfileForm({
-        firstName: metadata.firstName || metadata.first_name || "",
-        lastName: metadata.lastName || metadata.last_name || "",
+        fullName: metadata.full_name || "",
         email: getUserEmail() || "",
         phone: metadata.phone || "",
         gender: metadata.gender || "",
@@ -217,20 +215,24 @@ const MyProfileClient = () => {
   return (
     <div className="min-h-[calc(100vh-4rem)] bg-gray-50">
       <div className="lg:grid lg:grid-cols-12 gap-4 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <Sidebar
-          activeTab={activeTab}
-          handleTabChange={handleTabChange}
-          mobileMenuOpen={mobileMenuOpen}
-          setMobileMenuOpen={setMobileMenuOpen}
-          fullName={
-            `${profileForm.firstName} ${profileForm.lastName}`.trim() || "User"
-          }
-          email={profileForm.email}
-          handleLogout={handleLogout}
-        />
         <main className="lg:col-span-9 py-4 lg:pl-28">
           <Breadcrumbs />
           <AnimatePresence mode="wait">
+            {activeTab === "welcome" && (
+              <motion.div
+                key="welcome-page"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.3 }}
+              >
+                <WelcomePage
+                  fullName={profileForm.fullName || "Guest"}
+                  recentOrders={[]} // Placeholder, replace with actual data
+                  handleLogout={handleLogout}
+                />
+              </motion.div>
+            )}
             {activeTab === "account" && !isEditing && (
               <motion.div
                 key="account-view"

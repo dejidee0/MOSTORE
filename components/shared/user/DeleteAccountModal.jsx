@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { AlertTriangle } from "lucide-react";
 import LoadingSpinner from "./LoadingSpinner";
 
-const DeleteAccountModal = ({ isOpen, onClose, onConfirm, isDeleting }) => {
+const DeleteAccountModal = ({ isOpen, setIsOpen, onConfirm, isDeleting }) => {
   return (
     <AnimatePresence>
       {isOpen && (
@@ -12,14 +12,14 @@ const DeleteAccountModal = ({ isOpen, onClose, onConfirm, isDeleting }) => {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
-          onClick={onClose}
+          onClick={() => setIsOpen(false)} // Use setIsOpen to close on backdrop click
         >
           <motion.div
             initial={{ scale: 0.95, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.95, opacity: 0 }}
             className="bg-white rounded-xl p-6 max-w-md w-full mx-4 shadow-xl"
-            onClick={(e) => e.stopPropagation()}
+            onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside
           >
             <div className="flex items-center gap-3 mb-4">
               <AlertTriangle className="w-8 h-8 text-red-500" />
@@ -34,7 +34,7 @@ const DeleteAccountModal = ({ isOpen, onClose, onConfirm, isDeleting }) => {
             </p>
             <div className="flex justify-end gap-4">
               <motion.button
-                onClick={onClose}
+                onClick={() => setIsOpen(false)} // Use setIsOpen to close on cancel
                 disabled={isDeleting}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}

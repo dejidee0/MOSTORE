@@ -254,7 +254,7 @@ const NavBar = () => {
     () =>
       [
         !user && { label: "Sign in", href: "/sign-in" },
-        { label: "My Profile", href: "/my-account?tab=profile" },
+        { label: "My Account", href: "/my-account?tab=profile" },
         { label: "My Orders", href: "/my-account?tab=orders" },
         { label: "Wishlist", href: "/wishlist" },
         { label: "Sell on Mostore", href: "/supplier-sign" },
@@ -680,9 +680,6 @@ const NavBar = () => {
                     </div>
                     <nav className="flex-1 flex flex-col gap-2 p-4 overflow-y-auto text-gray-700">
                       <div className="border-b border-gray-200 pb-2 mb-2">
-                        <span className="font-bold text-sm uppercase text-black">
-                          Account
-                        </span>
                         {navigationLinks.map((link) => (
                           <Link
                             key={link.label}

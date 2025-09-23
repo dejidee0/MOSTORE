@@ -26,7 +26,7 @@ import useUserStore from "@/lib/stores/useUserStore";
 import OrderHistory from "@/components/orderHistory";
 import { supabase } from "@/lib/supabase-client";
 
-const LoadingSpinner = ({ size = "sm" }) => {
+export const LoadingSpinner = ({ size = "sm" }) => {
   const sizeClasses = {
     sm: "w-4 h-4",
     md: "w-6 h-6",

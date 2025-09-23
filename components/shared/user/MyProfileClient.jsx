@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase-client";
 import useUserStore from "@/lib/stores/useUserStore";
-import Breadcrumbs from "@/components/shared/user/Breadcrumbs";
+import Breadcrumbs from "@/components/shared/user/BreadCrumbs";
 import Sidebar from "@/components/shared/user/Sidebar";
 import AccountView from "@/components/shared/user/AccountView";
 import AccountEdit from "@/components/shared/user/AccountEdit";

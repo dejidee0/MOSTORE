@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   ChevronRight,
   Home,
@@ -13,16 +13,20 @@ import {
   CheckCircle,
   Save,
   RotateCcw,
+  User,
+  ShoppingBag,
+  Heart,
+  UserCircle,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import Footer from "@/components/shared/Footer";
-import NavBar from "@/components/shared/NavBar";
+import * as Tooltip from "@radix-ui/react-tooltip";
+import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import useUserStore from "@/lib/stores/useUserStore";
 import OrderHistory from "@/components/orderHistory";
 import { supabase } from "@/lib/supabase-client";
 
-export const LoadingSpinner = ({ size = "sm" }) => {
+const LoadingSpinner = ({ size = "sm" }) => {
   const sizeClasses = {
     sm: "w-4 h-4",
     md: "w-6 h-6",
@@ -31,7 +35,7 @@ export const LoadingSpinner = ({ size = "sm" }) => {
 
   return (
     <div
-      className={`${sizeClasses[size]} border-2 border-orange-300 border-t-orange-600 rounded-full animate-spin`}
+      className={`${sizeClasses[size]} border-4 border-orange-200 border-t-orange-500 rounded-full animate-spin`}
     />
   );
 };
@@ -45,29 +49,29 @@ const Breadcrumbs = ({ activeTab }) => {
   };
 
   return (
-    <nav className="flex mb-4 py-4 px-4 md:mb-6" aria-label="Breadcrumb">
-      <ol className="inline-flex items-center flex-wrap gap-y-1 space-x-2">
-        <li className="inline-flex items-center">
+    <nav className="flex mb-6 px-4 md:px-0" aria-label="Breadcrumb">
+      <ol className="inline-flex items-center space-x-2 text-sm text-gray-600">
+        <li className="flex items-center">
           <Link
             href="/"
-            className="inline-flex items-center text-gray-500 hover:text-orange-500 transition-colors text-base md:text-sm"
+            className="hover:text-orange-500 transition-colors flex items-center"
           >
-            <Home className="w-3 h-3 md:w-4 md:h-4 mr-1" />
+            <Home className="w-4 h-4 mr-2" />
             Home
           </Link>
         </li>
-        <li className="inline-flex items-center">
-          <ChevronRight className="w-3 h-3 md:w-4 md:h-4 text-gray-400 mx-1" />
+        <li className="flex items-center">
+          <ChevronRight className="w-4 h-4 mx-1 text-gray-400" />
           <Link
             href="/my-account"
-            className="text-gray-500 hover:text-orange-500 transition-colors text-xs md:text-sm capitalize"
+            className="hover:text-orange-500 transition-colors"
           >
             My Account
           </Link>
         </li>
-        <li className="inline-flex items-center">
-          <ChevronRight className="w-3 h-3 md:w-4 md:h-4 text-gray-400 mx-1" />
-          <span className="text-orange-500 font-medium text-xs md:text-sm capitalize">
+        <li className="flex items-center">
+          <ChevronRight className="w-4 h-4 mx-1 text-gray-400" />
+          <span className="text-orange-500 font-medium">
             {tabDisplayNames[activeTab] || "My Profile"}
           </span>
         </li>
@@ -117,14 +121,14 @@ const MyProfileClient = () => {
     confirmPassword: "",
   });
 
-  // Set active tab based on query parameter
+  // Set active tab
   useEffect(() => {
     const tab = searchParams.get("tab");
     const validTabs = ["profile", "orders", "wishlist"];
     setActiveTab(validTabs.includes(tab) ? tab : "profile");
   }, [searchParams]);
 
-  // Load user data when component mounts or user changes
+  // Load user data
   useEffect(() => {
     if (user) {
       const metadata = getUserMetadata();
@@ -148,47 +152,40 @@ const MyProfileClient = () => {
 
   const handleProfileChange = (e) => {
     const { name, value } = e.target;
-    setProfileForm((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    setProfileForm((prev) => ({ ...prev, [name]: value }));
   };
 
   const handlePasswordChange = (e) => {
     const { name, value } = e.target;
-    setPasswordForm((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    setPasswordForm((prev) => ({ ...prev, [name]: value }));
   };
 
   const togglePasswordVisibility = (field) => {
-    setShowPasswords((prev) => ({
-      ...prev,
-      [field]: !prev[field],
-    }));
+    setShowPasswords((prev) => ({ ...prev, [field]: !prev[field] }));
   };
 
   const validatePasswordForm = () => {
-    if (!passwordForm.currentPassword) {
-      setMessage({ type: "error", text: "Current password is required" });
-      return false;
-    }
-    if (!passwordForm.newPassword) {
-      setMessage({ type: "error", text: "New password is required" });
-      return false;
-    }
-    if (passwordForm.newPassword.length < 6) {
-      setMessage({
-        type: "error",
-        text: "New password must be at least 6 characters long",
-      });
-      return false;
-    }
-    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
-      setMessage({ type: "error", text: "New passwords do not match" });
-      return false;
-    }
+    if (!passwordForm.currentPassword)
+      return (
+        setMessage({ type: "error", text: "Current password is required" }),
+        false
+      );
+    if (!passwordForm.newPassword)
+      return (
+        setMessage({ type: "error", text: "New password is required" }), false
+      );
+    if (passwordForm.newPassword.length < 6)
+      return (
+        setMessage({
+          type: "error",
+          text: "New password must be at least 6 characters long",
+        }),
+        false
+      );
+    if (passwordForm.newPassword !== passwordForm.confirmPassword)
+      return (
+        setMessage({ type: "error", text: "New passwords do not match" }), false
+      );
     return true;
   };
 
@@ -205,23 +202,13 @@ const MyProfileClient = () => {
         gender: profileForm.gender,
         date_of_birth: profileForm.dateOfBirth,
       };
-
-      const { data, error } = await updateProfile(updates);
-
-      if (error) {
-        throw error;
-      }
-
+      await updateProfile(updates);
       setMessage({ type: "success", text: "Profile updated successfully!" });
-
-      setTimeout(() => {
-        setMessage({ type: "", text: "" });
-      }, 3000);
+      setTimeout(() => setMessage({ type: "", text: "" }), 3000);
     } catch (error) {
-      console.error("Profile update error:", error);
       setMessage({
         type: "error",
-        text: error.message || "Failed to update profile. Please try again.",
+        text: error.message || "Failed to update profile.",
       });
     } finally {
       setIsSubmitting(false);
@@ -230,37 +217,23 @@ const MyProfileClient = () => {
 
   const handlePasswordSubmit = async (e) => {
     e.preventDefault();
-
-    if (!validatePasswordForm()) {
-      return;
-    }
-
+    if (!validatePasswordForm()) return;
     setIsSubmitting(true);
     setMessage({ type: "", text: "" });
 
     try {
-      const { data, error } = await updatePassword(passwordForm.newPassword);
-
-      if (error) {
-        throw error;
-      }
-
+      await updatePassword(passwordForm.newPassword);
       setMessage({ type: "success", text: "Password updated successfully!" });
-
       setPasswordForm({
         currentPassword: "",
         newPassword: "",
         confirmPassword: "",
       });
-
-      setTimeout(() => {
-        setMessage({ type: "", text: "" });
-      }, 3000);
+      setTimeout(() => setMessage({ type: "", text: "" }), 3000);
     } catch (error) {
-      console.error("Password update error:", error);
       setMessage({
         type: "error",
-        text: error.message || "Failed to update password. Please try again.",
+        text: error.message || "Failed to update password.",
       });
     } finally {
       setIsSubmitting(false);
@@ -290,423 +263,527 @@ const MyProfileClient = () => {
   const handleTabChange = (tab) => {
     setActiveTab(tab);
     setMobileMenuOpen(false);
-    const params = new URLSearchParams(searchParams);
-    params.set("tab", tab);
-    router.push(`/my-account?${params.toString()}`);
+    router.push(`/my-account?tab=${tab}`);
   };
 
-  if (!initialized || (loading && !user)) {
+  if (!initialized || loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-center">
-          <LoadingSpinner size="lg" />
-          <p className="mt-4 text-gray-600">Loading your profile...</p>
-        </div>
+        <LoadingSpinner size="lg" />
+        <p className="mt-4 text-gray-600">Loading...</p>
       </div>
     );
   }
 
-  if (!isAuthenticated()) {
-    return null;
-  }
+  if (!isAuthenticated()) return null;
+
+  const userMetadata = getUserMetadata();
+  const fullName =
+    `${profileForm.firstName} ${profileForm.lastName}`.trim() || "User";
 
   return (
-    <>
-      <div className="min-h-screen bg-gray-50 w-full overflow-hidden font-raleway flex flex-col">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex-1">
+    <Tooltip.Provider>
+      <div className="min-h-screen bg-gray-50 font-sans antialiased">
+        <div className="max-w-7xl mx-auto px-4 py-8 md:py-12">
           <Breadcrumbs activeTab={activeTab} />
 
-          <div className="flex flex-col lg:flex-row gap-6">
-            {/* Mobile Menu Button */}
-            <button
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="lg:hidden flex items-center justify-between w-full py-3 px-4 bg-white rounded-lg shadow-sm mb-4"
-              aria-expanded={mobileMenuOpen}
-            >
-              <span className="font-medium text-gray-800">Account Menu</span>
-              {mobileMenuOpen ? (
-                <X className="w-5 h-5 text-gray-500" />
-              ) : (
-                <Menu className="w-5 h-5 text-gray-500" />
-              )}
-            </button>
-
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
             {/* Sidebar */}
-            <aside
-              className={`${
-                mobileMenuOpen ? "block" : "hidden"
-              } lg:block w-full lg:w-1/4 space-y-6 bg-white lg:bg-transparent p-4 lg:p-0 rounded-lg shadow-lg lg:shadow-none`}
-            >
-              <div>
-                <h3 className="font-bold text-base md:text-lg mb-3 text-gray-800">
-                  Manage My Account
-                </h3>
-                <ul className="space-y-2">
-                  <li>
-                    <button
-                      onClick={() => handleTabChange("profile")}
-                      className={`flex items-center py-2 px-3 w-full text-left rounded-lg transition-colors ${
+            <aside className="lg:col-span-1">
+              <DropdownMenu.Root
+                open={mobileMenuOpen}
+                onOpenChange={setMobileMenuOpen}
+              >
+                <DropdownMenu.Trigger asChild className="lg:hidden">
+                  <button className="w-full flex justify-between items-center p-4 bg-white rounded-xl shadow-sm mb-4 backdrop-blur-sm">
+                    <span className="font-medium text-gray-800">Menu</span>
+                    {mobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
+                  </button>
+                </DropdownMenu.Trigger>
+                <DropdownMenu.Portal>
+                  <DropdownMenu.Content
+                    className="lg:hidden bg-white rounded-xl shadow-lg p-4 w-full max-w-[90vw] mx-auto mt-2 backdrop-blur-md"
+                    sideOffset={5}
+                  >
+                    <div className="flex items-center gap-3 mb-4">
+                      <UserCircle className="w-8 h-8 text-orange-500" />
+                      <div>
+                        <h3 className="font-semibold text-gray-800">
+                          {fullName}
+                        </h3>
+                        <p className="text-sm text-gray-500">
+                          {profileForm.email}
+                        </p>
+                      </div>
+                    </div>
+                    <DropdownMenu.Item
+                      onSelect={() => handleTabChange("profile")}
+                      className={`flex items-center p-3 rounded-lg cursor-pointer ${
                         activeTab === "profile"
-                          ? "text-orange-500 font-medium bg-orange-50"
-                          : "text-gray-700 hover:text-orange-500 hover:bg-orange-50"
+                          ? "bg-orange-50 text-orange-500"
+                          : "hover:bg-gray-50"
                       }`}
                     >
-                      <span
-                        className={`w-1 h-6 mr-3 rounded-full ${
-                          activeTab === "profile"
-                            ? "bg-orange-500"
-                            : "bg-transparent"
-                        }`}
-                      ></span>
+                      <User className="w-5 h-5 mr-3" />
                       My Profile
-                    </button>
-                  </li>
-                </ul>
-              </div>
-              <div>
-                <h3 className="font-bold text-base md:text-lg mb-3 text-gray-800">
-                  My Orders
-                </h3>
-                <ul className="space-y-2">
-                  <li>
-                    <button
-                      onClick={() => handleTabChange("orders")}
-                      className={`flex items-center py-2 px-3 w-full text-left rounded-lg transition-colors ${
+                    </DropdownMenu.Item>
+                    <DropdownMenu.Item
+                      onSelect={() => handleTabChange("orders")}
+                      className={`flex items-center p-3 rounded-lg cursor-pointer ${
                         activeTab === "orders"
-                          ? "text-orange-500 font-medium bg-orange-50"
-                          : "text-gray-700 hover:text-orange-500 hover:bg-orange-50"
+                          ? "bg-orange-50 text-orange-500"
+                          : "hover:bg-gray-50"
                       }`}
                     >
-                      <span
-                        className={`w-1 h-6 mr-3 rounded-full ${
-                          activeTab === "orders"
-                            ? "bg-orange-500"
-                            : "bg-transparent"
-                        }`}
-                      ></span>
-                      View Order History
-                    </button>
-                  </li>
-                </ul>
-              </div>
-              <div>
-                <h3 className="font-bold text-base md:text-lg mb-3 text-gray-800">
-                  My WishList
-                </h3>
-                <ul className="space-y-2">
-                  <li>
-                    <button
-                      onClick={() => handleTabChange("wishlist")}
-                      className={`flex items-center py-2 px-3 w-full text-left rounded-lg transition-colors ${
+                      <ShoppingBag className="w-5 h-5 mr-3" />
+                      My Orders
+                    </DropdownMenu.Item>
+                    <DropdownMenu.Item
+                      onSelect={() => handleTabChange("wishlist")}
+                      className={`flex items-center p-3 rounded-lg cursor-pointer ${
                         activeTab === "wishlist"
-                          ? "text-orange-500 font-medium bg-orange-50"
-                          : "text-gray-700 hover:text-orange-500 hover:bg-orange-50"
+                          ? "bg-orange-50 text-orange-500"
+                          : "hover:bg-gray-50"
                       }`}
                     >
-                      <span
-                        className={`w-1 h-6 mr-3 rounded-full ${
-                          activeTab === "wishlist"
-                            ? "bg-orange-500"
-                            : "bg-transparent"
+                      <Heart className="w-5 h-5 mr-3" />
+                      Wishlist
+                    </DropdownMenu.Item>
+                  </DropdownMenu.Content>
+                </DropdownMenu.Portal>
+              </DropdownMenu.Root>
+
+              <nav className="hidden lg:block bg-white rounded-xl shadow-sm p-6 space-y-6 backdrop-blur-sm">
+                <div className="flex items-center gap-3 mb-6">
+                  <UserCircle className="w-10 h-10 text-orange-500" />
+                  <div>
+                    <h3 className="font-semibold text-gray-800">{fullName}</h3>
+                    <p className="text-sm text-gray-500">{profileForm.email}</p>
+                  </div>
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold mb-4 text-gray-800">
+                    Manage Account
+                  </h3>
+                  <Tooltip.Root>
+                    <Tooltip.Trigger asChild>
+                      <button
+                        onClick={() => handleTabChange("profile")}
+                        className={`w-full flex items-center p-3 rounded-lg transition ${
+                          activeTab === "profile"
+                            ? "bg-orange-50 text-orange-500"
+                            : "hover:bg-gray-50"
                         }`}
-                      ></span>
-                      View Wishlist
-                    </button>
-                  </li>
-                </ul>
-              </div>
+                      >
+                        <User className="w-5 h-5 mr-3" />
+                        My Profile
+                      </button>
+                    </Tooltip.Trigger>
+                    <Tooltip.Portal>
+                      <Tooltip.Content
+                        className="bg-gray-800 text-white text-sm rounded-md px-3 py-1.5 shadow-lg"
+                        sideOffset={5}
+                      >
+                        Edit your personal information
+                        <Tooltip.Arrow className="fill-gray-800" />
+                      </Tooltip.Content>
+                    </Tooltip.Portal>
+                  </Tooltip.Root>
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold mb-4 text-gray-800">
+                    Shopping
+                  </h3>
+                  <Tooltip.Root>
+                    <Tooltip.Trigger asChild>
+                      <button
+                        onClick={() => handleTabChange("orders")}
+                        className={`w-full flex items-center p-3 rounded-lg transition ${
+                          activeTab === "orders"
+                            ? "bg-orange-50 text-orange-500"
+                            : "hover:bg-gray-50"
+                        }`}
+                      >
+                        <ShoppingBag className="w-5 h-5 mr-3" />
+                        My Orders
+                      </button>
+                    </Tooltip.Trigger>
+                    <Tooltip.Portal>
+                      <Tooltip.Content
+                        className="bg-gray-800 text-white text-sm rounded-md px-3 py-1.5 shadow-lg"
+                        sideOffset={5}
+                      >
+                        View your order history
+                        <Tooltip.Arrow className="fill-gray-800" />
+                      </Tooltip.Content>
+                    </Tooltip.Portal>
+                  </Tooltip.Root>
+                  <Tooltip.Root>
+                    <Tooltip.Trigger asChild>
+                      <button
+                        onClick={() => handleTabChange("wishlist")}
+                        className={`w-full flex items-center p-3 rounded-lg transition ${
+                          activeTab === "wishlist"
+                            ? "bg-orange-50 text-orange-500"
+                            : "hover:bg-gray-50"
+                        }`}
+                      >
+                        <Heart className="w-5 h-5 mr-3" />
+                        Wishlist
+                      </button>
+                    </Tooltip.Trigger>
+                    <Tooltip.Portal>
+                      <Tooltip.Content
+                        className="bg-gray-800 text-white text-sm rounded-md px-3 py-1.5 shadow-lg"
+                        sideOffset={5}
+                      >
+                        Manage your saved items
+                        <Tooltip.Arrow className="fill-gray-800" />
+                      </Tooltip.Content>
+                    </Tooltip.Portal>
+                  </Tooltip.Root>
+                </div>
+              </nav>
             </aside>
 
-            {/* Main Form */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3 }}
-              className="flex-1 bg-white shadow-sm rounded-xl p-5 sm:p-6 md:p-8"
-            >
-              {activeTab === "profile" && (
-                <>
-                  <div className="flex items-center justify-between mb-6">
-                    <div>
-                      <h2 className="text-xl md:text-2xl font-semibold text-gray-800 mb-1">
-                        Edit Your Profile
-                      </h2>
-                      <p className="text-gray-500 text-sm md:text-base">
-                        Update your personal information
-                      </p>
-                    </div>
-                    <button
-                      onClick={resetForm}
-                      disabled={isSubmitting}
-                      className="flex items-center gap-2 px-3 py-2 text-sm text-gray-600 hover:text-gray-800 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                      title="Reset form"
-                    >
-                      <RotateCcw className="w-4 h-4" />
-                      Reset
-                    </button>
-                  </div>
+            {/* Main Content */}
+            <main className="col-span-1 lg:col-span-3 bg-white rounded-xl shadow-sm p-6 md:p-8 backdrop-blur-sm">
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={activeTab}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  {activeTab === "profile" && (
+                    <>
+                      <div className="flex justify-between items-start mb-8">
+                        <div>
+                          <h2 className="text-2xl font-bold text-gray-800">
+                            Edit Profile
+                          </h2>
+                          <p className="text-gray-500 mt-1">
+                            Update your personal details
+                          </p>
+                        </div>
+                        <Tooltip.Root>
+                          <Tooltip.Trigger asChild>
+                            <motion.button
+                              onClick={resetForm}
+                              disabled={isSubmitting}
+                              whileHover={{ scale: 1.05 }}
+                              whileTap={{ scale: 0.95 }}
+                              className="flex items-center gap-2 px-4 py-2 bg-gray-100 rounded-lg hover:bg-gray-200 transition disabled:opacity-50"
+                            >
+                              <RotateCcw size={16} />
+                              Reset
+                            </motion.button>
+                          </Tooltip.Trigger>
+                          <Tooltip.Portal>
+                            <Tooltip.Content
+                              className="bg-gray-800 text-white text-sm rounded-md px-3 py-1.5 shadow-lg"
+                              sideOffset={5}
+                            >
+                              Reset form to original values
+                              <Tooltip.Arrow className="fill-gray-800" />
+                            </Tooltip.Content>
+                          </Tooltip.Portal>
+                        </Tooltip.Root>
+                      </div>
 
-                  {/* Status Message */}
-                  {message.text && (
-                    <motion.div
-                      initial={{ opacity: 0, y: -10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      className={`flex items-center gap-2 p-4 rounded-lg mb-6 ${
-                        message.type === "success"
-                          ? "bg-green-50 text-green-700 border border-green-200"
-                          : "bg-red-50 text-red-700 border border-red-200"
-                      }`}
-                    >
-                      {message.type === "success" ? (
-                        <CheckCircle className="w-5 h-5" />
-                      ) : (
-                        <AlertCircle className="w-5 h-5" />
+                      {message.text && (
+                        <motion.div
+                          initial={{ opacity: 0, scale: 0.95 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          className={`p-4 rounded-lg mb-6 flex items-center gap-2 ${
+                            message.type === "success"
+                              ? "bg-green-50 text-green-700"
+                              : "bg-red-50 text-red-700"
+                          } backdrop-blur-sm`}
+                        >
+                          {message.type === "success" ? (
+                            <CheckCircle size={20} />
+                          ) : (
+                            <AlertCircle size={20} />
+                          )}
+                          {message.text}
+                        </motion.div>
                       )}
-                      <span>{message.text}</span>
-                    </motion.div>
+
+                      <form
+                        onSubmit={handleProfileSubmit}
+                        className="space-y-6"
+                      >
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                          <motion.div
+                            whileHover={{ y: -2 }}
+                            className="bg-gray-50/50 p-4 rounded-lg shadow-sm backdrop-blur-sm"
+                          >
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              First Name
+                            </label>
+                            <input
+                              type="text"
+                              name="firstName"
+                              value={profileForm.firstName}
+                              onChange={handleProfileChange}
+                              disabled={isSubmitting}
+                              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition disabled:bg-gray-100"
+                            />
+                          </motion.div>
+                          <motion.div
+                            whileHover={{ y: -2 }}
+                            className="bg-gray-50/50 p-4 rounded-lg shadow-sm backdrop-blur-sm"
+                          >
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              Last Name
+                            </label>
+                            <input
+                              type="text"
+                              name="lastName"
+                              value={profileForm.lastName}
+                              onChange={handleProfileChange}
+                              disabled={isSubmitting}
+                              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition disabled:bg-gray-100"
+                            />
+                          </motion.div>
+                          <motion.div
+                            whileHover={{ y: -2 }}
+                            className="bg-gray-50/50 p-4 rounded-lg shadow-sm backdrop-blur-sm"
+                          >
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              Email
+                            </label>
+                            <input
+                              type="email"
+                              value={profileForm.email}
+                              disabled
+                              className="w-full p-3 border border-gray-300 rounded-lg bg-gray-100 text-gray-500 cursor-not-allowed"
+                            />
+                          </motion.div>
+                          <motion.div
+                            whileHover={{ y: -2 }}
+                            className="bg-gray-50/50 p-4 rounded-lg shadow-sm backdrop-blur-sm"
+                          >
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              Phone
+                            </label>
+                            <input
+                              type="tel"
+                              name="phone"
+                              value={profileForm.phone}
+                              onChange={handleProfileChange}
+                              disabled={isSubmitting}
+                              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition disabled:bg-gray-100"
+                            />
+                          </motion.div>
+                          <motion.div
+                            whileHover={{ y: -2 }}
+                            className="bg-gray-50/50 p-4 rounded-lg shadow-sm backdrop-blur-sm"
+                          >
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              Gender
+                            </label>
+                            <select
+                              name="gender"
+                              value={profileForm.gender}
+                              onChange={handleProfileChange}
+                              disabled={isSubmitting}
+                              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition disabled:bg-gray-100"
+                            >
+                              <option value="">Select</option>
+                              <option value="male">Male</option>
+                              <option value="female">Female</option>
+                              <option value="other">Other</option>
+                            </select>
+                          </motion.div>
+                          <motion.div
+                            whileHover={{ y: -2 }}
+                            className="bg-gray-50/50 p-4 rounded-lg shadow-sm backdrop-blur-sm"
+                          >
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              Date of Birth
+                            </label>
+                            <input
+                              type="date"
+                              name="dateOfBirth"
+                              value={profileForm.dateOfBirth}
+                              onChange={handleProfileChange}
+                              disabled={isSubmitting}
+                              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition disabled:bg-gray-100"
+                            />
+                          </motion.div>
+                        </div>
+                        <div className="flex justify-end">
+                          <motion.button
+                            type="submit"
+                            disabled={isSubmitting}
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                            className="flex items-center gap-2 px-6 py-3 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition shadow-md hover:shadow-lg disabled:bg-gray-400"
+                          >
+                            {isSubmitting ? (
+                              <LoadingSpinner size="sm" />
+                            ) : (
+                              <Save size={16} />
+                            )}
+                            {isSubmitting ? "Updating..." : "Update Profile"}
+                          </motion.button>
+                        </div>
+                      </form>
+
+                      <div className="mt-12 border-t border-gray-200 pt-8">
+                        <h3 className="text-xl font-bold text-gray-800 mb-6">
+                          Change Password
+                        </h3>
+                        <form
+                          onSubmit={handlePasswordSubmit}
+                          className="space-y-6"
+                        >
+                          <motion.div
+                            whileHover={{ y: -2 }}
+                            className="bg-gray-50/50 p-4 rounded-lg shadow-sm backdrop-blur-sm"
+                          >
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              Current Password
+                            </label>
+                            <div className="relative">
+                              <input
+                                type={
+                                  showPasswords.current ? "text" : "password"
+                                }
+                                name="currentPassword"
+                                value={passwordForm.currentPassword}
+                                onChange={handlePasswordChange}
+                                disabled={isSubmitting}
+                                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition disabled:bg-gray-100 pr-10"
+                              />
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  togglePasswordVisibility("current")
+                                }
+                                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"
+                              >
+                                {showPasswords.current ? (
+                                  <EyeOff size={18} />
+                                ) : (
+                                  <Eye size={18} />
+                                )}
+                              </button>
+                            </div>
+                          </motion.div>
+                          <motion.div
+                            whileHover={{ y: -2 }}
+                            className="bg-gray-50/50 p-4 rounded-lg shadow-sm backdrop-blur-sm"
+                          >
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              New Password
+                            </label>
+                            <div className="relative">
+                              <input
+                                type={showPasswords.new ? "text" : "password"}
+                                name="newPassword"
+                                value={passwordForm.newPassword}
+                                onChange={handlePasswordChange}
+                                disabled={isSubmitting}
+                                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition disabled:bg-gray-100 pr-10"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => togglePasswordVisibility("new")}
+                                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"
+                              >
+                                {showPasswords.new ? (
+                                  <EyeOff size={18} />
+                                ) : (
+                                  <Eye size={18} />
+                                )}
+                              </button>
+                            </div>
+                          </motion.div>
+                          <motion.div
+                            whileHover={{ y: -2 }}
+                            className="bg-gray-50/50 p-4 rounded-lg shadow-sm backdrop-blur-sm"
+                          >
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              Confirm New Password
+                            </label>
+                            <div className="relative">
+                              <input
+                                type={
+                                  showPasswords.confirm ? "text" : "password"
+                                }
+                                name="confirmPassword"
+                                value={passwordForm.confirmPassword}
+                                onChange={handlePasswordChange}
+                                disabled={isSubmitting}
+                                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition disabled:bg-gray-100 pr-10"
+                              />
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  togglePasswordVisibility("confirm")
+                                }
+                                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"
+                              >
+                                {showPasswords.confirm ? (
+                                  <EyeOff size={18} />
+                                ) : (
+                                  <Eye size={18} />
+                                )}
+                              </button>
+                            </div>
+                          </motion.div>
+                          <div className="flex justify-end">
+                            <motion.button
+                              type="submit"
+                              disabled={isSubmitting}
+                              whileHover={{ scale: 1.05 }}
+                              whileTap={{ scale: 0.95 }}
+                              className="flex items-center gap-2 px-6 py-3 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition shadow-md hover:shadow-lg disabled:bg-gray-400"
+                            >
+                              {isSubmitting ? (
+                                <LoadingSpinner size="sm" />
+                              ) : (
+                                <Save size={16} />
+                              )}
+                              {isSubmitting ? "Updating..." : "Change Password"}
+                            </motion.button>
+                          </div>
+                        </form>
+                      </div>
+                    </>
                   )}
 
-                  {/* Profile Form */}
-                  <form
-                    onSubmit={handleProfileSubmit}
-                    className="space-y-5 md:space-y-6"
-                  >
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-                      <div>
-                        <label className="block text-sm md:text-base font-medium text-gray-700 mb-1 md:mb-2">
-                          First Name
-                        </label>
-                        <input
-                          type="text"
-                          name="firstName"
-                          value={profileForm.firstName}
-                          onChange={handleProfileChange}
-                          disabled={isSubmitting}
-                          className="w-full px-3 py-2 md:px-4 md:py-3 text-sm md:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all disabled:bg-gray-50 disabled:cursor-not-allowed"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm md:text-base font-medium text-gray-700 mb-1 md:mb-2">
-                          Last Name
-                        </label>
-                        <input
-                          type="text"
-                          name="lastName"
-                          value={profileForm.lastName}
-                          onChange={handleProfileChange}
-                          disabled={isSubmitting}
-                          className="w-full px-3 py-2 md:px-4 md:py-3 text-sm md:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all disabled:bg-gray-50 disabled:cursor-not-allowed"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm md:text-base font-medium text-gray-700 mb-1 md:mb-2">
-                          Email
-                        </label>
-                        <input
-                          type="email"
-                          name="email"
-                          value={profileForm.email}
-                          disabled={true}
-                          className="w-full px-3 py-2 md:px-4 md:py-3 text-sm md:text-base border border-gray-300 rounded-lg bg-gray-50 cursor-not-allowed text-gray-500"
-                          title="Email cannot be changed here. Contact support if needed."
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm md:text-base font-medium text-gray-700 mb-1 md:mb-2">
-                          Phone Number
-                        </label>
-                        <input
-                          type="tel"
-                          name="phone"
-                          value={profileForm.phone}
-                          onChange={handleProfileChange}
-                          disabled={isSubmitting}
-                          className="w-full px-3 py-2 md:px-4 md:py-3 text-sm md:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all disabled:bg-gray-50 disabled:cursor-not-allowed"
-                          placeholder="+234 XXX XXX XXXX"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm md:text-base font-medium text-gray-700 mb-1 md:mb-2">
-                          Gender
-                        </label>
-                        <select
-                          name="gender"
-                          value={profileForm.gender}
-                          onChange={handleProfileChange}
-                          disabled={isSubmitting}
-                          className="w-full px-3 py-2 md:px-4 md:py-3 text-sm md:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all disabled:bg-gray-50 disabled:cursor-not-allowed"
-                        >
-                          <option value="" disabled>
-                            Select Gender
-                          </option>
-                          <option value="male">Male</option>
-                          <option value="female">Female</option>
-                          <option value="other">Other</option>
-                        </select>
-                      </div>
-                      <div>
-                        <label className="block text-sm md:text-base font-medium text-gray-700 mb-1 md:mb-2">
-                          Date of Birth
-                        </label>
-                        <input
-                          type="date"
-                          name="dateOfBirth"
-                          value={profileForm.dateOfBirth}
-                          onChange={handleProfileChange}
-                          disabled={isSubmitting}
-                          className="w-full px-3 py-2 md:px-4 md:py-3 text-sm md:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all disabled:bg-gray-50 disabled:cursor-not-allowed"
-                        />
-                      </div>
-                    </div>
+                  {activeTab === "orders" && (
+                    <OrderHistory user={user} supabase={supabase} />
+                  )}
 
-                    <div className="flex justify-end">
-                      <button
-                        type="submit"
-                        disabled={isSubmitting}
-                        className="flex items-center gap-2 px-4 py-2 md:px-6 md:py-3 text-sm md:text-base bg-orange-500 hover:bg-orange-600 disabled:bg-gray-400 text-white rounded-lg transition-all shadow-sm hover:shadow-md disabled:cursor-not-allowed"
+                  {activeTab === "wishlist" && (
+                    <div className="text-center py-16">
+                      <motion.div
+                        animate={{ scale: [1, 1.1, 1] }}
+                        transition={{ duration: 1.5, repeat: Infinity }}
                       >
-                        {isSubmitting ? (
-                          <>
-                            <LoadingSpinner size="sm" />
-                            Updating Profile...
-                          </>
-                        ) : (
-                          <>
-                            <Save className="w-4 h-4" />
-                            Update Profile
-                          </>
-                        )}
-                      </button>
+                        <Heart className="w-12 h-12 mx-auto text-orange-500 mb-4" />
+                      </motion.div>
+                      <h2 className="text-2xl font-bold text-gray-800 mb-2">
+                        Your Wishlist
+                      </h2>
+                      <p className="text-gray-500">
+                        Wishlist functionality coming soon...
+                      </p>
                     </div>
-                  </form>
-
-                  <div className="border-t border-gray-200 pt-6 mt-8">
-                    <h3 className="text-lg md:text-xl font-semibold text-gray-800 mb-4">
-                      Password Changes
-                    </h3>
-                    <form onSubmit={handlePasswordSubmit} className="space-y-4">
-                      <div>
-                        <label className="block text-sm md:text-base font-medium text-gray-700 mb-1 md:mb-2">
-                          Current Password
-                        </label>
-                        <div className="relative">
-                          <input
-                            type={showPasswords.current ? "text" : "password"}
-                            name="currentPassword"
-                            value={passwordForm.currentPassword}
-                            onChange={handlePasswordChange}
-                            disabled={isSubmitting}
-                            className="w-full px-3 py-2 md:px-4 md:py-3 text-sm md:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all disabled:bg-gray-50 disabled:cursor-not-allowed pr-10"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => togglePasswordVisibility("current")}
-                            className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
-                          >
-                            {showPasswords.current ? (
-                              <EyeOff className="w-4 h-4" />
-                            ) : (
-                              <Eye className="w-4 h-4" />
-                            )}
-                          </button>
-                        </div>
-                      </div>
-                      <div>
-                        <label className="block text-sm md:text-base font-medium text-gray-700 mb-1 md:mb-2">
-                          New Password
-                        </label>
-                        <div className="relative">
-                          <input
-                            type={showPasswords.new ? "text" : "password"}
-                            name="newPassword"
-                            value={passwordForm.newPassword}
-                            onChange={handlePasswordChange}
-                            disabled={isSubmitting}
-                            className="w-full px-3 py-2 md:px-4 md:py-3 text-sm md:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all disabled:bg-gray-50 disabled:cursor-not-allowed pr-10"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => togglePasswordVisibility("new")}
-                            className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
-                          >
-                            {showPasswords.new ? (
-                              <EyeOff className="w-4 h-4" />
-                            ) : (
-                              <Eye className="w-4 h-4" />
-                            )}
-                          </button>
-                        </div>
-                      </div>
-                      <div>
-                        <label className="block text-sm md:text-base font-medium text-gray-700 mb-1 md:mb-2">
-                          Confirm New Password
-                        </label>
-                        <div className="relative">
-                          <input
-                            type={showPasswords.confirm ? "text" : "password"}
-                            name="confirmPassword"
-                            value={passwordForm.confirmPassword}
-                            onChange={handlePasswordChange}
-                            disabled={isSubmitting}
-                            className="w-full px-3 py-2 md:px-4 md:py-3 text-sm md:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all disabled:bg-gray-50 disabled:cursor-not-allowed pr-10"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => togglePasswordVisibility("confirm")}
-                            className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
-                          >
-                            {showPasswords.confirm ? (
-                              <EyeOff className="w-4 h-4" />
-                            ) : (
-                              <Eye className="w-4 h-4" />
-                            )}
-                          </button>
-                        </div>
-                      </div>
-
-                      <div className="flex justify-end pt-4">
-                        <button
-                          type="submit"
-                          disabled={isSubmitting}
-                          className="flex items-center gap-2 px-4 py-2 md:px-6 md:py-3 text-sm md:text-base bg-red-500 hover:bg-red-600 disabled:bg-gray-400 text-white rounded-lg transition-all shadow-sm hover:shadow-md disabled:cursor-not-allowed"
-                        >
-                          {isSubmitting ? (
-                            <>
-                              <LoadingSpinner size="sm" />
-                              Updating Password...
-                            </>
-                          ) : (
-                            <>
-                              <Save className="w-4 h-4" />
-                              Change Password
-                            </>
-                          )}
-                        </button>
-                      </div>
-                    </form>
-                  </div>
-                </>
-              )}
-
-              {activeTab === "orders" && (
-                <OrderHistory user={user} supabase={supabase} />
-              )}
-
-              {activeTab === "wishlist" && (
-                <div className="text-center py-12">
-                  <h2 className="text-xl md:text-2xl font-semibold text-gray-800 mb-4">
-                    Wishlist
-                  </h2>
-                  <p className="text-gray-500">
-                    Wishlist functionality coming soon...
-                  </p>
-                </div>
-              )}
-            </motion.div>
+                  )}
+                </motion.div>
+              </AnimatePresence>
+            </main>
           </div>
         </div>
       </div>
-    </>
+    </Tooltip.Provider>
   );
 };
 

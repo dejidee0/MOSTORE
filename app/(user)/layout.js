@@ -1,6 +1,6 @@
 import { Raleway } from "next/font/google";
 import "../globals.css";
-import { ToastProvider } from "@/lib/toastW";
+import { ToastProvider } from "@/lib/toast";
 import Footer from "@/components/shared/Footer";
 import AuthProvider from "@/components/AuthProvider";
 import { CartProvider } from "@/lib/cart";

@@ -1,6 +1,6 @@
 import { Raleway } from "next/font/google";
 import "../globals.css";
-import { ToastProvider } from "@/lib/toast";
+import { ToastProvider } from "@/lib/toastW";
 import Footer from "@/components/shared/Footer";
 import AuthProvider from "@/components/AuthProvider";
 import { CartProvider } from "@/lib/cart";
@@ -40,9 +40,10 @@ export default function UserLayout({ children }) {
       >
         <AuthProvider>
           <CartProvider>
-            <NavBar />
-            <main className="flex-1">{children}</main>
             <ToastProvider>
+              <NavBar />
+              <main className="flex-1">{children}</main>
+
               <Footer />
             </ToastProvider>
           </CartProvider>

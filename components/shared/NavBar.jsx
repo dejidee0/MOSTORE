@@ -773,7 +773,7 @@ const NavBar = () => {
                           </li>
                         </ul>
                       </div>
-                      <div className="pb-2 mb-2">
+                      <div className="mb-2">
                         <a
                           href="/blog"
                           onClick={() => setIsDrawerOpen(false)}

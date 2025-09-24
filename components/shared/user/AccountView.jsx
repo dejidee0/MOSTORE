@@ -157,7 +157,7 @@ const AccountView = ({
           transition={{ duration: 0.6 }}
         >
           <h1 className="text-2xl font-bold text-gray-900 mb-3">
-            Profile Details
+            Account Information
           </h1>
           <p className="text-gray-600 text-sm leading-relaxed">
             Manage your personal information, preferences, and account settings

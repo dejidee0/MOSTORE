@@ -10,8 +10,8 @@ const WelcomePage = ({ fullName, recentOrders, handleLogout }) => {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6, ease: "easeOut" }}
     >
-      {/* Header with Welcome Message and Logout */}
-      <div className="flex justify-between items-center border-b border-gray-200 pb-4 mb-6">
+      {/* Header with Welcome Message */}
+      <div className="border-b border-gray-200 pb-4 mb-6">
         <motion.h1
           className="text-4xl font-bold text-gray-800"
           initial={{ opacity: 0 }}
@@ -20,15 +20,6 @@ const WelcomePage = ({ fullName, recentOrders, handleLogout }) => {
         >
           Welcome, {fullName || "Guest"}!
         </motion.h1>
-        <motion.button
-          onClick={handleLogout}
-          className="flex items-center gap-2 px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors duration-200 shadow-sm"
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-        >
-          <LogOut size={18} />
-          Logout
-        </motion.button>
       </div>
 
       {/* Membership Overview and Recent Orders */}
@@ -44,12 +35,12 @@ const WelcomePage = ({ fullName, recentOrders, handleLogout }) => {
           </h2>
           <div className="space-y-4">
             <div className="flex justify-between text-sm">
-              <span className="text-gray-600">Plan:</span>
-              <span className="text-gray-800 font-medium">Free Tier</span>
+              <span className="text-gray-900">Plan:</span>
+              <span className="text-gray-500 font-medium">Free Tier</span>
             </div>
             <div className="flex justify-between text-sm">
-              <span className="text-gray-600">Join Date:</span>
-              <span className="text-gray-800 font-medium">
+              <span className="text-gray-900">Join Date:</span>
+              <span className="text-gray-500 font-medium">
                 September 23, 2025
               </span>
             </div>
@@ -86,6 +77,24 @@ const WelcomePage = ({ fullName, recentOrders, handleLogout }) => {
           )}
         </motion.div>
       </div>
+
+      {/* Logout Button at Bottom */}
+      <motion.div
+        className="mt-6 pt-6 border-t border-gray-200"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.6, duration: 0.5 }}
+      >
+        <motion.button
+          onClick={handleLogout}
+          className="flex items-center gap-2 px-6 py-3 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors duration-200 shadow-sm"
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+        >
+          <LogOut size={18} />
+          Logout
+        </motion.button>
+      </motion.div>
     </motion.div>
   );
 };

@@ -1,62 +1,155 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X } from "lucide-react";
-import countries from "./countries.json"; // Import JSON file with countries
+import countries from "./countries.json";
 
 const AccountView = ({
   profile,
   setIsEditing,
   setIsDeleteModalOpen,
   handleProfileChange,
+  handleProfileSubmit,
 }) => {
-  // State for address modals
   const [isBillingModalOpen, setIsBillingModalOpen] = useState(false);
   const [isDeliveryModalOpen, setIsDeliveryModalOpen] = useState(false);
   const [billingForm, setBillingForm] = useState({
-    firstName: profile.billingFirstName || "",
-    lastName: profile.billingLastName || "",
-    streetAddress: profile.billingStreetAddress || "",
-    zipCode: profile.billingZipCode || "",
-    city: profile.billingCity || "",
-    state: profile.billingState || "",
-    country: profile.billingCountry || "",
-    phone: profile.billingPhone || "",
+    firstName: "",
+    lastName: "",
+    streetAddress: "",
+    zipCode: "",
+    city: "",
+    state: "",
+    country: "",
+    phone: "",
   });
   const [deliveryForm, setDeliveryForm] = useState({
-    firstName: profile.deliveryFirstName || "",
-    lastName: profile.deliveryLastName || "",
-    streetAddress: profile.deliveryStreetAddress || "",
-    zipCode: profile.deliveryZipCode || "",
-    city: profile.deliveryCity || "",
-    state: profile.deliveryState || "",
-    country: profile.deliveryCountry || "",
-    phone: profile.deliveryPhone || "",
+    firstName: "",
+    lastName: "",
+    streetAddress: "",
+    zipCode: "",
+    city: "",
+    state: "",
+    country: "",
+    phone: "",
   });
+  const [error, setError] = useState("");
 
-  // Handle changes in address forms
+  // Update form states when profile data changes
+  useEffect(() => {
+    setBillingForm({
+      firstName: profile.billingFirstName || "",
+      lastName: profile.billingLastName || "",
+      streetAddress: profile.billingStreetAddress || "",
+      zipCode: profile.billingZipCode || "",
+      city: profile.billingCity || "",
+      state: profile.billingState || "",
+      country: profile.billingCountry || "",
+      phone: profile.billingPhone || "",
+    });
+
+    setDeliveryForm({
+      firstName: profile.deliveryFirstName || "",
+      lastName: profile.deliveryLastName || "",
+      streetAddress: profile.deliveryStreetAddress || "",
+      zipCode: profile.deliveryZipCode || "",
+      city: profile.deliveryCity || "",
+      state: profile.deliveryState || "",
+      country: profile.deliveryCountry || "",
+      phone: profile.deliveryPhone || "",
+    });
+  }, [profile]);
+
   const handleAddressChange = (e, setForm) => {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
   };
 
-  // Handle address form submission
-  const handleAddressSubmit = (e, form, type) => {
+  const validateAddressForm = (form, type) => {
+    if (!form.firstName)
+      return `${
+        type === "billing" ? "Billing" : "Delivery"
+      } first name is required`;
+    if (!form.lastName)
+      return `${
+        type === "billing" ? "Billing" : "Delivery"
+      } last name is required`;
+    if (!form.streetAddress)
+      return `${
+        type === "billing" ? "Billing" : "Delivery"
+      } street address is required`;
+    if (!form.city)
+      return `${type === "billing" ? "Billing" : "Delivery"} city is required`;
+    if (!form.country)
+      return `${
+        type === "billing" ? "Billing" : "Delivery"
+      } country is required`;
+    return "";
+  };
+
+  const handleAddressSubmit = async (e, form, type) => {
     e.preventDefault();
-    handleProfileChange({
-      target: {
-        name: type === "billing" ? "billingAddress" : "deliveryAddress",
-        value: form,
-      },
-    });
-    if (type === "billing") setIsBillingModalOpen(false);
-    else setIsDeliveryModalOpen(false);
+    setError("");
+
+    const validationError = validateAddressForm(form, type);
+    if (validationError) {
+      setError(validationError);
+      return;
+    }
+
+    try {
+      // Prepare profile data for submission with correct field names
+      const profileData = {
+        fullName: profile.fullName,
+        phone: profile.phone,
+        gender: profile.gender,
+        dateOfBirth: profile.dateOfBirth,
+        ...(type === "billing"
+          ? {
+              billing_first_name: form.firstName,
+              billing_last_name: form.lastName,
+              billing_street_address: form.streetAddress,
+              billing_zip_code: form.zipCode,
+              billing_city: form.city,
+              billing_state: form.state,
+              billing_country: form.country,
+              billing_phone: form.phone,
+            }
+          : {
+              delivery_first_name: form.firstName,
+              delivery_last_name: form.lastName,
+              delivery_street_address: form.streetAddress,
+              delivery_zip_code: form.zipCode,
+              delivery_city: form.city,
+              delivery_state: form.state,
+              delivery_country: form.country,
+              delivery_phone: form.phone,
+            }),
+      };
+
+      // Update profileForm state
+      handleProfileChange({
+        target: {
+          name: type === "billing" ? "billingAddress" : "deliveryAddress",
+          value: form,
+        },
+      });
+
+      // Call handleProfileSubmit to save to database
+      console.log("Submitting profile data:", profileData);
+      await handleProfileSubmit(profileData);
+
+      // Close modal on success
+      if (type === "billing") setIsBillingModalOpen(false);
+      else setIsDeliveryModalOpen(false);
+    } catch (err) {
+      console.error("Error saving address:", err);
+      setError(err.message || "Failed to save address");
+    }
   };
 
   return (
     <div className="">
-      {/* Profile Content */}
       <div className="px-4 py-6">
-        {/* Profile Title and Description */}
         <motion.div
           className="text-center mb-8"
           initial={{ opacity: 0, y: 20 }}
@@ -72,7 +165,6 @@ const AccountView = ({
           </p>
         </motion.div>
 
-        {/* Personal Details Section */}
         <motion.div
           className="bg-white rounded-lg p-6 mb-6 shadow-sm"
           initial={{ opacity: 0, y: 20 }}
@@ -92,7 +184,6 @@ const AccountView = ({
               Edit
             </motion.button>
           </div>
-
           <div className="space-y-1">
             <p className="font-medium text-gray-900">
               {profile?.fullName || "John Doe"}
@@ -118,7 +209,6 @@ const AccountView = ({
             </p>
             {profile?.phone && <p className="text-gray-600">{profile.phone}</p>}
           </div>
-
           <div className="mt-6 pt-4 border-t border-gray-100">
             <button
               onClick={() => setIsDeleteModalOpen(true)}
@@ -129,7 +219,6 @@ const AccountView = ({
           </div>
         </motion.div>
 
-        {/* Billing Address Section */}
         <motion.div
           className="bg-white rounded-lg p-6 mb-6 shadow-sm"
           initial={{ opacity: 0, y: 20 }}
@@ -156,7 +245,6 @@ const AccountView = ({
           </p>
         </motion.div>
 
-        {/* Shipping Address Section (Changed to Delivery Address) */}
         <motion.div
           className="bg-white rounded-lg p-6 shadow-sm"
           initial={{ opacity: 0, y: 20 }}
@@ -183,7 +271,16 @@ const AccountView = ({
           </p>
         </motion.div>
 
-        {/* Billing Address Modal */}
+        {error && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="text-red-600 text-sm mt-4 text-center"
+          >
+            {error}
+          </motion.div>
+        )}
+
         <AnimatePresence>
           {isBillingModalOpen && (
             <motion.div
@@ -218,7 +315,7 @@ const AccountView = ({
                 >
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      First Name
+                      First Name *
                     </label>
                     <input
                       type="text"
@@ -226,11 +323,12 @@ const AccountView = ({
                       value={billingForm.firstName}
                       onChange={(e) => handleAddressChange(e, setBillingForm)}
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                      required
                     />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Last Name
+                      Last Name *
                     </label>
                     <input
                       type="text"
@@ -238,11 +336,12 @@ const AccountView = ({
                       value={billingForm.lastName}
                       onChange={(e) => handleAddressChange(e, setBillingForm)}
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                      required
                     />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Street Address
+                      Street Address *
                     </label>
                     <input
                       type="text"
@@ -250,6 +349,7 @@ const AccountView = ({
                       value={billingForm.streetAddress}
                       onChange={(e) => handleAddressChange(e, setBillingForm)}
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                      required
                     />
                   </div>
                   <div>
@@ -266,7 +366,7 @@ const AccountView = ({
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      City
+                      City *
                     </label>
                     <input
                       type="text"
@@ -274,6 +374,7 @@ const AccountView = ({
                       value={billingForm.city}
                       onChange={(e) => handleAddressChange(e, setBillingForm)}
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                      required
                     />
                   </div>
                   <div>
@@ -290,13 +391,14 @@ const AccountView = ({
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Country
+                      Country *
                     </label>
                     <select
                       name="country"
                       value={billingForm.country}
                       onChange={(e) => handleAddressChange(e, setBillingForm)}
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                      required
                     >
                       <option value="">Select a country</option>
                       {countries.map((country) => (
@@ -332,7 +434,6 @@ const AccountView = ({
           )}
         </AnimatePresence>
 
-        {/* Delivery Address Modal */}
         <AnimatePresence>
           {isDeliveryModalOpen && (
             <motion.div
@@ -367,7 +468,7 @@ const AccountView = ({
                 >
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      First Name
+                      First Name *
                     </label>
                     <input
                       type="text"
@@ -375,11 +476,12 @@ const AccountView = ({
                       value={deliveryForm.firstName}
                       onChange={(e) => handleAddressChange(e, setDeliveryForm)}
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                      required
                     />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Last Name
+                      Last Name *
                     </label>
                     <input
                       type="text"
@@ -387,11 +489,12 @@ const AccountView = ({
                       value={deliveryForm.lastName}
                       onChange={(e) => handleAddressChange(e, setDeliveryForm)}
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                      required
                     />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Street Address
+                      Street Address *
                     </label>
                     <input
                       type="text"
@@ -399,6 +502,7 @@ const AccountView = ({
                       value={deliveryForm.streetAddress}
                       onChange={(e) => handleAddressChange(e, setDeliveryForm)}
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                      required
                     />
                   </div>
                   <div>
@@ -415,7 +519,7 @@ const AccountView = ({
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      City
+                      City *
                     </label>
                     <input
                       type="text"
@@ -423,6 +527,7 @@ const AccountView = ({
                       value={deliveryForm.city}
                       onChange={(e) => handleAddressChange(e, setDeliveryForm)}
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                      required
                     />
                   </div>
                   <div>
@@ -439,13 +544,14 @@ const AccountView = ({
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Country
+                      Country *
                     </label>
                     <select
                       name="country"
                       value={deliveryForm.country}
                       onChange={(e) => handleAddressChange(e, setDeliveryForm)}
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                      required
                     >
                       <option value="">Select a country</option>
                       {countries.map((country) => (

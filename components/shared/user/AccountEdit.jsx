@@ -1,6 +1,5 @@
 import React, { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { X } from "lucide-react";
+import { motion } from "framer-motion";
 
 const AccountEdit = ({
   profileForm,
@@ -8,185 +7,168 @@ const AccountEdit = ({
   handleProfileSubmit,
   resetForm,
   isSubmitting,
+  message,
   setIsEditing,
 }) => {
-  // Split fullName into firstName and lastName for editing
-  const [firstName, setFirstName] = useState(() => {
-    const nameParts = profileForm.fullName
-      ? profileForm.fullName.split(" ")
-      : ["", ""];
-    return nameParts[0] || "";
-  });
-  const [lastName, setLastName] = useState(() => {
-    const nameParts = profileForm.fullName
-      ? profileForm.fullName.split(" ")
-      : ["", ""];
-    return nameParts.slice(1).join(" ") || "";
-  });
+  const [error, setError] = useState("");
 
-  // Handle profile form submission with combined fullName
-  const handleSubmit = (e) => {
+  const validateForm = () => {
+    if (!profileForm.fullName) {
+      setError("Full name is required");
+      return false;
+    }
+    return true;
+  };
+
+  const onSubmit = async (e) => {
     e.preventDefault();
-    handleProfileSubmit({
-      ...e,
-      fullName: `${firstName} ${lastName}`.trim(),
-    });
+    setError("");
+
+    if (!validateForm()) return;
+
+    try {
+      // Prepare data for submission with correct field names
+      const profileData = {
+        fullName: profileForm.fullName,
+        phone: profileForm.phone,
+        gender: profileForm.gender,
+        dateOfBirth: profileForm.dateOfBirth,
+      };
+
+      console.log("Submitting personal details:", profileData);
+      await handleProfileSubmit(profileData);
+    } catch (err) {
+      console.error("Error saving personal details:", err);
+      setError(err.message || "Failed to save personal details");
+    }
   };
 
   return (
-    <AnimatePresence>
+    <div className="px-4 py-6">
       <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        className="fixed inset-0 bg-black/50 flex items-end justify-center z-50 p-4"
+        className="text-center mb-8"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6 }}
       >
-        <motion.div
-          initial={{ y: "100%", opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          exit={{ y: "100%", opacity: 0 }}
-          transition={{ type: "spring", damping: 20, stiffness: 100 }}
-          className="bg-white rounded-t-2xl p-6 w-full max-w-md mx-auto shadow-2xl"
-        >
-          <div className="flex justify-between items-center mb-6 border-b border-gray-200 pb-4">
-            <h3 className="text-lg font-semibold text-gray-900">
-              Personal Information
-            </h3>
-            <button
-              onClick={() => setIsEditing(false)}
-              className="text-gray-500 hover:text-gray-700"
-            >
-              <X size={20} />
-            </button>
+        <h1 className="text-2xl font-bold text-gray-900 mb-3">
+          Edit Personal Details
+        </h1>
+        <p className="text-gray-600 text-sm leading-relaxed">
+          Update your personal information below.
+        </p>
+      </motion.div>
+
+      <motion.div
+        className="bg-white rounded-lg p-6 shadow-sm max-w-2xl mx-auto"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.2, duration: 0.5 }}
+      >
+        <form onSubmit={onSubmit} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Full Name *
+            </label>
+            <input
+              type="text"
+              name="fullName"
+              value={profileForm.fullName}
+              onChange={handleProfileChange}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+              required
+            />
           </div>
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                First Name
-              </label>
-              <div className="relative">
-                <input
-                  type="text"
-                  name="firstName"
-                  value={firstName}
-                  onChange={(e) => setFirstName(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
-                />
-                <button
-                  type="button"
-                  onClick={() => setFirstName("")}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                >
-                  <X size={16} />
-                </button>
-              </div>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Last Name
-              </label>
-              <div className="relative">
-                <input
-                  type="text"
-                  name="lastName"
-                  value={lastName}
-                  onChange={(e) => setLastName(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
-                />
-                <button
-                  type="button"
-                  onClick={() => setLastName("")}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                >
-                  <X size={16} />
-                </button>
-              </div>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Email
-              </label>
-              <div className="relative">
-                <input
-                  type="email"
-                  name="email"
-                  value={profileForm.email || ""}
-                  onChange={handleProfileChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
-                  disabled
-                />
-                <button
-                  type="button"
-                  onClick={() =>
-                    handleProfileChange({
-                      target: { name: "email", value: "" },
-                    })
-                  }
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                >
-                  <X size={16} />
-                </button>
-              </div>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Phone Number - Optional
-              </label>
-              <div className="relative flex">
-                <select
-                  name="countryCode"
-                  value={profileForm.countryCode || "+1"}
-                  onChange={handleProfileChange}
-                  className="w-16 px-2 py-2 border border-r-0 border-gray-300 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
-                >
-                  <option value="+1">+1</option>
-                  <option value="+44">+44</option>
-                  <option value="+91">+91</option>
-                </select>
-                <input
-                  type="tel"
-                  name="phone"
-                  value={profileForm.phone || ""}
-                  onChange={handleProfileChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-r-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
-                />
-              </div>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Gender
-              </label>
-              <input
-                type="text"
-                value={profileForm.gender || "Not specified"}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-100"
-                disabled
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Date of Birth
-              </label>
-              <input
-                type="text"
-                value={profileForm.dateOfBirth || "Not specified"}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-100"
-                disabled
-              />
-            </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Phone Number
+            </label>
+            <input
+              type="tel"
+              name="phone"
+              value={profileForm.phone}
+              onChange={handleProfileChange}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Gender
+            </label>
+            <select
+              name="gender"
+              value={profileForm.gender}
+              onChange={handleProfileChange}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+            >
+              <option value="">Select gender</option>
+              <option value="male">Male</option>
+              <option value="female">Female</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Date of Birth
+            </label>
+            <input
+              type="date"
+              name="dateOfBirth"
+              value={profileForm.dateOfBirth}
+              onChange={handleProfileChange}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+            />
+          </div>
+
+          {error && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="text-red-600 text-sm text-center"
+            >
+              {error}
+            </motion.div>
+          )}
+
+          {message.text && message.type === "error" && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="text-red-600 text-sm text-center"
+            >
+              {message.text}
+            </motion.div>
+          )}
+
+          <div className="flex gap-4 justify-center">
             <motion.button
               type="submit"
               disabled={isSubmitting}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              className="w-full py-3 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition disabled:bg-gray-400"
+              className={`px-6 py-2 bg-orange-500 text-white rounded-lg font-medium hover:bg-orange-600 transition ${
+                isSubmitting ? "opacity-50 cursor-not-allowed" : ""
+              }`}
             >
-              {isSubmitting ? "Saving..." : "Save"}
+              {isSubmitting ? "Saving..." : "Save Changes"}
             </motion.button>
-          </form>
-        </motion.div>
+            <motion.button
+              type="button"
+              onClick={() => {
+                resetForm();
+                setIsEditing(false);
+                setError("");
+              }}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="px-6 py-2 bg-gray-200 text-gray-800 rounded-lg font-medium hover:bg-gray-300 transition"
+            >
+              Cancel
+            </motion.button>
+          </div>
+        </form>
       </motion.div>
-    </AnimatePresence>
+    </div>
   );
 };
 

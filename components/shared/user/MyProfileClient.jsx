@@ -23,10 +23,8 @@ const MyProfileClient = () => {
     user,
     loading,
     isAuthenticated,
-    updateProfile,
     updatePassword,
     getUserEmail,
-    getUserMetadata,
     initialized,
   } = useUserStore();
 
@@ -45,10 +43,7 @@ const MyProfileClient = () => {
     const tab = searchParams.get("tab");
     const validTabs = ["welcome", "account", "orders", "wishlist"];
     return validTabs.includes(tab) ? tab : "welcome";
-  }); // Initialize with URL
-
-  console.log("Active Tab:", activeTab); // Debug activeTab
-  console.log("Search Params:", searchParams.get("tab")); // Debug URL tab
+  });
 
   const [profileForm, setProfileForm] = useState({
     fullName: "",
@@ -56,6 +51,22 @@ const MyProfileClient = () => {
     phone: "",
     gender: "",
     dateOfBirth: "",
+    billingFirstName: "",
+    billingLastName: "",
+    billingStreetAddress: "",
+    billingZipCode: "",
+    billingCity: "",
+    billingState: "",
+    billingCountry: "",
+    billingPhone: "",
+    deliveryFirstName: "",
+    deliveryLastName: "",
+    deliveryStreetAddress: "",
+    deliveryZipCode: "",
+    deliveryCity: "",
+    deliveryState: "",
+    deliveryCountry: "",
+    deliveryPhone: "",
   });
 
   const [passwordForm, setPasswordForm] = useState({
@@ -69,23 +80,52 @@ const MyProfileClient = () => {
     const validTabs = ["welcome", "account", "orders", "wishlist"];
     const newTab = validTabs.includes(tab) ? tab : "welcome";
     if (activeTab !== newTab) {
-      setActiveTab(newTab); // Update only if different
-      console.log("Updating activeTab to:", newTab); // Debug update
+      setActiveTab(newTab);
+      console.log("Updating activeTab to:", newTab);
     }
   }, [searchParams]);
 
   useEffect(() => {
-    if (user) {
-      const metadata = getUserMetadata();
-      setProfileForm({
-        fullName: metadata.full_name || "",
-        email: getUserEmail() || "",
-        phone: metadata.phone || "",
-        gender: metadata.gender || "",
-        dateOfBirth: metadata.date_of_birth || "",
-      });
-    }
-  }, [user, getUserEmail, getUserMetadata]);
+    const fetchProfile = async () => {
+      if (user) {
+        try {
+          const { data, error } = await supabase
+            .from("profiles")
+            .select("*")
+            .eq("id", user.id)
+            .single();
+          if (error) throw error;
+          setProfileForm({
+            fullName: data.full_name || "",
+            email: getUserEmail() || "",
+            phone: data.phone || "",
+            gender: data.gender || "",
+            dateOfBirth: data.date_of_birth || "",
+            billingFirstName: data.billing_first_name || "",
+            billingLastName: data.billing_last_name || "",
+            billingStreetAddress: data.billing_street_address || "",
+            billingZipCode: data.billing_zip_code || "",
+            billingCity: data.billing_city || "",
+            billingState: data.billing_state || "",
+            billingCountry: data.billing_country || "",
+            billingPhone: data.billing_phone || "",
+            deliveryFirstName: data.delivery_first_name || "",
+            deliveryLastName: data.delivery_last_name || "",
+            deliveryStreetAddress: data.delivery_street_address || "",
+            deliveryZipCode: data.delivery_zip_code || "",
+            deliveryCity: data.delivery_city || "",
+            deliveryState: data.delivery_state || "",
+            deliveryCountry: data.delivery_country || "",
+            deliveryPhone: data.delivery_phone || "",
+          });
+        } catch (error) {
+          console.error("Error fetching profile:", error);
+          setMessage({ type: "error", text: "Failed to load profile data" });
+        }
+      }
+    };
+    fetchProfile();
+  }, [user, getUserEmail]);
 
   useEffect(() => {
     if (initialized && !loading && !isAuthenticated()) {
@@ -133,21 +173,72 @@ const MyProfileClient = () => {
     return true;
   };
 
-  const handleProfileSubmit = async (e) => {
-    e.preventDefault();
+  const handleProfileSubmit = async (profileData) => {
     setIsSubmitting(true);
     setMessage({ type: "", text: "" });
 
     try {
-      await updateProfile({
-        fullName: profileForm.fullName,
-        phone: profileForm.phone,
-        gender: profileForm.gender,
-        dateOfBirth: profileForm.dateOfBirth,
-      });
+      if (!user || !user.id) {
+        throw new Error("User not authenticated");
+      }
+
+      const dataToUpdate = {
+        full_name: profileData.fullName || profileForm.fullName,
+        phone: profileData.phone || profileForm.phone,
+        gender: profileData.gender || profileForm.gender,
+        date_of_birth: profileData.dateOfBirth || profileForm.dateOfBirth,
+        billing_first_name:
+          profileData.billing_first_name || profileForm.billingFirstName,
+        billing_last_name:
+          profileData.billing_last_name || profileForm.billingLastName,
+        billing_street_address:
+          profileData.billing_street_address ||
+          profileForm.billingStreetAddress,
+        billing_zip_code:
+          profileData.billing_zip_code || profileForm.billingZipCode,
+        billing_city: profileData.billing_city || profileForm.billingCity,
+        billing_state: profileData.billing_state || profileForm.billingState,
+        billing_country:
+          profileData.billing_country || profileForm.billingCountry,
+        billing_phone: profileData.billing_phone || profileForm.billingPhone,
+        delivery_first_name:
+          profileData.delivery_first_name || profileForm.deliveryFirstName,
+        delivery_last_name:
+          profileData.delivery_last_name || profileForm.deliveryLastName,
+        delivery_street_address:
+          profileData.delivery_street_address ||
+          profileForm.deliveryStreetAddress,
+        delivery_zip_code:
+          profileData.delivery_zip_code || profileForm.deliveryZipCode,
+        delivery_city: profileData.delivery_city || profileForm.deliveryCity,
+        delivery_state: profileData.delivery_state || profileForm.deliveryState,
+        delivery_country:
+          profileData.delivery_country || profileForm.deliveryCountry,
+        delivery_phone: profileData.delivery_phone || profileForm.deliveryPhone,
+      };
+
+      console.log("Updating profile with data:", dataToUpdate);
+
+      const { data, error } = await supabase
+        .from("profiles")
+        .update(dataToUpdate)
+        .eq("id", user.id)
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      setProfileForm((prev) => ({
+        ...prev,
+        ...dataToUpdate,
+        fullName: dataToUpdate.full_name,
+        dateOfBirth: dataToUpdate.date_of_birth,
+      }));
       setMessage({ type: "success", text: "Profile updated successfully" });
       setIsEditing(false);
+      router.refresh(); // Trigger page refresh to refetch data
     } catch (error) {
+      console.error("Error updating profile:", error);
       setMessage({
         type: "error",
         text: error.message || "Failed to update profile",
@@ -177,6 +268,7 @@ const MyProfileClient = () => {
       });
       setShowPasswords({ current: false, new: false, confirm: false });
     } catch (error) {
+      console.error("Error updating password:", error);
       setMessage({
         type: "error",
         text: error.message || "Failed to update password",
@@ -188,15 +280,44 @@ const MyProfileClient = () => {
 
   const resetForm = () => {
     if (user) {
-      const metadata = getUserMetadata();
-      setProfileForm({
-        fullName: metadata.full_name || "",
-        email: getUserEmail() || "",
-        phone: metadata.phone || "",
-        gender: metadata.gender || "",
-        dateOfBirth: metadata.date_of_birth || "",
-      });
-      setMessage({ type: "", text: "" });
+      const fetchProfile = async () => {
+        try {
+          const { data, error } = await supabase
+            .from("profiles")
+            .select("*")
+            .eq("id", user.id)
+            .single();
+          if (error) throw error;
+          setProfileForm({
+            fullName: data.full_name || "",
+            email: getUserEmail() || "",
+            phone: data.phone || "",
+            gender: data.gender || "",
+            dateOfBirth: data.date_of_birth || "",
+            billingFirstName: data.billing_first_name || "",
+            billingLastName: data.billing_last_name || "",
+            billingStreetAddress: data.billing_street_address || "",
+            billingZipCode: data.billing_zip_code || "",
+            billingCity: data.billing_city || "",
+            billingState: data.billing_state || "",
+            billingCountry: data.billing_country || "",
+            billingPhone: data.billing_phone || "",
+            deliveryFirstName: data.delivery_first_name || "",
+            deliveryLastName: data.delivery_last_name || "",
+            deliveryStreetAddress: data.delivery_street_address || "",
+            deliveryZipCode: data.delivery_zip_code || "",
+            deliveryCity: data.delivery_city || "",
+            deliveryState: data.delivery_state || "",
+            deliveryCountry: data.delivery_country || "",
+            deliveryPhone: data.delivery_phone || "",
+          });
+          setMessage({ type: "", text: "" });
+        } catch (error) {
+          console.error("Error resetting profile:", error);
+          setMessage({ type: "error", text: "Failed to reset profile data" });
+        }
+      };
+      fetchProfile();
     }
   };
 
@@ -226,8 +347,18 @@ const MyProfileClient = () => {
     <div className="min-h-[calc(100vh-4rem)] bg-gray-50">
       <div className="lg:grid lg:grid-cols-12 gap-4 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <main className="lg:col-span-9 py-4 lg:pl-28">
-          <Breadcrumbs key={activeTab} activeTab={activeTab} />{" "}
-          {/* Force re-render */}
+          <Breadcrumbs key={activeTab} activeTab={activeTab} />
+          {message.text && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className={`text-sm text-center mb-4 ${
+                message.type === "error" ? "text-red-600" : "text-green-600"
+              }`}
+            >
+              {message.text}
+            </motion.div>
+          )}
           <AnimatePresence mode="wait">
             {activeTab === "welcome" && (
               <motion.div
@@ -239,7 +370,7 @@ const MyProfileClient = () => {
               >
                 <WelcomePage
                   fullName={profileForm.fullName || "Guest"}
-                  recentOrders={[]} // Placeholder, replace with actual data
+                  recentOrders={[]}
                   handleLogout={handleLogout}
                 />
               </motion.div>
@@ -256,6 +387,8 @@ const MyProfileClient = () => {
                   profile={profileForm}
                   setIsEditing={setIsEditing}
                   setIsDeleteModalOpen={setIsDeleteModalOpen}
+                  handleProfileChange={handleProfileChange}
+                  handleProfileSubmit={handleProfileSubmit}
                 />
               </motion.div>
             )}

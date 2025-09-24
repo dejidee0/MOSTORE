@@ -678,7 +678,7 @@ const NavBar = () => {
                         </button>
                       </DrawerClose>
                     </div>
-                    <nav className="flex-1 flex flex-col gap-2 p-4 overflow-y-auto text-gray-700">
+                    <nav className="flex-1 flex flex-col gap-2 px-4 py-0 overflow-y-auto text-gray-700">
                       <div className="border-b border-gray-200 pb-2 mb-2">
                         {navigationLinks.map((link) => (
                           <Link

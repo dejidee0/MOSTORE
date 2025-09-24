@@ -258,7 +258,6 @@ const NavBar = () => {
         { label: "My Account", href: "/my-account?tab=profile" },
         { label: "My Orders", href: "/my-account?tab=orders" },
         { label: "Wishlist", href: "/wishlist" },
-        { label: "Sell on Mostore", href: "/supplier-sign" },
       ].filter(Boolean),
     [user]
   );
@@ -693,20 +692,25 @@ const NavBar = () => {
                         ))}
                       </div>
                       <div className="border-b border-gray-200 pb-2 mb-2">
-                        <div className="flex justify-between items-center">
-                          {" "}
-                          <Link href="/supplier-sign" prefetch>
-                            <span className="font-bold text-sm uppercase text-black">
-                              Sell on{" "}
-                              <span className="font-extrabold">Mostore</span>
+                        {" "}
+                        <Link
+                          href="/supplier-sign"
+                          className="flex justify-between items-center"
+                          prefetch
+                        >
+                          <span className=" text-black">
+                            Sell on{" "}
+                            <span className="font-bold text-orange-500">
+                              Mostore
                             </span>
+                          </span>
 
-                            <span className="text-orange-500">
-                              <ArrowRight />
-                            </span>
-                          </Link>
-                        </div>
+                          <span className="text-orange-500 text-xs">
+                            <ArrowRight />
+                          </span>
+                        </Link>
                       </div>
+
                       <div className="border-b border-gray-200 pb-2 mb-2">
                         <div className="flex justify-between items-center">
                           <span className="font-bold text-sm uppercase text-black">

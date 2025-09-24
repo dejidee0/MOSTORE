@@ -9,7 +9,7 @@ const Breadcrumbs = ({ activeTab }) => {
   const tabDisplayNames = {
     welcome: "Dashboard",
     account: "My Account",
-    orders: " Orders",
+    orders: "Orders",
     wishlist: "Wishlist",
   };
 
@@ -35,9 +35,10 @@ const Breadcrumbs = ({ activeTab }) => {
               }}
               className={`font-medium ${
                 activeTab === tab
-                  ? "text-orange-500"
+                  ? "text-orange-500 font-semibold"
                   : "text-gray-600 hover:text-gray-800"
               }`}
+              aria-current={activeTab === tab ? "page" : undefined}
             >
               {tabDisplayNames[tab]}
             </Link>

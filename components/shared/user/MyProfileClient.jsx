@@ -7,7 +7,7 @@ import { supabase } from "@/lib/supabase-client";
 import useUserStore from "@/lib/stores/useUserStore";
 import Breadcrumbs from "@/components/shared/user/BreadCrumbs";
 import Sidebar from "@/components/shared/user/Sidebar";
-import WelcomePage from "@/components/shared/user/WelcomePage"; // New component
+import WelcomePage from "@/components/shared/user/WelcomePage";
 import AccountView from "@/components/shared/user/AccountView";
 import AccountEdit from "@/components/shared/user/AccountEdit";
 import PasswordChange from "@/components/shared/user/PasswordChange";
@@ -41,8 +41,14 @@ const MyProfileClient = () => {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [message, setMessage] = useState({ type: "", text: "" });
-  const [activeTab, setActiveTab] = useState("welcome"); // Default to "welcome"
-  console.log(user);
+  const [activeTab, setActiveTab] = useState(() => {
+    const tab = searchParams.get("tab");
+    const validTabs = ["welcome", "account", "orders", "wishlist"];
+    return validTabs.includes(tab) ? tab : "welcome";
+  }); // Initialize with URL
+
+  console.log("Active Tab:", activeTab); // Debug activeTab
+  console.log("Search Params:", searchParams.get("tab")); // Debug URL tab
 
   const [profileForm, setProfileForm] = useState({
     fullName: "",
@@ -61,7 +67,11 @@ const MyProfileClient = () => {
   useEffect(() => {
     const tab = searchParams.get("tab");
     const validTabs = ["welcome", "account", "orders", "wishlist"];
-    setActiveTab(validTabs.includes(tab) ? tab : "welcome"); // Default to "welcome"
+    const newTab = validTabs.includes(tab) ? tab : "welcome";
+    if (activeTab !== newTab) {
+      setActiveTab(newTab); // Update only if different
+      console.log("Updating activeTab to:", newTab); // Debug update
+    }
   }, [searchParams]);
 
   useEffect(() => {
@@ -216,7 +226,8 @@ const MyProfileClient = () => {
     <div className="min-h-[calc(100vh-4rem)] bg-gray-50">
       <div className="lg:grid lg:grid-cols-12 gap-4 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <main className="lg:col-span-9 py-4 lg:pl-28">
-          <Breadcrumbs />
+          <Breadcrumbs key={activeTab} activeTab={activeTab} />{" "}
+          {/* Force re-render */}
           <AnimatePresence mode="wait">
             {activeTab === "welcome" && (
               <motion.div

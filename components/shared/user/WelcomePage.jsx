@@ -86,47 +86,6 @@ const WelcomePage = ({ fullName, recentOrders, handleLogout }) => {
           )}
         </motion.div>
       </div>
-
-      {/* Quick Actions */}
-      <motion.div
-        className="mt-6"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.5, duration: 0.5 }}
-      >
-        <h2 className="text-xl font-semibold text-gray-700 mb-4">
-          Quick Actions
-        </h2>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <motion.a
-            href="/my-account?tab=account"
-            className="bg-gray-50 p-5 rounded-lg border border-gray-100 text-center hover:bg-gray-100 transition-colors shadow-sm"
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-          >
-            <User className="text-orange-500 mx-auto mb-2" size={24} />
-            <p className="text-sm text-gray-600">View Profile</p>
-          </motion.a>
-          <motion.a
-            href="/my-account?tab=orders"
-            className="bg-gray-50 p-5 rounded-lg border border-gray-100 text-center hover:bg-gray-100 transition-colors shadow-sm"
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-          >
-            <ShoppingBag className="text-orange-500 mx-auto mb-2" size={24} />
-            <p className="text-sm text-gray-600">View Orders</p>
-          </motion.a>
-          <motion.a
-            href="/my-account?tab=wishlist"
-            className="bg-gray-50 p-5 rounded-lg border border-gray-100 text-center hover:bg-gray-100 transition-colors shadow-sm"
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-          >
-            <Heart className="text-orange-500 mx-auto mb-2" size={24} />
-            <p className="text-sm text-gray-600">View Wishlist</p>
-          </motion.a>
-        </div>
-      </motion.div>
     </motion.div>
   );
 };

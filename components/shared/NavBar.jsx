@@ -44,6 +44,7 @@ import { useWishlist } from "@/hooks/useWishlist";
 import { Gift, HeartPulse, Laptop, Ship, Baby } from "lucide-react";
 import { FaChildDress, FaOilCan } from "react-icons/fa6";
 import { BsGear } from "react-icons/bs";
+import { ArrowRight } from "lucide-react";
 
 const MenuButton = ({ onClick, icon, label, className = "" }) => {
   return (
@@ -690,6 +691,21 @@ const NavBar = () => {
                             {link.label}
                           </Link>
                         ))}
+                      </div>
+                      <div className="border-b border-gray-200 pb-2 mb-2">
+                        <div className="flex justify-between items-center">
+                          {" "}
+                          <Link href="/supplier-sign" prefetch>
+                            <span className="font-bold text-sm uppercase text-black">
+                              Sell on{" "}
+                              <span className="font-extrabold">Mostore</span>
+                            </span>
+
+                            <span className="text-orange-500">
+                              <ArrowRight />
+                            </span>
+                          </Link>
+                        </div>
                       </div>
                       <div className="border-b border-gray-200 pb-2 mb-2">
                         <div className="flex justify-between items-center">

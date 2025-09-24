@@ -777,7 +777,7 @@ const NavBar = () => {
                         <a
                           href="/blog"
                           onClick={() => setIsDrawerOpen(false)}
-                          className="block py-2 text-black font-bold hover:text-orange-600"
+                          className="block text-black font-bold hover:text-orange-600"
                         >
                           Blog
                         </a>

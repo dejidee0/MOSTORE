@@ -35,11 +35,11 @@ const WelcomePage = ({ fullName, recentOrders, handleLogout }) => {
           </h2>
           <div className="space-y-4">
             <div className="flex justify-between text-sm">
-              <span className="text-gray-900">Plan:</span>
+              <span className="text-gray-900 font-bold">Plan:</span>
               <span className="text-gray-500 font-medium">Free Tier</span>
             </div>
             <div className="flex justify-between text-sm">
-              <span className="text-gray-900">Join Date:</span>
+              <span className="text-gray-900 font-bold">Join Date:</span>
               <span className="text-gray-500 font-medium">
                 September 23, 2025
               </span>

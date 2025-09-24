@@ -8,9 +8,7 @@ const Breadcrumbs = ({ activeTab }) => {
   const router = useRouter();
   const tabDisplayNames = {
     welcome: "Dashboard",
-    account: "My Account",
-    orders: "Orders",
-    wishlist: "Wishlist",
+    account: "Profile",
   };
 
   const tabs = Object.keys(tabDisplayNames);

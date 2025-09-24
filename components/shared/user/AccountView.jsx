@@ -1,11 +1,59 @@
-import React from "react";
-import { motion } from "framer-motion";
+import React, { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { X } from "lucide-react";
+import countries from "./countries.json"; // Import JSON file with countries
 
-const AccountView = ({ profile, setIsEditing, setIsDeleteModalOpen }) => {
+const AccountView = ({
+  profile,
+  setIsEditing,
+  setIsDeleteModalOpen,
+  handleProfileChange,
+}) => {
+  // State for address modals
+  const [isBillingModalOpen, setIsBillingModalOpen] = useState(false);
+  const [isDeliveryModalOpen, setIsDeliveryModalOpen] = useState(false);
+  const [billingForm, setBillingForm] = useState({
+    firstName: profile.billingFirstName || "",
+    lastName: profile.billingLastName || "",
+    streetAddress: profile.billingStreetAddress || "",
+    zipCode: profile.billingZipCode || "",
+    city: profile.billingCity || "",
+    state: profile.billingState || "",
+    country: profile.billingCountry || "",
+    phone: profile.billingPhone || "",
+  });
+  const [deliveryForm, setDeliveryForm] = useState({
+    firstName: profile.deliveryFirstName || "",
+    lastName: profile.deliveryLastName || "",
+    streetAddress: profile.deliveryStreetAddress || "",
+    zipCode: profile.deliveryZipCode || "",
+    city: profile.deliveryCity || "",
+    state: profile.deliveryState || "",
+    country: profile.deliveryCountry || "",
+    phone: profile.deliveryPhone || "",
+  });
+
+  // Handle changes in address forms
+  const handleAddressChange = (e, setForm) => {
+    const { name, value } = e.target;
+    setForm((prev) => ({ ...prev, [name]: value }));
+  };
+
+  // Handle address form submission
+  const handleAddressSubmit = (e, form, type) => {
+    e.preventDefault();
+    handleProfileChange({
+      target: {
+        name: type === "billing" ? "billingAddress" : "deliveryAddress",
+        value: form,
+      },
+    });
+    if (type === "billing") setIsBillingModalOpen(false);
+    else setIsDeliveryModalOpen(false);
+  };
+
   return (
     <div className="">
-      {/* Header */}
-
       {/* Profile Content */}
       <div className="px-4 py-6">
         {/* Profile Title and Description */}
@@ -15,7 +63,9 @@ const AccountView = ({ profile, setIsEditing, setIsDeleteModalOpen }) => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
         >
-          <h1 className="text-2xl font-bold text-gray-900 mb-3">My Profile</h1>
+          <h1 className="text-2xl font-bold text-gray-900 mb-3">
+            Profile Details
+          </h1>
           <p className="text-gray-600 text-sm leading-relaxed">
             Manage your personal information, preferences, and account settings
             all in one place.
@@ -33,12 +83,14 @@ const AccountView = ({ profile, setIsEditing, setIsDeleteModalOpen }) => {
             <h2 className="text-lg font-semibold text-gray-900">
               Personal details
             </h2>
-            <button
+            <motion.button
               onClick={() => setIsEditing(true)}
-              className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="px-4 py-2 bg-orange-500 text-white rounded-lg text-sm font-medium hover:bg-orange-600 transition"
             >
               Edit
-            </button>
+            </motion.button>
           </div>
 
           <div className="space-y-1">
@@ -88,17 +140,23 @@ const AccountView = ({ profile, setIsEditing, setIsDeleteModalOpen }) => {
             <h2 className="text-lg font-semibold text-gray-900">
               Billing address
             </h2>
-            <button className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors">
+            <motion.button
+              onClick={() => setIsBillingModalOpen(true)}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="px-4 py-2 bg-orange-500 text-white rounded-lg text-sm font-medium hover:bg-orange-600 transition"
+            >
               Edit
-            </button>
+            </motion.button>
           </div>
           <p className="text-gray-600 text-sm">
-            {profile?.billingAddress ||
-              "No billing address on file. Add one to speed up checkout."}
+            {profile?.billingFirstName && profile?.billingLastName
+              ? `${profile.billingFirstName} ${profile.billingLastName}, ${profile.billingStreetAddress}, ${profile.billingCity}, ${profile.billingState} ${profile.billingZipCode}, ${profile.billingCountry}`
+              : "No billing address on file. Add one to speed up checkout."}
           </p>
         </motion.div>
 
-        {/* Shipping Address Section */}
+        {/* Shipping Address Section (Changed to Delivery Address) */}
         <motion.div
           className="bg-white rounded-lg p-6 shadow-sm"
           initial={{ opacity: 0, y: 20 }}
@@ -107,20 +165,322 @@ const AccountView = ({ profile, setIsEditing, setIsDeleteModalOpen }) => {
         >
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-lg font-semibold text-gray-900">
-              Shipping address
+              Delivery address
             </h2>
-            <button className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors">
+            <motion.button
+              onClick={() => setIsDeliveryModalOpen(true)}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="px-4 py-2 bg-orange-500 text-white rounded-lg text-sm font-medium hover:bg-orange-600 transition"
+            >
               Edit
-            </button>
+            </motion.button>
           </div>
           <p className="text-gray-600 text-sm">
-            {profile?.shippingAddress ||
-              "No shipping address on file. Add one for faster delivery."}
+            {profile?.deliveryFirstName && profile?.deliveryLastName
+              ? `${profile.deliveryFirstName} ${profile.deliveryLastName}, ${profile.deliveryStreetAddress}, ${profile.deliveryCity}, ${profile.deliveryState} ${profile.deliveryZipCode}, ${profile.deliveryCountry}`
+              : "No delivery address on file. Add one for faster delivery."}
           </p>
         </motion.div>
-      </div>
 
-      {/* Bottom Navigation Bar (iOS style) */}
+        {/* Billing Address Modal */}
+        <AnimatePresence>
+          {isBillingModalOpen && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/50 flex items-end justify-center z-50 p-4"
+            >
+              <motion.div
+                initial={{ y: "100%", opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                exit={{ y: "100%", opacity: 0 }}
+                transition={{ type: "spring", damping: 20, stiffness: 100 }}
+                className="bg-white max-h-[85vh] overflow-y-auto rounded-t-2xl p-6 w-full max-w-md mx-auto shadow-2xl"
+              >
+                <div className="flex justify-between items-center mb-6 border-b border-gray-200 pb-4">
+                  <h3 className="text-lg font-semibold text-gray-900">
+                    Edit Billing Address
+                  </h3>
+                  <button
+                    onClick={() => setIsBillingModalOpen(false)}
+                    className="text-gray-500 hover:text-gray-700"
+                  >
+                    <X size={20} />
+                  </button>
+                </div>
+                <form
+                  onSubmit={(e) =>
+                    handleAddressSubmit(e, billingForm, "billing")
+                  }
+                  className="space-y-4"
+                >
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      First Name
+                    </label>
+                    <input
+                      type="text"
+                      name="firstName"
+                      value={billingForm.firstName}
+                      onChange={(e) => handleAddressChange(e, setBillingForm)}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Last Name
+                    </label>
+                    <input
+                      type="text"
+                      name="lastName"
+                      value={billingForm.lastName}
+                      onChange={(e) => handleAddressChange(e, setBillingForm)}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Street Address
+                    </label>
+                    <input
+                      type="text"
+                      name="streetAddress"
+                      value={billingForm.streetAddress}
+                      onChange={(e) => handleAddressChange(e, setBillingForm)}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Zip Code
+                    </label>
+                    <input
+                      type="text"
+                      name="zipCode"
+                      value={billingForm.zipCode}
+                      onChange={(e) => handleAddressChange(e, setBillingForm)}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      City
+                    </label>
+                    <input
+                      type="text"
+                      name="city"
+                      value={billingForm.city}
+                      onChange={(e) => handleAddressChange(e, setBillingForm)}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      State/Province/Region
+                    </label>
+                    <input
+                      type="text"
+                      name="state"
+                      value={billingForm.state}
+                      onChange={(e) => handleAddressChange(e, setBillingForm)}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Country
+                    </label>
+                    <select
+                      name="country"
+                      value={billingForm.country}
+                      onChange={(e) => handleAddressChange(e, setBillingForm)}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                    >
+                      <option value="">Select a country</option>
+                      {countries.map((country) => (
+                        <option key={country.code} value={country.name}>
+                          {country.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Phone Number
+                    </label>
+                    <input
+                      type="tel"
+                      name="phone"
+                      value={billingForm.phone}
+                      onChange={(e) => handleAddressChange(e, setBillingForm)}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                    />
+                  </div>
+                  <motion.button
+                    type="submit"
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    className="w-full py-3 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition"
+                  >
+                    Save Billing Address
+                  </motion.button>
+                </form>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Delivery Address Modal */}
+        <AnimatePresence>
+          {isDeliveryModalOpen && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/50 flex items-end justify-center z-50 p-4"
+            >
+              <motion.div
+                initial={{ y: "100%", opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                exit={{ y: "100%", opacity: 0 }}
+                transition={{ type: "spring", damping: 20, stiffness: 100 }}
+                className="bg-white max-h-[85vh] overflow-y-auto rounded-t-2xl p-6 w-full max-w-md mx-auto shadow-2xl"
+              >
+                <div className="flex justify-between items-center mb-6 border-b border-gray-200 pb-4">
+                  <h3 className="text-lg font-semibold text-gray-900">
+                    Edit Delivery Address
+                  </h3>
+                  <button
+                    onClick={() => setIsDeliveryModalOpen(false)}
+                    className="text-gray-500 hover:text-gray-700"
+                  >
+                    <X size={20} />
+                  </button>
+                </div>
+                <form
+                  onSubmit={(e) =>
+                    handleAddressSubmit(e, deliveryForm, "delivery")
+                  }
+                  className="space-y-4"
+                >
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      First Name
+                    </label>
+                    <input
+                      type="text"
+                      name="firstName"
+                      value={deliveryForm.firstName}
+                      onChange={(e) => handleAddressChange(e, setDeliveryForm)}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Last Name
+                    </label>
+                    <input
+                      type="text"
+                      name="lastName"
+                      value={deliveryForm.lastName}
+                      onChange={(e) => handleAddressChange(e, setDeliveryForm)}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Street Address
+                    </label>
+                    <input
+                      type="text"
+                      name="streetAddress"
+                      value={deliveryForm.streetAddress}
+                      onChange={(e) => handleAddressChange(e, setDeliveryForm)}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Zip Code
+                    </label>
+                    <input
+                      type="text"
+                      name="zipCode"
+                      value={deliveryForm.zipCode}
+                      onChange={(e) => handleAddressChange(e, setDeliveryForm)}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      City
+                    </label>
+                    <input
+                      type="text"
+                      name="city"
+                      value={deliveryForm.city}
+                      onChange={(e) => handleAddressChange(e, setDeliveryForm)}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      State/Province/Region
+                    </label>
+                    <input
+                      type="text"
+                      name="state"
+                      value={deliveryForm.state}
+                      onChange={(e) => handleAddressChange(e, setDeliveryForm)}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Country
+                    </label>
+                    <select
+                      name="country"
+                      value={deliveryForm.country}
+                      onChange={(e) => handleAddressChange(e, setDeliveryForm)}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                    >
+                      <option value="">Select a country</option>
+                      {countries.map((country) => (
+                        <option key={country.code} value={country.name}>
+                          {country.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Phone Number
+                    </label>
+                    <input
+                      type="tel"
+                      name="phone"
+                      value={deliveryForm.phone}
+                      onChange={(e) => handleAddressChange(e, setDeliveryForm)}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                    />
+                  </div>
+                  <motion.button
+                    type="submit"
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    className="w-full py-3 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition"
+                  >
+                    Save Delivery Address
+                  </motion.button>
+                </form>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
     </div>
   );
 };

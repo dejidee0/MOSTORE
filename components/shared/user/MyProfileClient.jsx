@@ -9,7 +9,6 @@ import Breadcrumbs from "@/components/shared/user/BreadCrumbs";
 import Sidebar from "@/components/shared/user/Sidebar";
 import WelcomePage from "@/components/shared/user/WelcomePage";
 import AccountView from "@/components/shared/user/AccountView";
-import AccountEdit from "@/components/shared/user/AccountEdit";
 import PasswordChange from "@/components/shared/user/PasswordChange";
 import DeleteAccountModal from "@/components/shared/user/DeleteAccountModal";
 import OrderHistory from "@/components/orderHistory";
@@ -29,7 +28,6 @@ const MyProfileClient = () => {
   } = useUserStore();
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [isEditing, setIsEditing] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [showPasswords, setShowPasswords] = useState({
@@ -219,6 +217,17 @@ const MyProfileClient = () => {
 
       console.log("Updating profile with data:", dataToUpdate);
 
+      // Update email in Supabase auth if changed
+      if (profileData.email && profileData.email !== profileForm.email) {
+        const { error: authError } = await supabase.auth.updateUser({
+          email: profileData.email,
+        });
+        if (authError) {
+          throw new Error(authError.message || "Failed to update email");
+        }
+      }
+
+      // Update profile in Supabase profiles table
       const { data, error } = await supabase
         .from("profiles")
         .update(dataToUpdate)
@@ -234,9 +243,15 @@ const MyProfileClient = () => {
         fullName: dataToUpdate.full_name,
         dateOfBirth: dataToUpdate.date_of_birth,
       }));
-      setMessage({ type: "success", text: "Profile updated successfully" });
-      setIsEditing(false);
-      router.refresh(); // Trigger page refresh to refetch data
+
+      setMessage({
+        type: "success",
+        text:
+          profileData.email && profileData.email !== profileForm.email
+            ? "Profile updated successfully. Please check your new email for verification."
+            : "Profile updated successfully",
+      });
+      router.refresh();
     } catch (error) {
       console.error("Error updating profile:", error);
       setMessage({
@@ -375,7 +390,7 @@ const MyProfileClient = () => {
                 />
               </motion.div>
             )}
-            {activeTab === "account" && !isEditing && (
+            {activeTab === "account" && (
               <motion.div
                 key="account-view"
                 initial={{ opacity: 0, y: 20 }}
@@ -385,29 +400,11 @@ const MyProfileClient = () => {
               >
                 <AccountView
                   profile={profileForm}
-                  setIsEditing={setIsEditing}
                   setIsDeleteModalOpen={setIsDeleteModalOpen}
-                  handleProfileChange={handleProfileChange}
-                  handleProfileSubmit={handleProfileSubmit}
-                />
-              </motion.div>
-            )}
-            {activeTab === "account" && isEditing && (
-              <motion.div
-                key="account-edit"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                transition={{ duration: 0.3 }}
-              >
-                <AccountEdit
-                  profileForm={profileForm}
                   handleProfileChange={handleProfileChange}
                   handleProfileSubmit={handleProfileSubmit}
                   resetForm={resetForm}
                   isSubmitting={isSubmitting}
-                  message={message}
-                  setIsEditing={setIsEditing}
                 />
               </motion.div>
             )}

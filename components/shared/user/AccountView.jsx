@@ -2,16 +2,19 @@ import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X } from "lucide-react";
 import countries from "./countries.json";
+import AccountEdit from "./AccountEdit";
 
 const AccountView = ({
   profile,
-  setIsEditing,
   setIsDeleteModalOpen,
   handleProfileChange,
   handleProfileSubmit,
+  resetForm,
+  isSubmitting, // Add isSubmitting prop
 }) => {
   const [isBillingModalOpen, setIsBillingModalOpen] = useState(false);
   const [isDeliveryModalOpen, setIsDeliveryModalOpen] = useState(false);
+  const [isPersonalModalOpen, setIsPersonalModalOpen] = useState(false);
   const [billingForm, setBillingForm] = useState({
     firstName: "",
     lastName: "",
@@ -97,7 +100,6 @@ const AccountView = ({
     }
 
     try {
-      // Prepare profile data for submission with correct field names
       const profileData = {
         fullName: profile.fullName,
         phone: profile.phone,
@@ -126,7 +128,6 @@ const AccountView = ({
             }),
       };
 
-      // Update profileForm state
       handleProfileChange({
         target: {
           name: type === "billing" ? "billingAddress" : "deliveryAddress",
@@ -134,11 +135,9 @@ const AccountView = ({
         },
       });
 
-      // Call handleProfileSubmit to save to database
       console.log("Submitting profile data:", profileData);
       await handleProfileSubmit(profileData);
 
-      // Close modal on success
       if (type === "billing") setIsBillingModalOpen(false);
       else setIsDeliveryModalOpen(false);
       window.location.reload();
@@ -177,7 +176,7 @@ const AccountView = ({
               Personal details
             </h2>
             <motion.button
-              onClick={() => setIsEditing(true)}
+              onClick={() => setIsPersonalModalOpen(true)}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               className="px-4 py-2 bg-orange-500 text-white rounded-lg text-sm font-medium hover:bg-orange-600 transition"
@@ -281,6 +280,20 @@ const AccountView = ({
             {error}
           </motion.div>
         )}
+
+        <AnimatePresence>
+          {isPersonalModalOpen && (
+            <AccountEdit
+              profileForm={profile}
+              handleProfileChange={handleProfileChange}
+              handleProfileSubmit={handleProfileSubmit}
+              resetForm={resetForm}
+              isSubmitting={isSubmitting} // Pass isSubmitting to AccountEdit
+              message={{ type: "", text: "" }}
+              setIsEditing={setIsPersonalModalOpen}
+            />
+          )}
+        </AnimatePresence>
 
         <AnimatePresence>
           {isBillingModalOpen && (

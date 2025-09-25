@@ -10,16 +10,16 @@ const WelcomePage = ({ fullName, recentOrders, handleLogout }) => {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6, ease: "easeOut" }}
     >
-      {/* Header with Welcome Message */}
-      <div className="border-b border-gray-200 pb-4 mb-6">
+      <div className="border-b border-gray-200 pb-2 mb-2 flex flex-col gap-1">
         <motion.h1
           className="text-4xl font-bold text-gray-800"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.2, duration: 0.5 }}
         >
-          Welcome, {fullName || "Guest"}!
+          Welcome,
         </motion.h1>
+        <p className="text-4xl"> {fullName || "Guest"}!</p>
       </div>
 
       {/* Membership Overview and Recent Orders */}

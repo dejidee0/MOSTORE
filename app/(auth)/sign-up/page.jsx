@@ -21,13 +21,28 @@ const SignUpPage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [passwordCriteria, setPasswordCriteria] = useState({
+    minLength: false,
+    uppercase: false,
+    lowercase: false,
+    number: false,
+    specialChar: false,
+  });
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setForm((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    setForm((prev) => ({ ...prev, [name]: value }));
+
+    // Update password criteria in real-time
+    if (name === "password") {
+      setPasswordCriteria({
+        minLength: value.length >= 6,
+        uppercase: /[A-Z]/.test(value),
+        lowercase: /[a-z]/.test(value),
+        number: /[0-9]/.test(value),
+        specialChar: /[!@#$%^&*(),.?":{}|<>]/.test(value),
+      });
+    }
   };
 
   const validateFields = () => {
@@ -48,8 +63,16 @@ const SignUpPage = () => {
       setError("Passwords do not match.");
       return false;
     }
-    if (form.password.length < 6) {
-      setError("Password must be at least 6 characters long.");
+    if (
+      !passwordCriteria.minLength ||
+      !passwordCriteria.uppercase ||
+      !passwordCriteria.lowercase ||
+      !passwordCriteria.number ||
+      !passwordCriteria.specialChar
+    ) {
+      setError(
+        "Password must be at least 6 characters long and include an uppercase letter, a lowercase letter, a number, and a special character."
+      );
       return false;
     }
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -152,6 +175,11 @@ const SignUpPage = () => {
     exit: { opacity: 0, scale: 0.8, transition: { duration: 0.3 } },
   };
 
+  const criteriaVariants = {
+    hidden: { opacity: 0, x: -10 },
+    visible: { opacity: 1, x: 0, transition: { duration: 0.3 } },
+  };
+
   return (
     <div className="min-h-screen flex flex-col md:flex-row font-raleway bg-gradient-to-br from-blue-50 to-indigo-100">
       <div className="hidden md:flex md:w-1/2 relative">
@@ -217,7 +245,7 @@ const SignUpPage = () => {
                   </p>
                   <button
                     onClick={() => router.push("/sign-in")}
-                    className="bg-blue-600 text-white py-2 px-6 rounded-md hover:bg-blue-700 transition-colors"
+                    className="bg-orange-500 text-white py-2 px-6 rounded-md hover:bg-orange-600 transition-colors"
                   >
                     Go to Sign In
                   </button>
@@ -242,10 +270,9 @@ const SignUpPage = () => {
                 onChange={handleChange}
                 required
                 placeholder="Enter your Full Name"
-                className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
               />
             </div>
-
             <div>
               <label
                 htmlFor="email"
@@ -261,10 +288,9 @@ const SignUpPage = () => {
                 onChange={handleChange}
                 required
                 placeholder="Enter your Email"
-                className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
               />
             </div>
-
             <div>
               <label
                 htmlFor="username"
@@ -280,13 +306,12 @@ const SignUpPage = () => {
                 onChange={handleChange}
                 required
                 placeholder="Enter your Username"
-                className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
               />
               <p className="text-xs text-gray-500 mt-1">
                 3-20 characters, letters, numbers, and underscores only
               </p>
             </div>
-
             <div>
               <label
                 htmlFor="gender"
@@ -300,7 +325,7 @@ const SignUpPage = () => {
                 value={form.gender}
                 onChange={handleChange}
                 required
-                className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-700"
+                className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-gray-700"
               >
                 <option value="" disabled>
                   Select your Gender
@@ -310,7 +335,6 @@ const SignUpPage = () => {
                 <option value="other">Other</option>
               </select>
             </div>
-
             <div>
               <label
                 htmlFor="dateOfBirth"
@@ -325,7 +349,7 @@ const SignUpPage = () => {
                 value={form.dateOfBirth}
                 onChange={handleChange}
                 required
-                className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
               />
             </div>
 
@@ -344,13 +368,109 @@ const SignUpPage = () => {
                 onChange={handleChange}
                 required
                 placeholder="Enter your Password"
-                className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
               />
-              <p className="text-xs text-gray-500 mt-1">
-                Must be at least 6 characters
-              </p>
-            </div>
 
+              {/* Show criteria when password field has focus or has content */}
+              {form.password && (
+                <div className="mt-2 space-y-1">
+                  <div className="flex items-center gap-2 text-xs">
+                    <CheckCircle
+                      className={`w-4 h-4 ${
+                        passwordCriteria.minLength
+                          ? "text-green-500"
+                          : "text-gray-400"
+                      }`}
+                    />
+                    <span
+                      className={
+                        passwordCriteria.minLength
+                          ? "text-green-600"
+                          : "text-gray-600"
+                      }
+                    >
+                      At least 6 characters
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-2 text-xs">
+                    <CheckCircle
+                      className={`w-4 h-4 ${
+                        passwordCriteria.uppercase
+                          ? "text-green-500"
+                          : "text-gray-400"
+                      }`}
+                    />
+                    <span
+                      className={
+                        passwordCriteria.uppercase
+                          ? "text-green-600"
+                          : "text-gray-600"
+                      }
+                    >
+                      Contains an uppercase letter
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-2 text-xs">
+                    <CheckCircle
+                      className={`w-4 h-4 ${
+                        passwordCriteria.lowercase
+                          ? "text-green-500"
+                          : "text-gray-400"
+                      }`}
+                    />
+                    <span
+                      className={
+                        passwordCriteria.lowercase
+                          ? "text-green-600"
+                          : "text-gray-600"
+                      }
+                    >
+                      Contains a lowercase letter
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-2 text-xs">
+                    <CheckCircle
+                      className={`w-4 h-4 ${
+                        passwordCriteria.number
+                          ? "text-green-500"
+                          : "text-gray-400"
+                      }`}
+                    />
+                    <span
+                      className={
+                        passwordCriteria.number
+                          ? "text-green-600"
+                          : "text-gray-600"
+                      }
+                    >
+                      Contains a number
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-2 text-xs">
+                    <CheckCircle
+                      className={`w-4 h-4 ${
+                        passwordCriteria.specialChar
+                          ? "text-green-500"
+                          : "text-gray-400"
+                      }`}
+                    />
+                    <span
+                      className={
+                        passwordCriteria.specialChar
+                          ? "text-green-600"
+                          : "text-gray-600"
+                      }
+                    >
+                      Contains a special character
+                    </span>
+                  </div>
+                </div>
+              )}
+            </div>
             <div>
               <label
                 htmlFor="confirmPassword"
@@ -366,7 +486,7 @@ const SignUpPage = () => {
                 onChange={handleChange}
                 required
                 placeholder="Confirm your Password"
-                className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
               />
             </div>
             <div className="flex items-start space-x-2">
@@ -375,26 +495,27 @@ const SignUpPage = () => {
                 name="acceptedTerms"
                 type="checkbox"
                 required
-                className="h-4 w-4 text-orange-600 focus:ring-orange-500 border-gray-300 rounded mt-0.5"
+                className="h-4 w-4 text-orange-500 focus:ring-orange-500 border-gray-300 rounded mt-0.5"
               />
               <div className="text-xs text-gray-700">
-                By creating an account, you agree to mostore{" "}
+                By creating an account, you agree to Mostore{" "}
                 <span className="text-orange-500 underline">Terms of Use</span>{" "}
-                 and the
+                and the
                 <span className="text-orange-500 underline">
                   {" "}
-                  Privacy and Cookies policy .
+                  Privacy and Cookies policy.
                 </span>
-                 
               </div>
             </div>
-            <button
+            <motion.button
               type="submit"
               disabled={isLoading}
-              className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white py-2 px-4 rounded-md transition-all duration-200 font-medium"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="w-full bg-orange-500 hover:bg-orange-600 disabled:bg-gray-400 disabled:cursor-not-allowed text-white py-2 px-4 rounded-md transition-all duration-200 font-medium"
             >
               {isLoading ? "Creating Account..." : "Create Account"}
-            </button>
+            </motion.button>
           </form>
 
           <div className="text-center">
@@ -415,7 +536,7 @@ const SignUpPage = () => {
             <button
               type="button"
               onClick={() => router.push("/sign-in")}
-              className="text-blue-600 hover:underline"
+              className="text-orange-500 hover:underline"
             >
               Sign In
             </button>

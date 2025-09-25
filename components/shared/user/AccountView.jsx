@@ -141,6 +141,7 @@ const AccountView = ({
       // Close modal on success
       if (type === "billing") setIsBillingModalOpen(false);
       else setIsDeliveryModalOpen(false);
+      window.location.reload();
     } catch (err) {
       console.error("Error saving address:", err);
       setError(err.message || "Failed to save address");

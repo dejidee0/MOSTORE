@@ -69,31 +69,98 @@ const CategoriesSection = ({ categories = [], categoriesLoading = false }) => {
         </div>
 
         {categoriesLoading ? (
-          // 🔹 Skeleton Loader - Horizontal
-          <div className="flex gap-4 overflow-x-auto scrollbar-hide animate-pulse">
-            {Array.from({ length: 10 }).map((_, index) => (
-              <div
-                key={index}
-                className="group cursor-pointer flex-shrink-0 w-40"
-              >
-                <div className="relative mb-3">
-                  <div className="w-full aspect-[4/3] bg-gray-200 rounded-xl"></div>
+          <>
+            {/* 🔹 Skeleton Loader - Desktop Horizontal */}
+            <div className="hidden md:flex gap-4 overflow-x-auto scrollbar-hide animate-pulse">
+              {Array.from({ length: 10 }).map((_, index) => (
+                <div
+                  key={index}
+                  className="group cursor-pointer flex-shrink-0 w-40"
+                >
+                  <div className="relative mb-3">
+                    <div className="w-full aspect-[4/3] bg-gray-200 rounded-xl"></div>
+                  </div>
+                  <div className="text-center space-y-2">
+                    <div className="h-4 bg-gray-200 rounded w-3/4 mx-auto"></div>
+                    <div className="h-3 bg-gray-200 rounded w-1/2 mx-auto"></div>
+                  </div>
                 </div>
-                <div className="text-center space-y-2">
-                  <div className="h-4 bg-gray-200 rounded w-3/4 mx-auto"></div>
-                  <div className="h-3 bg-gray-200 rounded w-1/2 mx-auto"></div>
+              ))}
+            </div>
+
+            {/* 🔹 Skeleton Loader - Mobile 3x3 Grid */}
+            <div className="md:hidden grid grid-cols-3 gap-3 animate-pulse">
+              {Array.from({ length: 9 }).map((_, index) => (
+                <div key={index} className="group cursor-pointer">
+                  <div className="relative mb-2">
+                    <div className="w-full aspect-square bg-gray-200 rounded-lg"></div>
+                  </div>
+                  <div className="text-center space-y-1">
+                    <div className="h-3 bg-gray-200 rounded w-3/4 mx-auto"></div>
+                    <div className="h-2 bg-gray-200 rounded w-1/2 mx-auto"></div>
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          </>
         ) : (
-          // 🔹 Actual Categories - Horizontal Slider
-          <div className="relative">
-            <div
-              ref={scrollRef}
-              className="flex gap-4 overflow-x-auto scrollbar-hide hover:scrollbar-visible pb-4"
-            >
-              {categories.map((category) => {
+          <>
+            {/* 🔹 Desktop - Horizontal Slider */}
+            <div className="hidden md:block relative">
+              <div
+                ref={scrollRef}
+                className="flex gap-4 overflow-x-auto scrollbar-hide hover:scrollbar-visible pb-4"
+              >
+                {categories.map((category) => {
+                  const items = formatCategoryItems(category.description);
+                  return (
+                    <div
+                      key={category.id}
+                      onClick={() =>
+                        router.push(
+                          `/products?category=${encodeURIComponent(
+                            category.id
+                          )}`
+                        )
+                      }
+                      className="group cursor-pointer flex-shrink-0 w-40"
+                    >
+                      {/* Image */}
+                      <div className="relative mb-1">
+                        <div className="relative w-full aspect-[4/3] rounded-xl overflow-hidden bg-gray-100 shadow-sm group-hover:shadow-md transition-shadow duration-300">
+                          <Image
+                            src={getCategoryImage(category.name)}
+                            alt={category.name}
+                            fill
+                            sizes="40vw"
+                            className="object-cover group-hover:scale-105 transition-transform duration-300"
+                            loading="lazy"
+                          />
+                          <div className="absolute inset-0 bg-black/10 group-hover:bg-black/20 transition-colors duration-300"></div>
+                        </div>
+                      </div>
+
+                      {/* Content */}
+                      <div className="text-center px-2">
+                        <h3 className="text-sm font-semibold text-gray-900 group-hover:text-orange-600 transition-colors duration-200 truncate mb-1">
+                          {category.name}
+                        </h3>
+                        {items.length > 0 && (
+                          <p className="text-xs text-gray-500 line-clamp-2 leading-relaxed">
+                            {items.slice(0, 2).join(" • ")}
+                            {items.length > 2 && "..."}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* 🔹 Mobile - 3x3 Grid */}
+            <div className="md:hidden grid grid-cols-3 gap-3">
+              {categories.slice(0, 9).map((category) => {
                 const items = formatCategoryItems(category.description);
                 return (
                   <div
@@ -103,16 +170,16 @@ const CategoriesSection = ({ categories = [], categoriesLoading = false }) => {
                         `/products?category=${encodeURIComponent(category.id)}`
                       )
                     }
-                    className="group cursor-pointer flex-shrink-0 w-40"
+                    className="group cursor-pointer"
                   >
-                    {/* Image */}
-                    <div className="relative mb-1">
-                      <div className="relative w-full aspect-[4/3] rounded-xl overflow-hidden bg-gray-100 shadow-sm group-hover:shadow-md transition-shadow duration-300">
+                    {/* Image - Square aspect ratio for mobile */}
+                    <div className="relative mb-2">
+                      <div className="relative w-full aspect-square rounded-lg overflow-hidden bg-gray-100 shadow-sm group-hover:shadow-md transition-shadow duration-300">
                         <Image
                           src={getCategoryImage(category.name)}
                           alt={category.name}
                           fill
-                          sizes="40vw"
+                          sizes="33vw"
                           className="object-cover group-hover:scale-105 transition-transform duration-300"
                           loading="lazy"
                         />
@@ -120,15 +187,15 @@ const CategoriesSection = ({ categories = [], categoriesLoading = false }) => {
                       </div>
                     </div>
 
-                    {/* Content */}
-                    <div className="text-center px-2">
-                      <h3 className="text-sm font-semibold text-gray-900 group-hover:text-orange-600 transition-colors duration-200 truncate mb-1">
+                    {/* Content - Smaller text for mobile */}
+                    <div className="text-center px-1">
+                      <h3 className="text-xs font-semibold text-gray-900 group-hover:text-orange-600 transition-colors duration-200 truncate mb-1 leading-tight">
                         {category.name}
                       </h3>
                       {items.length > 0 && (
-                        <p className="text-xs text-gray-500 line-clamp-2 leading-relaxed">
-                          {items.slice(0, 2).join(" • ")}
-                          {items.length > 2 && "..."}
+                        <p className="text-[10px] text-gray-500 line-clamp-1 leading-tight">
+                          {items[0]}
+                          {items.length > 1 && "..."}
                         </p>
                       )}
                     </div>
@@ -136,7 +203,7 @@ const CategoriesSection = ({ categories = [], categoriesLoading = false }) => {
                 );
               })}
             </div>
-          </div>
+          </>
         )}
 
         {/* Custom Scrollbar Styles */}

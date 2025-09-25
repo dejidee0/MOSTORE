@@ -369,7 +369,25 @@ const SignUpPage = () => {
                 className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
             </div>
-
+            <div className="flex items-start space-x-2">
+              <input
+                id="acceptedTerms"
+                name="acceptedTerms"
+                type="checkbox"
+                required
+                className="h-4 w-4 text-orange-600 focus:ring-orange-500 border-gray-300 rounded mt-0.5"
+              />
+              <div className="text-xs text-gray-700">
+                By creating an account, you agree to mostore{" "}
+                <span className="text-orange-500 underline">Terms of Use</span>{" "}
+                 and the
+                <span className="text-orange-500 underline">
+                  {" "}
+                  Privacy and Cookies policy .
+                </span>
+                 
+              </div>
+            </div>
             <button
               type="submit"
               disabled={isLoading}

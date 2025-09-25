@@ -3,6 +3,8 @@ import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import useUserStore from "@/lib/stores/useUserStore";
 import Image from "next/image";
+import { Eye, EyeOff } from "lucide-react";
+import { motion } from "framer-motion";
 
 const SignInPage = () => {
   const router = useRouter();
@@ -24,6 +26,7 @@ const SignInPage = () => {
   const [error, setError] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   // Initialize the store if not already initialized
   useEffect(() => {
@@ -34,7 +37,6 @@ const SignInPage = () => {
   }, [initialized, initialize]);
 
   // Handle authentication redirect
-  // In your SignInPage.js, modify the auth check useEffect:
   useEffect(() => {
     console.log("Auth check:", {
       initialized,
@@ -59,6 +61,7 @@ const SignInPage = () => {
       }
     }
   }, [user, isAuthenticated, router, initialized, loading]);
+
   const handleChange = (e) =>
     setForm({ ...form, [e.target.name]: e.target.value });
 
@@ -95,9 +98,6 @@ const SignInPage = () => {
         if (rememberMe) {
           localStorage.setItem("rememberMe", "true");
         }
-
-        // Don't manually redirect - let the useEffect handle it
-        // The auth state change will trigger the redirect
       }
     } catch (err) {
       console.error("Unexpected sign in error:", err);
@@ -138,7 +138,7 @@ const SignInPage = () => {
   if (!initialized) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500"></div>
       </div>
     );
   }
@@ -146,7 +146,7 @@ const SignInPage = () => {
   const isDisabled = loading || isSubmitting;
 
   return (
-    <div className="min-h-screen flex flex-col md:flex-row font-raleway">
+    <div className="min-h-screen flex flex-col md:flex-row font-raleway bg-gradient-to-br from-blue-50 to-indigo-100">
       {/* Left Side Image */}
       <div
         className="hidden md:flex md:w-1/2 bg-cover bg-center"
@@ -164,8 +164,10 @@ const SignInPage = () => {
             priority
           />
         </div>
-        <div className="w-full max-w-md">
-          <h2 className="text-3xl font-semibold mb-6 text-center">Sign In</h2>
+        <div className="w-full max-w-md bg-white shadow-xl rounded-lg p-8 md:p-10">
+          <h2 className="text-3xl font-semibold mb-6 text-center text-gray-800">
+            Sign In
+          </h2>
           {error && (
             <div
               className={`text-sm text-center mb-4 p-3 rounded-md ${
@@ -193,7 +195,7 @@ const SignInPage = () => {
                 onChange={handleChange}
                 required
                 placeholder="you@example.com"
-                className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary text-sm disabled:bg-gray-100 disabled:cursor-not-allowed"
+                className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-sm disabled:bg-gray-100 disabled:cursor-not-allowed"
                 disabled={isDisabled}
               />
             </div>
@@ -205,17 +207,29 @@ const SignInPage = () => {
               >
                 Password
               </label>
-              <input
-                id="password"
-                type="password"
-                name="password"
-                value={form.password}
-                onChange={handleChange}
-                required
-                placeholder="••••••••"
-                className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary text-sm disabled:bg-gray-100 disabled:cursor-not-allowed"
-                disabled={isDisabled}
-              />
+              <div className="relative">
+                <input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  name="password"
+                  value={form.password}
+                  onChange={handleChange}
+                  required
+                  placeholder="••••••••"
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 pr-10 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-sm disabled:bg-gray-100 disabled:cursor-not-allowed"
+                  disabled={isDisabled}
+                />
+                <motion.button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute inset-y-0 right-0 flex items-center pr-3 text-orange-500 hover:bg-orange-100 rounded-r-md focus:outline-none disabled:text-gray-400 disabled:cursor-not-allowed"
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
+                  disabled={isDisabled}
+                >
+                  {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                </motion.button>
+              </div>
             </div>
 
             <div className="flex justify-between items-center text-sm">
@@ -223,7 +237,7 @@ const SignInPage = () => {
                 <input
                   type="checkbox"
                   id="remember"
-                  className="mr-2"
+                  className="mr-2 h-4 w-4 text-orange-500 focus:ring-orange-500 border-gray-300 rounded"
                   checked={rememberMe}
                   onChange={(e) => setRememberMe(e.target.checked)}
                   disabled={isDisabled}
@@ -235,17 +249,19 @@ const SignInPage = () => {
               <button
                 type="button"
                 onClick={() => router.push("/forgot-password")}
-                className="text-blue-600 hover:underline disabled:text-gray-400 disabled:cursor-not-allowed"
+                className="text-orange-500 hover:underline disabled:text-gray-400 disabled:cursor-not-allowed"
                 disabled={isDisabled}
               >
                 Forgot Password?
               </button>
             </div>
 
-            <button
+            <motion.button
               type="submit"
               disabled={isDisabled}
-              className="w-full bg-primary hover:bg-primary-dark disabled:bg-gray-400 disabled:cursor-not-allowed text-white py-2 px-4 rounded-md transition-all duration-200 flex items-center justify-center"
+              className="w-full bg-orange-500 hover:bg-orange-600 disabled:bg-gray-400 disabled:cursor-not-allowed text-white py-2 px-4 rounded-md transition-all duration-200 flex items-center justify-center"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
             >
               {isDisabled ? (
                 <>
@@ -255,16 +271,16 @@ const SignInPage = () => {
               ) : (
                 "Sign In"
               )}
-            </button>
+            </motion.button>
           </form>
-          {/* Google Sign In Button */}\{/* Sign Up Link */}
+
           <div className="mt-6 text-center">
             <p className="text-sm text-gray-600">
               Don't have an account?{" "}
               <button
                 type="button"
                 onClick={() => router.push("/sign-up")}
-                className="text-blue-600 hover:underline font-medium disabled:text-gray-400 disabled:cursor-not-allowed"
+                className="text-orange-500 hover:underline font-medium disabled:text-gray-400 disabled:cursor-not-allowed"
                 disabled={isDisabled}
               >
                 Sign up

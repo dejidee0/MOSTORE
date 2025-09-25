@@ -234,7 +234,7 @@ const SignInPage = () => {
               </div>
               <button
                 type="button"
-                onClick={handleForgotPassword}
+                onClick={() => router.push("/forgot-password")}
                 className="text-blue-600 hover:underline disabled:text-gray-400 disabled:cursor-not-allowed"
                 disabled={isDisabled}
               >

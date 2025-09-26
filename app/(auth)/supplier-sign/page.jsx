@@ -451,34 +451,6 @@ const SupplierSignUpPage = () => {
                 </div>
 
                 {/* Trust indicators */}
-                <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-4 mb-6 border border-gray-100/50">
-                  <div className="flex items-center justify-center space-x-8 text-center">
-                    <div className="flex flex-col items-center space-y-1">
-                      <div className="w-8 h-8 bg-gradient-to-br from-green-100 to-green-200 rounded-lg flex items-center justify-center">
-                        <Shield className="w-4 h-4 text-green-600" />
-                      </div>
-                      <span className="text-xs font-medium text-gray-700">
-                        Secure
-                      </span>
-                    </div>
-                    <div className="flex flex-col items-center space-y-1">
-                      <div className="w-8 h-8 bg-gradient-to-br from-yellow-100 to-yellow-200 rounded-lg flex items-center justify-center">
-                        <Star className="w-4 h-4 text-yellow-600 fill-current" />
-                      </div>
-                      <span className="text-xs font-medium text-gray-700">
-                        Trusted
-                      </span>
-                    </div>
-                    <div className="flex flex-col items-center space-y-1">
-                      <div className="w-8 h-8 bg-gradient-to-br from-blue-100 to-blue-200 rounded-lg flex items-center justify-center">
-                        <CheckCircle className="w-4 h-4 text-blue-600" />
-                      </div>
-                      <span className="text-xs font-medium text-gray-700">
-                        Verified
-                      </span>
-                    </div>
-                  </div>
-                </div>
 
                 {/* CTA */}
                 <div className="space-y-3">

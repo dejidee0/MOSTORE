@@ -380,7 +380,7 @@ const SupplierSignUpPage = () => {
               initial={{ scale: 0.95, opacity: 0, y: 10 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.95, opacity: 0, y: 10 }}
-              className="bg-white rounded-3xl max-w-lg w-full relative overflow-hidden shadow-xl border border-gray-100"
+              className="bg-white rounded-3xl max-h-[90vh] max-w-lg w-full relative overflow-hidden shadow-xl border border-gray-100"
               style={{
                 background: "linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)",
                 backdropFilter: "blur(20px)",

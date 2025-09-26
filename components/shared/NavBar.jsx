@@ -412,7 +412,7 @@ const NavBar = () => {
               </div>
             </div>
             <div className="flex items-center space-x-2 lg:space-x-4">
-              <Link href="/sign-up">
+              <Link href="/supplier-sign">
                 <button className="hidden lg:flex items-center text-white font-medium hover:text-orange-300 transition-colors duration-200 ml-2">
                   Sell
                 </button>

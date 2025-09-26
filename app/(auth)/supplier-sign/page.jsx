@@ -13,15 +13,13 @@ import {
   DollarSign,
   Clock,
   Star,
-  Zap,
-  Globe,
-  Play,
+  X,
 } from "lucide-react";
 
 const SupplierSignUpPage = () => {
   const router = useRouter();
 
-  const [currentSlide, setCurrentSlide] = useState(0); // 0 = landing, 1 = signup
+  const [showSplash, setShowSplash] = useState(true);
   const [form, setForm] = useState({
     fullName: "",
     email: "",
@@ -197,13 +195,7 @@ const SupplierSignUpPage = () => {
   };
 
   const handleGetStarted = () => {
-    setCurrentSlide(1);
-  };
-
-  const handleBackToLanding = () => {
-    setCurrentSlide(0);
-    setStep(1);
-    setError("");
+    setShowSplash(false);
   };
 
   const TermsModal = () =>
@@ -349,723 +341,557 @@ const SupplierSignUpPage = () => {
     exit: { opacity: 0, scale: 0.8, transition: { duration: 0.3 } },
   };
 
-  // Landing page content
+  // Splash screen benefits (simplified like Konga)
   const benefits = [
     {
-      icon: <Users className="w-8 h-8 text-orange-600" />,
-      title: "Massive Customer Base",
-      description:
-        "Reach millions of shoppers actively looking for products like yours",
+      icon: <DollarSign className="w-6 h-6 text-orange-600" />,
+      title: "Earn More Money",
+      description: "Reach millions of customers across Nigeria and beyond",
     },
     {
-      icon: <TrendingUp className="w-8 h-8 text-orange-600" />,
-      title: "Boost Your Sales",
-      description: "Increase your revenue with our proven marketplace platform",
+      icon: <Shield className="w-6 h-6 text-orange-600" />,
+      title: "Safe & Secure",
+      description: "Trusted platform with secure payment processing",
     },
     {
-      icon: <Shield className="w-8 h-8 text-orange-600" />,
-      title: "Secure Payments",
-      description: "Get paid safely with our secure payment processing system",
+      icon: <TrendingUp className="w-6 h-6 text-orange-600" />,
+      title: "Low Commission",
+      description: "Only 15% commission - you keep more of your earnings",
     },
     {
-      icon: <DollarSign className="w-8 h-8 text-orange-600" />,
-      title: "Competitive Fees",
-      description:
-        "Only 15% commission with transparent pricing - no hidden costs",
-    },
-    {
-      icon: <Clock className="w-8 h-8 text-orange-600" />,
-      title: "Quick Setup",
-      description:
-        "Start selling in minutes with our streamlined onboarding process",
-    },
-    {
-      icon: <Globe className="w-8 h-8 text-orange-600" />,
-      title: "Global Reach",
-      description:
-        "Expand your business internationally with our global marketplace",
-    },
-  ];
-
-  const stats = [
-    { number: "10M+", label: "Active Customers" },
-    { number: "500K+", label: "Products Sold" },
-    { number: "50K+", label: "Happy Sellers" },
-    { number: "99.9%", label: "Uptime" },
-  ];
-
-  const testimonials = [
-    {
-      name: "Sarah Johnson",
-      business: "Fashion Boutique",
-      rating: 5,
-      text: "Mostore transformed my business. I've tripled my sales in just 6 months!",
-    },
-    {
-      name: "Michael Chen",
-      business: "Electronics Store",
-      rating: 5,
-      text: "The platform is intuitive and the support team is amazing. Highly recommend!",
-    },
-    {
-      name: "Amara Okafor",
-      business: "Handmade Crafts",
-      rating: 5,
-      text: "Finally found a marketplace that understands local businesses. Love it!",
+      icon: <Users className="w-6 h-6 text-orange-600" />,
+      title: "24/7 Support",
+      description: "Dedicated merchant support team always ready to help",
     },
   ];
 
   return (
-    <div className="min-h-screen flex flex-col font-raleway bg-gradient-to-br from-orange-50 to-orange-100">
-      <AnimatePresence mode="wait">
-        {currentSlide === 0 ? (
-          // Landing Slide
+    <div className="min-h-screen flex flex-col md:flex-row font-raleway bg-gradient-to-br from-orange-50 to-orange-100">
+      {/* Splash Screen Modal */}
+      <AnimatePresence>
+        {showSplash && (
           <motion.div
-            key="landing"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            exit={{ opacity: 0, x: "-100%" }}
-            transition={{ duration: 0.5 }}
-            className="flex-1"
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-white/80 backdrop-blur-sm flex items-center justify-center z-50 p-4"
           >
-            {/* Header */}
-            <header className="flex justify-between items-center p-6 bg-white shadow-sm">
-              <div className="flex items-center space-x-3">
-                <Image
-                  src="/assets/Mostore Logo Icon.png"
-                  width={40}
-                  height={40}
-                  alt="Mostore Logo"
-                  priority
-                />
-                <span className="text-2xl font-bold text-gray-800">
-                  Mostore
-                </span>
-              </div>
-              <div className="flex items-center space-x-4">
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0, y: 10 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.95, opacity: 0, y: 10 }}
+              className="bg-white rounded-3xl max-w-lg w-full relative overflow-hidden shadow-xl border border-gray-100"
+              style={{
+                background: "linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)",
+                backdropFilter: "blur(20px)",
+              }}
+            >
+              {/* Header with gradient background */}
+              <div className="bg-gradient-to-br from-orange-500 via-orange-600 to-orange-700 px-8 pt-8 pb-6 text-white relative overflow-hidden ">
+                {/* Close button */}
                 <button
-                  onClick={() => router.push("/sign-in")}
-                  className="text-gray-600 hover:text-orange-600 transition-colors"
+                  onClick={() => setShowSplash(false)}
+                  className="absolute top-4 right-4 text-white/90 hover:text-white transition-colors z-10"
                 >
-                  Sign In
+                  <X className="w-6 h-6" />
                 </button>
-                <button
-                  onClick={() => router.push("/sign-up")}
-                  className="text-orange-600 hover:text-orange-700 transition-colors"
-                >
-                  Customer Signup
-                </button>
-              </div>
-            </header>
 
-            {/* Hero Section */}
-            <section className="relative py-20 px-6 text-center bg-gradient-to-r from-orange-600 to-orange-700 text-white overflow-hidden">
-              <div className="absolute inset-0 bg-black opacity-10"></div>
-              <div className="relative max-w-4xl mx-auto">
-                <motion.div
-                  initial={{ y: 30, opacity: 0 }}
-                  animate={{ y: 0, opacity: 1 }}
-                  transition={{ duration: 0.6 }}
-                >
-                  <h1 className="text-5xl md:text-6xl font-bold mb-6 leading-tight">
-                    Start Selling on <br />
-                    <span className="text-orange-200">Mostore Today</span>
-                  </h1>
-                  <p className="text-xl md:text-2xl mb-8 text-orange-100 max-w-3xl mx-auto">
-                    Join thousands of successful sellers who trust Mostore to
-                    grow their business. Reach millions of customers and boost
-                    your sales effortlessly.
-                  </p>
-                  <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-                    <motion.button
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      onClick={handleGetStarted}
-                      className="bg-white text-orange-600 px-8 py-4 rounded-lg font-semibold text-lg hover:bg-orange-50 transition-all duration-200 flex items-center space-x-2 shadow-lg"
-                    >
-                      <span>Get Started - It's Free</span>
-                      <ArrowRight className="w-5 h-5" />
-                    </motion.button>
-                    <button className="text-orange-100 hover:text-white flex items-center space-x-2 transition-colors">
-                      <Play className="w-5 h-5" />
-                      <span>Watch Demo Video</span>
-                    </button>
+                {/* Logo and header */}
+                <div className="text-center relative z-10 ">
+                  <div className="flex justify-center ">
+                    <div className="backdrop-blur-bg-white sm rounded-2xl p-3 border border-white/20">
+                      <Image
+                        src="/assets/Mostore Logo Icon.png"
+                        width={50}
+                        height={50}
+                        alt="Mostore Logo"
+                        priority
+                        className="rounded-lg"
+                      />
+                    </div>
                   </div>
-                </motion.div>
-              </div>
-              {/* Floating icons animation */}
-              <div className="absolute top-10 left-10 opacity-20">
-                <motion.div
-                  animate={{ y: [0, -10, 0] }}
-                  transition={{ duration: 3, repeat: Infinity }}
-                >
-                  <DollarSign className="w-8 h-8" />
-                </motion.div>
-              </div>
-              <div className="absolute top-20 right-20 opacity-20">
-                <motion.div
-                  animate={{ y: [0, 10, 0] }}
-                  transition={{ duration: 4, repeat: Infinity }}
-                >
-                  <TrendingUp className="w-10 h-10" />
-                </motion.div>
-              </div>
-            </section>
-
-            {/* Stats Section */}
-            <section className="py-16 bg-white">
-              <div className="max-w-6xl mx-auto px-6">
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-                  {stats.map((stat, index) => (
-                    <motion.div
-                      key={index}
-                      initial={{ y: 20, opacity: 0 }}
-                      whileInView={{ y: 0, opacity: 1 }}
-                      transition={{ duration: 0.5, delay: index * 0.1 }}
-                      className="text-center"
-                    >
-                      <div className="text-3xl md:text-4xl font-bold text-orange-600 mb-2">
-                        {stat.number}
-                      </div>
-                      <div className="text-gray-600 font-medium">
-                        {stat.label}
-                      </div>
-                    </motion.div>
-                  ))}
-                </div>
-              </div>
-            </section>
-
-            {/* Benefits Section */}
-            <section className="py-20 bg-gray-50">
-              <div className="max-w-6xl mx-auto px-6">
-                <motion.div
-                  initial={{ y: 20, opacity: 0 }}
-                  whileInView={{ y: 0, opacity: 1 }}
-                  transition={{ duration: 0.6 }}
-                  className="text-center mb-16"
-                >
-                  <h2 className="text-4xl font-bold text-gray-800 mb-4">
-                    Why Choose Mostore?
+                  <h2 className="text-2xl font-bold mb-2">
+                    Start Selling on Mostore
                   </h2>
-                  <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-                    Everything you need to succeed as an online seller, all in
-                    one powerful platform
+                  <p className="text-orange-100 text-sm opacity-90">
+                    Join the next generation of successful online sellers
                   </p>
-                </motion.div>
+                </div>
 
-                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {/* Decorative glass elements */}
+                <div className="absolute top-0 right-0 w-40 h-40 bg-white/10 rounded-full blur-3xl -translate-y-20 translate-x-20"></div>
+                <div className="absolute bottom-0 left-0 w-32 h-32 bg-white/10 rounded-full blur-2xl translate-y-16 -translate-x-16"></div>
+                <div className="absolute top-1/2 right-1/4 w-6 h-6 bg-white/20 rounded-full"></div>
+                <div className="absolute top-1/4 left-1/3 w-4 h-4 bg-white/15 rounded-full"></div>
+              </div>
+
+              {/* Content */}
+              <div className="px-8 py-6 bg-white/50 backdrop-blur-sm">
+                {/* Benefits grid */}
+                <div className="grid grid-cols-2 gap-4 mb-6">
                   {benefits.map((benefit, index) => (
                     <motion.div
                       key={index}
-                      initial={{ y: 30, opacity: 0 }}
-                      whileInView={{ y: 0, opacity: 1 }}
-                      transition={{ duration: 0.5, delay: index * 0.1 }}
-                      whileHover={{ y: -5 }}
-                      className="bg-white p-8 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100"
+                      initial={{ x: index % 2 === 0 ? -20 : 20, opacity: 0 }}
+                      animate={{ x: 0, opacity: 1 }}
+                      transition={{ delay: 0.2 + 0.1 * index, duration: 0.4 }}
+                      className="bg-white/70 backdrop-blur-sm rounded-2xl p-4 hover:bg-white/90 transition-all duration-300 group border border-gray-100/50 hover:shadow-lg hover:scale-105"
                     >
-                      <div className="mb-4">{benefit.icon}</div>
-                      <h3 className="text-xl font-semibold text-gray-800 mb-3">
+                      <div className="flex items-center justify-center w-12 h-12 bg-gradient-to-br from-orange-100 to-orange-200 rounded-xl mb-3 group-hover:from-orange-200 group-hover:to-orange-300 transition-all duration-300">
+                        {benefit.icon}
+                      </div>
+                      <h3 className="font-semibold text-gray-800 text-sm mb-1">
                         {benefit.title}
                       </h3>
-                      <p className="text-gray-600 leading-relaxed">
+                      <p className="text-gray-600 text-xs leading-relaxed">
                         {benefit.description}
                       </p>
                     </motion.div>
                   ))}
                 </div>
-              </div>
-            </section>
 
-            {/* Testimonials Section */}
-            <section className="py-20 bg-white">
-              <div className="max-w-6xl mx-auto px-6">
-                <motion.div
-                  initial={{ y: 20, opacity: 0 }}
-                  whileInView={{ y: 0, opacity: 1 }}
-                  transition={{ duration: 0.6 }}
-                  className="text-center mb-16"
-                >
-                  <h2 className="text-4xl font-bold text-gray-800 mb-4">
-                    What Our Sellers Say
-                  </h2>
-                  <p className="text-xl text-gray-600">
-                    Join thousands of successful sellers who love Mostore
-                  </p>
-                </motion.div>
-
-                <div className="grid md:grid-cols-3 gap-8">
-                  {testimonials.map((testimonial, index) => (
-                    <motion.div
-                      key={index}
-                      initial={{ y: 30, opacity: 0 }}
-                      whileInView={{ y: 0, opacity: 1 }}
-                      transition={{ duration: 0.5, delay: index * 0.1 }}
-                      className="bg-gray-50 p-8 rounded-xl border border-gray-200"
-                    >
-                      <div className="flex mb-4">
-                        {[...Array(testimonial.rating)].map((_, i) => (
-                          <Star
-                            key={i}
-                            className="w-5 h-5 text-yellow-400 fill-current"
-                          />
-                        ))}
+                {/* Trust indicators */}
+                <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-4 mb-6 border border-gray-100/50">
+                  <div className="flex items-center justify-center space-x-8 text-center">
+                    <div className="flex flex-col items-center space-y-1">
+                      <div className="w-8 h-8 bg-gradient-to-br from-green-100 to-green-200 rounded-lg flex items-center justify-center">
+                        <Shield className="w-4 h-4 text-green-600" />
                       </div>
-                      <p className="text-gray-700 mb-6 italic">
-                        "{testimonial.text}"
-                      </p>
-                      <div>
-                        <div className="font-semibold text-gray-800">
-                          {testimonial.name}
-                        </div>
-                        <div className="text-orange-600 text-sm">
-                          {testimonial.business}
-                        </div>
+                      <span className="text-xs font-medium text-gray-700">
+                        Secure
+                      </span>
+                    </div>
+                    <div className="flex flex-col items-center space-y-1">
+                      <div className="w-8 h-8 bg-gradient-to-br from-yellow-100 to-yellow-200 rounded-lg flex items-center justify-center">
+                        <Star className="w-4 h-4 text-yellow-600 fill-current" />
                       </div>
-                    </motion.div>
-                  ))}
-                </div>
-              </div>
-            </section>
-
-            {/* CTA Section */}
-            <section className="py-20 bg-gradient-to-r from-orange-600 to-orange-700 text-white">
-              <div className="max-w-4xl mx-auto px-6 text-center">
-                <motion.div
-                  initial={{ y: 20, opacity: 0 }}
-                  whileInView={{ y: 0, opacity: 1 }}
-                  transition={{ duration: 0.6 }}
-                >
-                  <h2 className="text-4xl font-bold mb-6">
-                    Ready to Start Your Success Story?
-                  </h2>
-                  <p className="text-xl mb-8 text-orange-100">
-                    Join Mostore today and transform your business. It's free to
-                    get started!
-                  </p>
-                  <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                    <motion.button
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      onClick={handleGetStarted}
-                      className="bg-white text-orange-600 px-8 py-4 rounded-lg font-semibold text-lg hover:bg-orange-50 transition-all duration-200 flex items-center justify-center space-x-2 shadow-lg"
-                    >
-                      <Zap className="w-5 h-5" />
-                      <span>Start Selling Now</span>
-                    </motion.button>
-                  </div>
-                  <p className="text-orange-200 text-sm mt-4">
-                    No setup fees • No monthly charges • Start earning today
-                  </p>
-                </motion.div>
-              </div>
-            </section>
-          </motion.div>
-        ) : (
-          // Signup Slide
-          <motion.div
-            key="signup"
-            initial={{ opacity: 0, x: "100%" }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: "100%" }}
-            transition={{ duration: 0.5 }}
-            className="min-h-screen flex flex-col md:flex-row bg-gradient-to-br from-orange-50 to-orange-100"
-          >
-            {/* Back button */}
-            <button
-              onClick={handleBackToLanding}
-              className="absolute top-6 left-6 z-10 flex items-center space-x-2 text-gray-600 hover:text-orange-600 transition-colors"
-            >
-              <ArrowRight className="w-5 h-5 rotate-180" />
-              <span>Back</span>
-            </button>
-
-            <div className="hidden md:flex md:w-1/2 relative">
-              <Image
-                src="/auth.png"
-                alt="Supplier sign up background"
-                fill
-                priority
-                className="object-contain md:object-cover"
-              />
-            </div>
-            <div className="flex w-full md:w-1/2 items-center justify-center p-6 sm:p-10">
-              <div className="w-full max-w-md bg-white shadow-xl rounded-lg p-8 md:p-10 space-y-6 relative overflow-hidden">
-                <div className="md:hidden flex justify-center">
-                  <Image
-                    src="/assets/Mostore Logo Icon.png"
-                    width={80}
-                    height={80}
-                    alt="Logo"
-                    priority
-                  />
-                </div>
-                <div className="text-center">
-                  <h2 className="text-3xl font-semibold text-gray-800">
-                    Become a Supplier
-                  </h2>
-                  <p className="text-sm text-gray-500 mt-1">
-                    Start selling on Mostore today
-                  </p>
-                </div>
-                {error && (
-                  <div className="text-red-600 bg-red-50 border border-red-200 text-sm text-center p-3 rounded-md">
-                    {error}
-                  </div>
-                )}
-                <AnimatePresence>
-                  {success && (
-                    <motion.div
-                      key="success-modal"
-                      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      exit={{ opacity: 0 }}
-                    >
-                      <motion.div
-                        className="bg-white rounded-lg p-8 max-w-md w-full text-center shadow-2xl"
-                        variants={successVariants}
-                        initial="hidden"
-                        animate="visible"
-                        exit="exit"
-                      >
-                        <motion.div className="w-16 h-16 mx-auto mb-4">
-                          <CheckCircle className="w-full h-full text-green-500" />
-                        </motion.div>
-                        <h3 className="text-2xl font-bold text-gray-800 mb-2">
-                          Welcome to Mostore!
-                        </h3>
-                        <p className="text-gray-600 mb-4">
-                          Your supplier account has been created. A verification
-                          email has been sent to {form.email}. Please verify
-                          your account before logging in.
-                        </p>
-                        <button
-                          onClick={() => router.push("/sign-in")}
-                          className="bg-orange-500 text-white py-2 px-6 rounded-md hover:bg-orange-600 transition-colors"
-                        >
-                          Go to Sign In
-                        </button>
-                      </motion.div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-
-                {/* Step Progress Indicator */}
-                <div className="flex items-center justify-center space-x-4 mb-6">
-                  <div
-                    className={`flex items-center ${
-                      step >= 1 ? "text-orange-600" : "text-gray-400"
-                    }`}
-                  >
-                    <div
-                      className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
-                        step >= 1 ? "bg-orange-600 text-white" : "bg-gray-200"
-                      }`}
-                    >
-                      1
+                      <span className="text-xs font-medium text-gray-700">
+                        Trusted
+                      </span>
                     </div>
-                    <span className="ml-2 text-sm font-medium">Basic Info</span>
-                  </div>
-                  <div
-                    className={`w-8 h-0.5 ${
-                      step >= 2 ? "bg-orange-600" : "bg-gray-200"
-                    }`}
-                  ></div>
-                  <div
-                    className={`flex items-center ${
-                      step >= 2 ? "text-orange-600" : "text-gray-400"
-                    }`}
-                  >
-                    <div
-                      className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
-                        step >= 2 ? "bg-orange-600 text-white" : "bg-gray-200"
-                      }`}
-                    >
-                      2
+                    <div className="flex flex-col items-center space-y-1">
+                      <div className="w-8 h-8 bg-gradient-to-br from-blue-100 to-blue-200 rounded-lg flex items-center justify-center">
+                        <CheckCircle className="w-4 h-4 text-blue-600" />
+                      </div>
+                      <span className="text-xs font-medium text-gray-700">
+                        Verified
+                      </span>
                     </div>
-                    <span className="ml-2 text-sm font-medium">
-                      Supplier Details
-                    </span>
                   </div>
                 </div>
 
-                <div className="relative">
-                  <AnimatePresence custom={direction} mode="wait">
-                    {step === 1 && (
-                      <motion.form
-                        key="step1"
-                        custom={direction}
-                        variants={slideVariants}
-                        initial="initial"
-                        animate="animate"
-                        exit="exit"
-                        onSubmit={handleNext}
-                        className="space-y-5"
-                      >
-                        <div>
-                          <label
-                            htmlFor="fullName"
-                            className="block text-sm font-medium text-gray-700 mb-1"
-                          >
-                            Full Name
-                          </label>
-                          <input
-                            id="fullName"
-                            name="fullName"
-                            type="text"
-                            value={form.fullName}
-                            onChange={handleChange}
-                            required
-                            placeholder="John Doe"
-                            className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                          />
-                        </div>
-                        <div>
-                          <label
-                            htmlFor="email"
-                            className="block text-sm font-medium text-gray-700 mb-1"
-                          >
-                            Email Address
-                          </label>
-                          <input
-                            id="email"
-                            name="email"
-                            type="email"
-                            value={form.email}
-                            onChange={handleChange}
-                            required
-                            placeholder="you@example.com"
-                            className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                          />
-                        </div>
-                        <div>
-                          <label
-                            htmlFor="username"
-                            className="block text-sm font-medium text-gray-700 mb-1"
-                          >
-                            Username
-                          </label>
-                          <input
-                            id="username"
-                            name="username"
-                            type="text"
-                            value={form.username}
-                            onChange={handleChange}
-                            required
-                            placeholder="johndoe123"
-                            className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                          />
-                          <p className="text-xs text-gray-500 mt-1">
-                            3-20 characters, letters, numbers, and underscores
-                            only
-                          </p>
-                        </div>
-                        <div>
-                          <label
-                            htmlFor="password"
-                            className="block text-sm font-medium text-gray-700 mb-1"
-                          >
-                            Password
-                          </label>
-                          <input
-                            id="password"
-                            name="password"
-                            type="password"
-                            value={form.password}
-                            onChange={handleChange}
-                            required
-                            placeholder="••••••••"
-                            className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                          />
-                          <p className="text-xs text-gray-500 mt-1">
-                            Must be at least 6 characters
-                          </p>
-                        </div>
-                        <div>
-                          <label
-                            htmlFor="confirmPassword"
-                            className="block text-sm font-medium text-gray-700 mb-1"
-                          >
-                            Confirm Password
-                          </label>
-                          <input
-                            id="confirmPassword"
-                            name="confirmPassword"
-                            type="password"
-                            value={form.confirmPassword}
-                            onChange={handleChange}
-                            required
-                            placeholder="••••••••"
-                            className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                          />
-                        </div>
-                        <button
-                          type="submit"
-                          disabled={isLoading || isCheckingUsername}
-                          className="w-full bg-orange-600 hover:bg-orange-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white py-2 px-4 rounded-md transition-all duration-200"
-                        >
-                          {isCheckingUsername
-                            ? "Checking Username..."
-                            : "Next Step"}
-                        </button>
-                      </motion.form>
-                    )}
-                    {step === 2 && (
-                      <motion.form
-                        key="step2"
-                        custom={direction}
-                        variants={slideVariants}
-                        initial="initial"
-                        animate="animate"
-                        exit="exit"
-                        onSubmit={handleSupplierSignUp}
-                        className="space-y-5"
-                      >
-                        <div className="space-y-4 bg-orange-50 p-4 rounded-md border border-orange-200">
-                          <h3 className="text-sm font-semibold text-gray-800 mb-3">
-                            Business & Payment Information
-                          </h3>
-                          <div>
-                            <label
-                              htmlFor="phoneNumber"
-                              className="block text-sm font-medium text-gray-700 mb-1"
-                            >
-                              Phone Number
-                            </label>
-                            <input
-                              id="phoneNumber"
-                              name="phoneNumber"
-                              type="tel"
-                              value={form.phoneNumber}
-                              onChange={handleChange}
-                              required
-                              placeholder="+1 234 567 8900"
-                              className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                            />
-                          </div>
-                          <div>
-                            <label
-                              htmlFor="address"
-                              className="block text-sm font-medium text-gray-700 mb-1"
-                            >
-                              Complete Business Address
-                            </label>
-                            <textarea
-                              id="address"
-                              name="address"
-                              value={form.address}
-                              onChange={handleChange}
-                              required
-                              placeholder="123 Main Street, New York, NY 10001, USA"
-                              rows="3"
-                              className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                            />
-                          </div>
-                          <div>
-                            <label
-                              htmlFor="bankName"
-                              className="block text-sm font-medium text-gray-700 mb-1"
-                            >
-                              Bank Name
-                            </label>
-                            <input
-                              id="bankName"
-                              name="bankName"
-                              type="text"
-                              value={form.bankName}
-                              onChange={handleChange}
-                              required
-                              placeholder="Bank of America"
-                              className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                            />
-                          </div>
-                          <div>
-                            <label
-                              htmlFor="bankAccountNumber"
-                              className="block text-sm font-medium text-gray-700 mb-1"
-                            >
-                              Account Number
-                            </label>
-                            <input
-                              id="bankAccountNumber"
-                              name="bankAccountNumber"
-                              type="text"
-                              value={form.bankAccountNumber}
-                              onChange={handleChange}
-                              required
-                              placeholder="1234567890"
-                              className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                            />
-                          </div>
-                          <div className="flex items-start space-x-2">
-                            <input
-                              id="acceptedTerms"
-                              name="acceptedTerms"
-                              type="checkbox"
-                              checked={form.acceptedTerms}
-                              onChange={handleChange}
-                              required
-                              className="h-4 w-4 text-orange-600 focus:ring-orange-500 border-gray-300 rounded mt-0.5"
-                            />
-                            <div className="text-xs text-gray-700">
-                              I accept the{" "}
-                              <button
-                                type="button"
-                                onClick={() => setShowTermsModal(true)}
-                                className="text-orange-600 hover:underline font-medium"
-                              >
-                                supplier terms & conditions
-                              </button>{" "}
-                              of Mostore
-                            </div>
-                          </div>
-                        </div>
-                        <div className="flex gap-3">
-                          <button
-                            type="button"
-                            onClick={handleBackToBasic}
-                            className="flex-1 bg-gray-200 text-gray-700 py-2 px-4 rounded-md hover:bg-gray-300 transition-colors"
-                          >
-                            Back
-                          </button>
-                          <button
-                            type="submit"
-                            disabled={isLoading}
-                            className="flex-1 bg-orange-600 hover:bg-orange-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white py-2 px-4 rounded-md transition-all duration-200"
-                          >
-                            {isLoading
-                              ? "Creating Account..."
-                              : "Create Supplier Account"}
-                          </button>
-                        </div>
-                      </motion.form>
-                    )}
-                  </AnimatePresence>
+                {/* CTA */}
+                <div className="space-y-3">
+                  <motion.button
+                    whileHover={{ scale: 1.02, y: -1 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={handleGetStarted}
+                    className="w-full bg-gradient-to-r from-orange-600 to-orange-700 text-white py-4 px-6 rounded-2xl font-semibold hover:from-orange-700 hover:to-orange-800 transition-all duration-300 flex items-center justify-center space-x-2 shadow-lg hover:shadow-xl"
+                  >
+                    <span>Start Selling - It's Free</span>
+                    <ArrowRight className="w-5 h-5" />
+                  </motion.button>
+
+                  <div className="text-center">
+                    <p className="text-xs text-gray-500">
+                      No setup fees • Quick approval • Start earning immediately
+                    </p>
+                  </div>
                 </div>
-                <p className="text-center text-sm text-gray-500">
-                  Already have an account?{" "}
-                  <button
-                    type="button"
-                    onClick={() => router.push("/sign-in")}
-                    className="text-orange-600 hover:underline"
-                  >
-                    Sign In
-                  </button>
-                  {" | "}
-                  <button
-                    type="button"
-                    onClick={() => router.push("/sign-up")}
-                    className="text-orange-600 hover:underline"
-                  >
-                    Customer Sign Up
-                  </button>
-                </p>
               </div>
-            </div>
+
+              {/* Bottom glass accent */}
+              <div className="h-1 bg-gradient-to-r from-orange-400 via-orange-500 to-orange-600 opacity-80"></div>
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Main Signup Form */}
+      <div className="hidden md:flex md:w-1/2 relative">
+        <Image
+          src="/auth.png"
+          alt="Supplier sign up background"
+          fill
+          priority
+          className="object-contain md:object-cover"
+        />
+      </div>
+      <div className="flex w-full md:w-1/2 items-center justify-center p-6 sm:p-10">
+        <div className="w-full max-w-md bg-white shadow-xl rounded-lg p-8 md:p-10 space-y-6 relative overflow-hidden">
+          <div className="md:hidden flex justify-center">
+            <Image
+              src="/assets/Mostore Logo Icon.png"
+              width={80}
+              height={80}
+              alt="Logo"
+              priority
+            />
+          </div>
+          <div className="text-center">
+            <h2 className="text-3xl font-semibold text-gray-800">
+              Become a Supplier
+            </h2>
+            <p className="text-sm text-gray-500 mt-1">
+              Start selling on Mostore today
+            </p>
+            <button
+              onClick={() => setShowSplash(true)}
+              className="text-orange-600 hover:underline text-sm mt-2"
+            >
+              Why sell on Mostore?
+            </button>
+          </div>
+          {error && (
+            <div className="text-red-600 bg-red-50 border border-red-200 text-sm text-center p-3 rounded-md">
+              {error}
+            </div>
+          )}
+          <AnimatePresence>
+            {success && (
+              <motion.div
+                key="success-modal"
+                className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+              >
+                <motion.div
+                  className="bg-white rounded-lg p-8 max-w-md w-full text-center shadow-2xl"
+                  variants={successVariants}
+                  initial="hidden"
+                  animate="visible"
+                  exit="exit"
+                >
+                  <motion.div className="w-16 h-16 mx-auto mb-4">
+                    <CheckCircle className="w-full h-full text-green-500" />
+                  </motion.div>
+                  <h3 className="text-2xl font-bold text-gray-800 mb-2">
+                    Welcome to Mostore!
+                  </h3>
+                  <p className="text-gray-600 mb-4">
+                    Your supplier account has been created. A verification email
+                    has been sent to {form.email}. Please verify your account
+                    before logging in.
+                  </p>
+                  <button
+                    onClick={() => router.push("/sign-in")}
+                    className="bg-orange-500 text-white py-2 px-6 rounded-md hover:bg-orange-600 transition-colors"
+                  >
+                    Go to Sign In
+                  </button>
+                </motion.div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Step Progress Indicator */}
+          <div className="flex items-center justify-center space-x-4 mb-6">
+            <div
+              className={`flex items-center ${
+                step >= 1 ? "text-orange-600" : "text-gray-400"
+              }`}
+            >
+              <div
+                className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
+                  step >= 1 ? "bg-orange-600 text-white" : "bg-gray-200"
+                }`}
+              >
+                1
+              </div>
+              <span className="ml-2 text-sm font-medium">Basic Info</span>
+            </div>
+            <div
+              className={`w-8 h-0.5 ${
+                step >= 2 ? "bg-orange-600" : "bg-gray-200"
+              }`}
+            ></div>
+            <div
+              className={`flex items-center ${
+                step >= 2 ? "text-orange-600" : "text-gray-400"
+              }`}
+            >
+              <div
+                className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
+                  step >= 2 ? "bg-orange-600 text-white" : "bg-gray-200"
+                }`}
+              >
+                2
+              </div>
+              <span className="ml-2 text-sm font-medium">Supplier Details</span>
+            </div>
+          </div>
+
+          <div className="relative">
+            <AnimatePresence custom={direction} mode="wait">
+              {step === 1 && (
+                <motion.form
+                  key="step1"
+                  custom={direction}
+                  variants={slideVariants}
+                  initial="initial"
+                  animate="animate"
+                  exit="exit"
+                  onSubmit={handleNext}
+                  className="space-y-5"
+                >
+                  <div>
+                    <label
+                      htmlFor="fullName"
+                      className="block text-sm font-medium text-gray-700 mb-1"
+                    >
+                      Full Name
+                    </label>
+                    <input
+                      id="fullName"
+                      name="fullName"
+                      type="text"
+                      value={form.fullName}
+                      onChange={handleChange}
+                      required
+                      placeholder="John Doe"
+                      className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                    />
+                  </div>
+                  <div>
+                    <label
+                      htmlFor="email"
+                      className="block text-sm font-medium text-gray-700 mb-1"
+                    >
+                      Email Address
+                    </label>
+                    <input
+                      id="email"
+                      name="email"
+                      type="email"
+                      value={form.email}
+                      onChange={handleChange}
+                      required
+                      placeholder="you@example.com"
+                      className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                    />
+                  </div>
+                  <div>
+                    <label
+                      htmlFor="username"
+                      className="block text-sm font-medium text-gray-700 mb-1"
+                    >
+                      Username
+                    </label>
+                    <input
+                      id="username"
+                      name="username"
+                      type="text"
+                      value={form.username}
+                      onChange={handleChange}
+                      required
+                      placeholder="johndoe123"
+                      className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      3-20 characters, letters, numbers, and underscores only
+                    </p>
+                  </div>
+                  <div>
+                    <label
+                      htmlFor="password"
+                      className="block text-sm font-medium text-gray-700 mb-1"
+                    >
+                      Password
+                    </label>
+                    <input
+                      id="password"
+                      name="password"
+                      type="password"
+                      value={form.password}
+                      onChange={handleChange}
+                      required
+                      placeholder="••••••••"
+                      className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      Must be at least 6 characters
+                    </p>
+                  </div>
+                  <div>
+                    <label
+                      htmlFor="confirmPassword"
+                      className="block text-sm font-medium text-gray-700 mb-1"
+                    >
+                      Confirm Password
+                    </label>
+                    <input
+                      id="confirmPassword"
+                      name="confirmPassword"
+                      type="password"
+                      value={form.confirmPassword}
+                      onChange={handleChange}
+                      required
+                      placeholder="••••••••"
+                      className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                    />
+                  </div>
+                  <button
+                    type="submit"
+                    disabled={isLoading || isCheckingUsername}
+                    className="w-full bg-orange-600 hover:bg-orange-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white py-2 px-4 rounded-md transition-all duration-200"
+                  >
+                    {isCheckingUsername ? "Checking Username..." : "Next Step"}
+                  </button>
+                </motion.form>
+              )}
+              {step === 2 && (
+                <motion.form
+                  key="step2"
+                  custom={direction}
+                  variants={slideVariants}
+                  initial="initial"
+                  animate="animate"
+                  exit="exit"
+                  onSubmit={handleSupplierSignUp}
+                  className="space-y-5"
+                >
+                  <div className="space-y-4 bg-orange-50 p-4 rounded-md border border-orange-200">
+                    <h3 className="text-sm font-semibold text-gray-800 mb-3">
+                      Business & Payment Information
+                    </h3>
+                    <div>
+                      <label
+                        htmlFor="phoneNumber"
+                        className="block text-sm font-medium text-gray-700 mb-1"
+                      >
+                        Phone Number
+                      </label>
+                      <input
+                        id="phoneNumber"
+                        name="phoneNumber"
+                        type="tel"
+                        value={form.phoneNumber}
+                        onChange={handleChange}
+                        required
+                        placeholder="+1 234 567 8900"
+                        className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                      />
+                    </div>
+                    <div>
+                      <label
+                        htmlFor="address"
+                        className="block text-sm font-medium text-gray-700 mb-1"
+                      >
+                        Complete Business Address
+                      </label>
+                      <textarea
+                        id="address"
+                        name="address"
+                        value={form.address}
+                        onChange={handleChange}
+                        required
+                        placeholder="123 Main Street, New York, NY 10001, USA"
+                        rows="3"
+                        className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                      />
+                    </div>
+                    <div>
+                      <label
+                        htmlFor="bankName"
+                        className="block text-sm font-medium text-gray-700 mb-1"
+                      >
+                        Bank Name
+                      </label>
+                      <input
+                        id="bankName"
+                        name="bankName"
+                        type="text"
+                        value={form.bankName}
+                        onChange={handleChange}
+                        required
+                        placeholder="Bank of America"
+                        className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                      />
+                    </div>
+                    <div>
+                      <label
+                        htmlFor="bankAccountNumber"
+                        className="block text-sm font-medium text-gray-700 mb-1"
+                      >
+                        Account Number
+                      </label>
+                      <input
+                        id="bankAccountNumber"
+                        name="bankAccountNumber"
+                        type="text"
+                        value={form.bankAccountNumber}
+                        onChange={handleChange}
+                        required
+                        placeholder="1234567890"
+                        className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                      />
+                    </div>
+                    <div className="flex items-start space-x-2">
+                      <input
+                        id="acceptedTerms"
+                        name="acceptedTerms"
+                        type="checkbox"
+                        checked={form.acceptedTerms}
+                        onChange={handleChange}
+                        required
+                        className="h-4 w-4 text-orange-600 focus:ring-orange-500 border-gray-300 rounded mt-0.5"
+                      />
+                      <div className="text-xs text-gray-700">
+                        I accept the{" "}
+                        <button
+                          type="button"
+                          onClick={() => setShowTermsModal(true)}
+                          className="text-orange-600 hover:underline font-medium"
+                        >
+                          supplier terms & conditions
+                        </button>{" "}
+                        of Mostore
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex gap-3">
+                    <button
+                      type="button"
+                      onClick={handleBackToBasic}
+                      className="flex-1 bg-gray-200 text-gray-700 py-2 px-4 rounded-md hover:bg-gray-300 transition-colors"
+                    >
+                      Back
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={isLoading}
+                      className="flex-1 bg-orange-600 hover:bg-orange-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white py-2 px-4 rounded-md transition-all duration-200"
+                    >
+                      {isLoading
+                        ? "Creating Account..."
+                        : "Create Supplier Account"}
+                    </button>
+                  </div>
+                </motion.form>
+              )}
+            </AnimatePresence>
+          </div>
+          <p className="text-center text-sm text-gray-500">
+            Already have an account?{" "}
+            <button
+              type="button"
+              onClick={() => router.push("/sign-in")}
+              className="text-orange-600 hover:underline"
+            >
+              Sign In
+            </button>
+            {" | "}
+            <button
+              type="button"
+              onClick={() => router.push("/sign-up")}
+              className="text-orange-600 hover:underline"
+            >
+              Customer Sign Up
+            </button>
+          </p>
+        </div>
+      </div>
       <TermsModal />
     </div>
   );

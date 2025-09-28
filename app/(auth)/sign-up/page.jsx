@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase-client";
 import { motion, AnimatePresence } from "framer-motion";
-import { CheckCircle } from "lucide-react";
+import { CheckCircle, Eye, EyeOff } from "lucide-react";
 
 const SignUpPage = () => {
   const router = useRouter();
@@ -28,6 +28,8 @@ const SignUpPage = () => {
     number: false,
     specialChar: false,
   });
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -43,6 +45,14 @@ const SignUpPage = () => {
         specialChar: /[!@#$%^&*(),.?":{}|<>]/.test(value),
       });
     }
+  };
+
+  const togglePasswordVisibility = () => {
+    setShowPassword((prev) => !prev);
+  };
+
+  const toggleConfirmPasswordVisibility = () => {
+    setShowConfirmPassword((prev) => !prev);
   };
 
   const validateFields = () => {
@@ -119,7 +129,6 @@ const SignUpPage = () => {
     setIsLoading(true);
 
     try {
-      // Check username availability
       const isUsernameAvailable = await checkUsernameAvailability(
         form.username
       );
@@ -150,7 +159,6 @@ const SignUpPage = () => {
       setSuccess(
         "Account created successfully! Please check your email to verify your account."
       );
-      // Delay redirect to show success UI
       setTimeout(() => router.push("/sign-in"), 5000);
     } catch (err) {
       console.error("Sign-up error:", err);
@@ -178,6 +186,11 @@ const SignUpPage = () => {
   const criteriaVariants = {
     hidden: { opacity: 0, x: -10 },
     visible: { opacity: 1, x: 0, transition: { duration: 0.3 } },
+  };
+
+  const iconVariants = {
+    hover: { scale: 1.1, color: "#f97316" }, // Orange-600
+    tap: { scale: 0.9 },
   };
 
   return (
@@ -352,7 +365,6 @@ const SignUpPage = () => {
                 className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
               />
             </div>
-
             <div>
               <label
                 htmlFor="password"
@@ -360,20 +372,40 @@ const SignUpPage = () => {
               >
                 Password
               </label>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                value={form.password}
-                onChange={handleChange}
-                required
-                placeholder="Enter your Password"
-                className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-              />
-
-              {/* Show criteria when password field has focus or has content */}
+              <div className="relative">
+                <input
+                  id="password"
+                  name="password"
+                  type={showPassword ? "text" : "password"}
+                  value={form.password}
+                  onChange={handleChange}
+                  required
+                  placeholder="Enter your Password"
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                />
+                <motion.button
+                  type="button"
+                  onClick={togglePasswordVisibility}
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                  className="absolute inset-y-0 right-3 flex items-center text-gray-500"
+                  variants={iconVariants}
+                  whileHover="hover"
+                  whileTap="tap"
+                >
+                  {showPassword ? (
+                    <EyeOff className="w-5 h-5" />
+                  ) : (
+                    <Eye className="w-5 h-5" />
+                  )}
+                </motion.button>
+              </div>
               {form.password && (
-                <div className="mt-2 space-y-1">
+                <motion.div
+                  className="mt-2 space-y-1"
+                  initial="hidden"
+                  animate="visible"
+                  variants={criteriaVariants}
+                >
                   <div className="flex items-center gap-2 text-xs">
                     <CheckCircle
                       className={`w-4 h-4 ${
@@ -392,7 +424,6 @@ const SignUpPage = () => {
                       At least 6 characters
                     </span>
                   </div>
-
                   <div className="flex items-center gap-2 text-xs">
                     <CheckCircle
                       className={`w-4 h-4 ${
@@ -411,7 +442,6 @@ const SignUpPage = () => {
                       Contains an uppercase letter
                     </span>
                   </div>
-
                   <div className="flex items-center gap-2 text-xs">
                     <CheckCircle
                       className={`w-4 h-4 ${
@@ -430,7 +460,6 @@ const SignUpPage = () => {
                       Contains a lowercase letter
                     </span>
                   </div>
-
                   <div className="flex items-center gap-2 text-xs">
                     <CheckCircle
                       className={`w-4 h-4 ${
@@ -449,7 +478,6 @@ const SignUpPage = () => {
                       Contains a number
                     </span>
                   </div>
-
                   <div className="flex items-center gap-2 text-xs">
                     <CheckCircle
                       className={`w-4 h-4 ${
@@ -468,7 +496,7 @@ const SignUpPage = () => {
                       Contains a special character
                     </span>
                   </div>
-                </div>
+                </motion.div>
               )}
             </div>
             <div>
@@ -478,16 +506,37 @@ const SignUpPage = () => {
               >
                 Confirm Password
               </label>
-              <input
-                id="confirmPassword"
-                name="confirmPassword"
-                type="password"
-                value={form.confirmPassword}
-                onChange={handleChange}
-                required
-                placeholder="Confirm your Password"
-                className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-              />
+              <div className="relative">
+                <input
+                  id="confirmPassword"
+                  name="confirmPassword"
+                  type={showConfirmPassword ? "text" : "password"}
+                  value={form.confirmPassword}
+                  onChange={handleChange}
+                  required
+                  placeholder="Confirm your Password"
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                />
+                <motion.button
+                  type="button"
+                  onClick={toggleConfirmPasswordVisibility}
+                  aria-label={
+                    showConfirmPassword
+                      ? "Hide confirm password"
+                      : "Show confirm password"
+                  }
+                  className="absolute inset-y-0 right-3 flex items-center text-gray-500"
+                  variants={iconVariants}
+                  whileHover="hover"
+                  whileTap="tap"
+                >
+                  {showConfirmPassword ? (
+                    <EyeOff className="w-5 h-5" />
+                  ) : (
+                    <Eye className="w-5 h-5" />
+                  )}
+                </motion.button>
+              </div>
             </div>
             <div className="flex items-start space-x-2">
               <input

@@ -14,6 +14,12 @@ import {
   Clock,
   Star,
   X,
+  Truck,
+  Globe,
+  CreditCard,
+  BarChart3,
+  Package,
+  PhoneCall,
 } from "lucide-react";
 
 const SupplierSignUpPage = () => {
@@ -341,140 +347,124 @@ const SupplierSignUpPage = () => {
     exit: { opacity: 0, scale: 0.8, transition: { duration: 0.3 } },
   };
 
-  // Splash screen benefits (simplified like Konga)
+  // Konga-style benefits with proper icons and descriptions
   const benefits = [
     {
-      icon: <DollarSign className="w-6 h-6 text-orange-600" />,
-      title: "Earn More Money",
-      description: "Reach millions of customers across Nigeria and beyond",
+      icon: <Globe className="w-12 h-12 text-orange-600" />,
+      title: "Millions of Customers",
+      description:
+        "Get access to largest online marketplace with millions of active buyers ready to purchase your products.",
+    },
+
+    {
+      icon: <CreditCard className="w-12 h-12 text-orange-600" />,
+      title: "Secure Payments",
+      description:
+        "Get paid quickly and securely with our trusted payment system. Multiple payment options for your customers.",
+    },
+
+    {
+      icon: <Package className="w-12 h-12 text-orange-600" />,
+      title: "Easy Inventory Management",
+      description:
+        "Simple tools to manage your products, track inventory, and update listings with just a few clicks.",
     },
     {
-      icon: <Shield className="w-6 h-6 text-orange-600" />,
-      title: "Safe & Secure",
-      description: "Trusted platform with secure payment processing",
-    },
-    {
-      icon: <TrendingUp className="w-6 h-6 text-orange-600" />,
-      title: "Low Commission",
-      description: "Only 15% commission - you keep more of your earnings",
-    },
-    {
-      icon: <Users className="w-6 h-6 text-orange-600" />,
+      icon: <PhoneCall className="w-12 h-12 text-orange-600" />,
       title: "24/7 Support",
-      description: "Dedicated merchant support team always ready to help",
+      description:
+        "Get help when you need it with our dedicated seller support team available round the clock.",
     },
   ];
 
   return (
     <div className="min-h-screen flex flex-col md:flex-row font-raleway bg-gradient-to-br from-orange-50 to-orange-100">
-      {/* Splash Screen Modal */}
+      {/* Konga-style Splash Screen */}
       <AnimatePresence>
         {showSplash && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-white/80 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+            className="fixed inset-0 bg-white flex justify-center z-50 overflow-y-auto"
           >
-            <motion.div
-              initial={{ scale: 0.95, opacity: 0, y: 10 }}
-              animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.95, opacity: 0, y: 10 }}
-              className="bg-white rounded-3xl max-h-[90vh] max-w-lg w-full relative overflow-hidden shadow-xl border border-gray-100"
-              style={{
-                background: "linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)",
-                backdropFilter: "blur(20px)",
-              }}
-            >
-              {/* Header with gradient background */}
-              <div className="bg-gradient-to-br from-orange-500 via-orange-600 to-orange-700 px-8 pt-8 pb-6 text-white relative overflow-hidden ">
-                {/* Close button */}
+            <div className="w-full max-w-6xl mx-auto px-4 py-8">
+              {/* Header */}
+              <div className="text-center ">
                 <button
                   onClick={() => setShowSplash(false)}
-                  className="absolute top-4 right-4 text-white/90 hover:text-white transition-colors z-10"
+                  className="absolute top-6 right-6 text-gray-500 hover:text-gray-700 transition-colors z-10"
                 >
-                  <X className="w-6 h-6" />
+                  <X className="w-8 h-8" />
                 </button>
 
-                {/* Logo and header */}
-                <div className="text-center relative z-10 ">
-                  <div className="flex justify-center ">
-                    <div className="backdrop-blur-bg-white sm rounded-2xl p-3 border border-white/20">
-                      <Image
-                        src="/assets/Mostore Logo Icon.png"
-                        width={50}
-                        height={50}
-                        alt="Mostore Logo"
-                        priority
-                        className="rounded-lg"
-                      />
-                    </div>
-                  </div>
-                  <h2 className="text-2xl font-bold mb-2">
-                    Start Selling on Mostore
-                  </h2>
-                  <p className="text-orange-100 text-sm opacity-90">
-                    Join the next generation of successful online sellers
-                  </p>
+                <div className="flex justify-center mb-6">
+                  <Image
+                    src="/assets/Mostore Logo Icon.png"
+                    width={80}
+                    height={80}
+                    alt="Mostore Logo"
+                    priority
+                    className="rounded-xl"
+                  />
                 </div>
 
-                {/* Decorative glass elements */}
-                <div className="absolute top-0 right-0 w-40 h-40 bg-white/10 rounded-full blur-3xl -translate-y-20 translate-x-20"></div>
-                <div className="absolute bottom-0 left-0 w-32 h-32 bg-white/10 rounded-full blur-2xl translate-y-16 -translate-x-16"></div>
-                <div className="absolute top-1/2 right-1/4 w-6 h-6 bg-white/20 rounded-full"></div>
-                <div className="absolute top-1/4 left-1/3 w-4 h-4 bg-white/15 rounded-full"></div>
+                <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
+                  Sell on Mostore
+                </h1>
+                <p className="text-xl text-gray-600 max-w-2xl mx-auto mb-8">
+                  Reach thousands of customers in globally easily, get your
+                  store on Mostore today!
+                </p>
               </div>
+              {/* Main Content */}
+              <div className="max-w-4xl mx-auto">
+                {/* Hero CTA */}
 
-              {/* Content */}
-              <div className="px-8 py-6 bg-white/50 backdrop-blur-sm">
-                {/* Benefits grid */}
-                <div className="grid grid-cols-2 gap-4 mb-6">
+                {/* Benefits Grid */}
+                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
                   {benefits.map((benefit, index) => (
                     <motion.div
                       key={index}
-                      initial={{ x: index % 2 === 0 ? -20 : 20, opacity: 0 }}
-                      animate={{ x: 0, opacity: 1 }}
-                      transition={{ delay: 0.2 + 0.1 * index, duration: 0.4 }}
-                      className="bg-white/70 backdrop-blur-sm rounded-2xl p-4 hover:bg-white/90 transition-all duration-300 group border border-gray-100/50 hover:shadow-lg hover:scale-105"
+                      initial={{ y: 30, opacity: 0 }}
+                      animate={{ y: 0, opacity: 1 }}
+                      transition={{ delay: 0.1 * index }}
+                      className="bg-white rounded-xl p-2 flex gap-4 items-center shadow-sm hover:shadow-md transition-all duration-300"
                     >
-                      <div className="flex items-center justify-center w-12 h-12 bg-gradient-to-br from-orange-100 to-orange-200 rounded-xl mb-3 group-hover:from-orange-200 group-hover:to-orange-300 transition-all duration-300">
-                        {benefit.icon}
+                      <div>{benefit.icon}</div>
+                      <div className="flex flex-col">
+                        {" "}
+                        <h3 className="text-lg font-semibold text-gray-900 mb-3">
+                          {benefit.title}
+                        </h3>
+                        <p className="text-gray-600 text-sm leading-relaxed">
+                          {benefit.description}
+                        </p>
                       </div>
-                      <h3 className="font-semibold text-gray-800 text-sm mb-1">
-                        {benefit.title}
-                      </h3>
-                      <p className="text-gray-600 text-xs leading-relaxed">
-                        {benefit.description}
-                      </p>
                     </motion.div>
                   ))}
                 </div>
 
-                {/* Trust indicators */}
+                {/* Pricing */}
 
-                {/* CTA */}
-                <div className="space-y-3">
+                {/* Final CTA */}
+                <div className="text-center">
                   <motion.button
-                    whileHover={{ scale: 1.02, y: -1 }}
-                    whileTap={{ scale: 0.98 }}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
                     onClick={handleGetStarted}
-                    className="w-full bg-gradient-to-r from-orange-600 to-orange-700 text-white py-4 px-6 rounded-2xl font-semibold hover:from-orange-700 hover:to-orange-800 transition-all duration-300 flex items-center justify-center space-x-2 shadow-lg hover:shadow-xl"
+                    className="bg-orange-600 hover:bg-orange-700 text-white text-xl font-semibold px-16 py-5 rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl inline-flex items-center space-x-3"
                   >
-                    <span>Start Selling - It's Free</span>
-                    <ArrowRight className="w-5 h-5" />
+                    <span>Join Mostore Today</span>
+                    <ArrowRight className="w-6 h-6" />
                   </motion.button>
-
-                  <div className="text-center">
-                    <p className="text-xs text-gray-500">
-                      No setup fees • Quick approval • Start earning immediately
-                    </p>
-                  </div>
+                  <p className="text-gray-500 mt-4 max-w-md mx-auto text-sm">
+                    Join thousands of successful sellers already making money on
+                    Mostore. Get started in minutes.
+                  </p>
                 </div>
               </div>
-
-              {/* Bottom glass accent */}
-              <div className="h-1 bg-gradient-to-r from-orange-400 via-orange-500 to-orange-600 opacity-80"></div>
-            </motion.div>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
@@ -619,63 +609,6 @@ const SupplierSignUpPage = () => {
                       name="fullName"
                       type="text"
                       value={form.fullName}
-                      onChange={handleChange}
-                      required
-                      placeholder="John Doe"
-                      className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                    />
-                  </div>
-                  <div>
-                    <label
-                      htmlFor="email"
-                      className="block text-sm font-medium text-gray-700 mb-1"
-                    >
-                      Email Address
-                    </label>
-                    <input
-                      id="email"
-                      name="email"
-                      type="email"
-                      value={form.email}
-                      onChange={handleChange}
-                      required
-                      placeholder="you@example.com"
-                      className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                    />
-                  </div>
-                  <div>
-                    <label
-                      htmlFor="username"
-                      className="block text-sm font-medium text-gray-700 mb-1"
-                    >
-                      Username
-                    </label>
-                    <input
-                      id="username"
-                      name="username"
-                      type="text"
-                      value={form.username}
-                      onChange={handleChange}
-                      required
-                      placeholder="johndoe123"
-                      className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                    />
-                    <p className="text-xs text-gray-500 mt-1">
-                      3-20 characters, letters, numbers, and underscores only
-                    </p>
-                  </div>
-                  <div>
-                    <label
-                      htmlFor="password"
-                      className="block text-sm font-medium text-gray-700 mb-1"
-                    >
-                      Password
-                    </label>
-                    <input
-                      id="password"
-                      name="password"
-                      type="password"
-                      value={form.password}
                       onChange={handleChange}
                       required
                       placeholder="••••••••"

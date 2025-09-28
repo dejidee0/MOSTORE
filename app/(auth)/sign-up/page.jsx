@@ -576,7 +576,7 @@ const SignUpPage = () => {
               onClick={() => router.push("/supplier-sign")}
               className="w-full bg-orange-100 text-orange-700 border border-orange-300 py-2 px-4 rounded-md hover:bg-orange-200 transition-colors font-medium"
             >
-              Become a Supplier
+              Create A Seller Account{" "}
             </button>
           </div>
 

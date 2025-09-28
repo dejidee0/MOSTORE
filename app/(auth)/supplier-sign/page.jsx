@@ -413,9 +413,37 @@ const SupplierSignUpPage = () => {
                   Sell on Mostore
                 </h1>
                 <p className="text-xl text-gray-600 max-w-2xl mx-auto mb-8">
-                  Reach thousands of customers in globally easily, get your
-                  store on Mostore today!
+                  Grow business online on Mostore and reach thousands of
+                  customers in globally today!
                 </p>
+
+                <div className="relative h-[30vh] rounded-2xl overflow-hidden">
+                  {/* Background Image */}
+                  <div className="absolute inset-0">
+                    <Image
+                      src="/appliance.jpg"
+                      alt="Join Mostore sellers"
+                      fill
+                      className="object-cover"
+                      priority
+                    />
+                    {/* Overlay for better text readability */}
+                    <div className="absolute inset-0 bg-black/40"></div>
+                  </div>
+
+                  {/* Content */}
+                  <div className="relative z-10 text-center py-44 px-8">
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={handleGetStarted}
+                      className="bg-orange-600 hover:bg-orange-700 text-white text-xl font-semibold px-10 py-3 rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl inline-flex items-center space-x-3"
+                    >
+                      <span>Join Mostore Today</span>
+                      <ArrowRight className="w-3 h-3" />
+                    </motion.button>
+                  </div>
+                </div>
               </div>
               {/* Main Content */}
               <div className="max-w-4xl mx-auto">
@@ -423,6 +451,9 @@ const SupplierSignUpPage = () => {
 
                 {/* Benefits Grid */}
                 <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+                  <h1 className="text-center text-2xl font-bold mt-8">
+                    Why Sell on Mostore
+                  </h1>
                   {benefits.map((benefit, index) => (
                     <motion.div
                       key={index}
@@ -449,15 +480,6 @@ const SupplierSignUpPage = () => {
 
                 {/* Final CTA */}
                 <div className="text-center">
-                  <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={handleGetStarted}
-                    className="bg-orange-600 hover:bg-orange-700 text-white text-xl font-semibold px-16 py-5 rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl inline-flex items-center space-x-3"
-                  >
-                    <span>Join Mostore Today</span>
-                    <ArrowRight className="w-6 h-6" />
-                  </motion.button>
                   <p className="text-gray-500 mt-4 max-w-md mx-auto text-sm">
                     Join thousands of successful sellers already making money on
                     Mostore. Get started in minutes.

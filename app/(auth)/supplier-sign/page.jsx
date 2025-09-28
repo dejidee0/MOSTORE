@@ -20,6 +20,8 @@ import {
   BarChart3,
   Package,
   PhoneCall,
+  Eye,
+  EyeOff,
 } from "lucide-react";
 
 const SupplierSignUpPage = () => {
@@ -45,6 +47,8 @@ const SupplierSignUpPage = () => {
   const [showTermsModal, setShowTermsModal] = useState(false);
   const [step, setStep] = useState(1);
   const [direction, setDirection] = useState(1);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -52,6 +56,14 @@ const SupplierSignUpPage = () => {
       ...prev,
       [name]: type === "checkbox" ? checked : value,
     }));
+  };
+
+  const togglePasswordVisibility = () => {
+    setShowPassword((prev) => !prev);
+  };
+
+  const toggleConfirmPasswordVisibility = () => {
+    setShowConfirmPassword((prev) => !prev);
   };
 
   const validateBasicFields = () => {
@@ -347,7 +359,11 @@ const SupplierSignUpPage = () => {
     exit: { opacity: 0, scale: 0.8, transition: { duration: 0.3 } },
   };
 
-  // Konga-style benefits with proper icons and descriptions
+  const iconVariants = {
+    hover: { scale: 1.1, color: "#f97316" }, // Orange-600
+    tap: { scale: 0.9 },
+  };
+
   const benefits = [
     {
       icon: <Globe className="w-12 h-12 text-orange-600" />,
@@ -355,14 +371,12 @@ const SupplierSignUpPage = () => {
       description:
         "Get access to largest online marketplace with millions of active buyers ready to purchase your products.",
     },
-
     {
       icon: <CreditCard className="w-12 h-12 text-orange-600" />,
       title: "Secure Payments",
       description:
         "Get paid quickly and securely with our trusted payment system. Multiple payment options for your customers.",
     },
-
     {
       icon: <Package className="w-12 h-12 text-orange-600" />,
       title: "Easy Inventory Management",
@@ -379,7 +393,6 @@ const SupplierSignUpPage = () => {
 
   return (
     <div className="min-h-screen flex flex-col md:flex-row font-raleway bg-gradient-to-br from-orange-50 to-orange-100">
-      {/* Konga-style Splash Screen */}
       <AnimatePresence>
         {showSplash && (
           <motion.div
@@ -389,15 +402,13 @@ const SupplierSignUpPage = () => {
             className="fixed inset-0 bg-white flex justify-center z-50 overflow-y-auto"
           >
             <div className="w-full max-w-6xl mx-auto px-4 py-8">
-              {/* Header */}
-              <div className="text-center ">
-                <button
-                  onClick={() => setShowSplash(false)}
-                  className="absolute top-6 right-6 text-gray-500 hover:text-gray-700 transition-colors z-10"
-                >
-                  <X className="w-8 h-8" />
-                </button>
-
+              <button
+                onClick={() => setShowSplash(false)}
+                className="absolute top-6 right-6 text-gray-500 hover:text-gray-700 transition-colors z-10"
+              >
+                <X className="w-8 h-8" />
+              </button>
+              <div className="text-center">
                 <div className="flex justify-center mb-6">
                   <Image
                     src="/assets/Mostore Logo Icon.png"
@@ -408,17 +419,14 @@ const SupplierSignUpPage = () => {
                     className="rounded-xl"
                   />
                 </div>
-
                 <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
                   Sell on Mostore
                 </h1>
                 <p className="text-xl text-gray-600 max-w-2xl mx-auto mb-8">
-                  Grow business online on Mostore and reach thousands of
-                  customers in globally today!
+                  Grow your business online on Mostore and reach thousands of
+                  customers globally today!
                 </p>
-
                 <div className="relative h-[30vh] rounded-2xl overflow-hidden">
-                  {/* Background Image */}
                   <div className="absolute inset-0">
                     <Image
                       src="/appliance.jpg"
@@ -427,11 +435,8 @@ const SupplierSignUpPage = () => {
                       className="object-cover"
                       priority
                     />
-                    {/* Overlay for better text readability */}
                     <div className="absolute inset-0 bg-black/40"></div>
                   </div>
-
-                  {/* Content */}
                   <div className="relative z-10 text-center py-44 px-8">
                     <motion.button
                       whileHover={{ scale: 1.05 }}
@@ -445,11 +450,7 @@ const SupplierSignUpPage = () => {
                   </div>
                 </div>
               </div>
-              {/* Main Content */}
               <div className="max-w-4xl mx-auto">
-                {/* Hero CTA */}
-
-                {/* Benefits Grid */}
                 <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
                   <h1 className="text-center text-2xl font-bold mt-8">
                     Why Sell on Mostore
@@ -464,7 +465,6 @@ const SupplierSignUpPage = () => {
                     >
                       <div>{benefit.icon}</div>
                       <div className="flex flex-col">
-                        {" "}
                         <h3 className="text-lg font-semibold text-gray-900 mb-3">
                           {benefit.title}
                         </h3>
@@ -475,10 +475,6 @@ const SupplierSignUpPage = () => {
                     </motion.div>
                   ))}
                 </div>
-
-                {/* Pricing */}
-
-                {/* Final CTA */}
                 <div className="text-center">
                   <p className="text-gray-500 mt-4 max-w-md mx-auto text-sm">
                     Join thousands of successful sellers already making money on
@@ -491,7 +487,6 @@ const SupplierSignUpPage = () => {
         )}
       </AnimatePresence>
 
-      {/* Main Signup Form */}
       <div className="hidden md:flex md:w-1/2 relative">
         <Image
           src="/auth.png"
@@ -569,7 +564,6 @@ const SupplierSignUpPage = () => {
             )}
           </AnimatePresence>
 
-          {/* Step Progress Indicator */}
           <div className="flex items-center justify-center space-x-4 mb-6">
             <div
               className={`flex items-center ${
@@ -642,21 +636,121 @@ const SupplierSignUpPage = () => {
                   </div>
                   <div>
                     <label
+                      htmlFor="email"
+                      className="block text-sm font-medium text-gray-700 mb-1"
+                    >
+                      Email Address
+                    </label>
+                    <input
+                      id="email"
+                      name="email"
+                      type="email"
+                      value={form.email}
+                      onChange={handleChange}
+                      required
+                      placeholder="you@example.com"
+                      className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                    />
+                  </div>
+                  <div>
+                    <label
+                      htmlFor="username"
+                      className="block text-sm font-medium text-gray-700 mb-1"
+                    >
+                      Store Name
+                    </label>
+                    <input
+                      id="username"
+                      name="username"
+                      type="text"
+                      value={form.username}
+                      onChange={handleChange}
+                      required
+                      placeholder="Jumia"
+                      className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      3-20 characters, letters, numbers, and underscores only
+                    </p>
+                  </div>
+                  <div>
+                    <label
+                      htmlFor="password"
+                      className="block text-sm font-medium text-gray-700 mb-1"
+                    >
+                      Password
+                    </label>
+                    <div className="relative">
+                      <input
+                        id="password"
+                        name="password"
+                        type={showPassword ? "text" : "password"}
+                        value={form.password}
+                        onChange={handleChange}
+                        required
+                        placeholder="••••••••"
+                        className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                      />
+                      <motion.button
+                        type="button"
+                        onClick={togglePasswordVisibility}
+                        aria-label={
+                          showPassword ? "Hide password" : "Show password"
+                        }
+                        className="absolute inset-y-0 right-3 flex items-center text-gray-500"
+                        variants={iconVariants}
+                        whileHover="hover"
+                        whileTap="tap"
+                      >
+                        {showPassword ? (
+                          <EyeOff className="w-5 h-5" />
+                        ) : (
+                          <Eye className="w-5 h-5" />
+                        )}
+                      </motion.button>
+                    </div>
+                    <p className="text-xs text-gray-500 mt-1">
+                      Must be at least 6 characters
+                    </p>
+                  </div>
+                  <div>
+                    <label
                       htmlFor="confirmPassword"
                       className="block text-sm font-medium text-gray-700 mb-1"
                     >
                       Confirm Password
                     </label>
-                    <input
-                      id="confirmPassword"
-                      name="confirmPassword"
-                      type="password"
-                      value={form.confirmPassword}
-                      onChange={handleChange}
-                      required
-                      placeholder="••••••••"
-                      className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                    />
+                    <div className="relative">
+                      <input
+                        id="confirmPassword"
+                        name="confirmPassword"
+                        type={showConfirmPassword ? "text" : "password"}
+                        value={form.confirmPassword}
+                        onChange={handleChange}
+                        required
+                        placeholder="••••••••"
+                        className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                      />
+                      <motion.button
+                        type="button"
+                        onClick={toggleConfirmPasswordVisibility}
+                        aria-label={
+                          showConfirmPassword
+                            ? "Hide confirm password"
+                            : "Show confirm password"
+                        }
+                        className="absolute  inset-y-0 right-3 flex items-center text-gray-500"
+                        variants={iconVariants}
+                        whileHover="hover"
+                        whileTap="tap"
+                      >
+                        {showConfirmPassword ? (
+                          <EyeOff className="w-5 h-5" />
+                        ) : (
+                          <Eye className="w-5 h-5" />
+                        )}
+                      </motion.button>
+                    </div>
                   </div>
                   <button
                     type="submit"

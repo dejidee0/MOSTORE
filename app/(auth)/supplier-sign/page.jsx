@@ -502,7 +502,7 @@ const SupplierSignUpPage = () => {
           </div>
           <div className="text-center">
             <h2 className="text-3xl font-semibold text-gray-800">
-              Become a Supplier
+              Create A Seller Account
             </h2>
             <p className="text-sm text-gray-500 mt-1">
               Start selling on Mostore today

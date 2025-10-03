@@ -2,11 +2,9 @@
 
 import React, { useState, useEffect, useCallback, useMemo, memo } from "react";
 import { supabase } from "@/lib/supabase-client";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { v4 as uuidv4 } from "uuid";
-
 import Link from "next/link";
-import Image from "next/image";
 import {
   ArrowLeft,
   Calendar,
@@ -16,12 +14,162 @@ import {
   MessageCircle,
   User,
   ThumbsUp,
-  Reply as ReplyIcon,
   Send,
   Share2,
+  ChevronLeft,
+  ChevronRight,
+  X,
+  ImageIcon,
 } from "lucide-react";
 
-// Memoized Comment Component
+// Image Gallery Component
+const ImageGallery = memo(({ images }) => {
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [currentIndex, setCurrentIndex] = useState(0);
+
+  if (!images || images.length === 0) return null;
+
+  const openGallery = (index) => {
+    setCurrentIndex(index);
+    setSelectedImage(images[index]);
+  };
+
+  const closeGallery = () => {
+    setSelectedImage(null);
+  };
+
+  const nextImage = () => {
+    const newIndex = (currentIndex + 1) % images.length;
+    setCurrentIndex(newIndex);
+    setSelectedImage(images[newIndex]);
+  };
+
+  const prevImage = () => {
+    const newIndex = (currentIndex - 1 + images.length) % images.length;
+    setCurrentIndex(newIndex);
+    setSelectedImage(images[newIndex]);
+  };
+
+  const handleKeyDown = useCallback((e) => {
+    if (e.key === "Escape") closeGallery();
+    if (e.key === "ArrowRight") nextImage();
+    if (e.key === "ArrowLeft") prevImage();
+  }, []);
+
+  useEffect(() => {
+    if (selectedImage) {
+      document.addEventListener("keydown", handleKeyDown);
+      return () => document.removeEventListener("keydown", handleKeyDown);
+    }
+  }, [selectedImage, handleKeyDown]);
+
+  return (
+    <>
+      <div className="my-8">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+          <ImageIcon className="w-5 h-5 text-orange-600" />
+          Image Gallery ({images.length})
+        </h3>
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+          {images.map((img, index) => (
+            <motion.div
+              key={img.id || index}
+              whileHover={{ scale: 1.02 }}
+              className="relative aspect-video rounded-lg overflow-hidden cursor-pointer border-2 border-gray-200 hover:border-orange-500 transition-colors"
+              onClick={() => openGallery(index)}
+            >
+              <img
+                src={img.url}
+                alt={img.alt || `Gallery image ${index + 1}`}
+                className="w-full h-full object-cover"
+                loading="lazy"
+              />
+              {img.caption && (
+                <div className="absolute bottom-0 left-0 right-0 bg-black/70 text-white text-xs p-2 truncate">
+                  {img.caption}
+                </div>
+              )}
+            </motion.div>
+          ))}
+        </div>
+      </div>
+
+      <AnimatePresence>
+        {selectedImage && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center p-4"
+            onClick={closeGallery}
+          >
+            <button
+              onClick={closeGallery}
+              className="absolute top-4 right-4 text-white hover:text-gray-300 transition-colors z-10"
+              aria-label="Close gallery"
+            >
+              <X className="w-8 h-8" />
+            </button>
+
+            {images.length > 1 && (
+              <>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    prevImage();
+                  }}
+                  className="absolute left-4 text-white hover:text-gray-300 transition-colors z-10"
+                  aria-label="Previous image"
+                >
+                  <ChevronLeft className="w-12 h-12" />
+                </button>
+
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    nextImage();
+                  }}
+                  className="absolute right-4 text-white hover:text-gray-300 transition-colors z-10"
+                  aria-label="Next image"
+                >
+                  <ChevronRight className="w-12 h-12" />
+                </button>
+              </>
+            )}
+
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="max-w-5xl max-h-[90vh] flex flex-col"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <img
+                src={selectedImage.url}
+                alt={selectedImage.alt || "Gallery image"}
+                className="max-w-full max-h-[80vh] object-contain rounded-lg"
+              />
+              {(selectedImage.caption || selectedImage.alt) && (
+                <div className="mt-4 text-center">
+                  <p className="text-white text-sm">
+                    {selectedImage.caption || selectedImage.alt}
+                  </p>
+                  <p className="text-gray-400 text-xs mt-1">
+                    {currentIndex + 1} / {images.length}
+                  </p>
+                </div>
+              )}
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </>
+  );
+});
+
+ImageGallery.displayName = "ImageGallery";
+
+// Comment Component
 const Comment = memo(({ comment, onCommentLike, onReply }) => (
   <motion.div
     initial={{ opacity: 0, y: 10 }}
@@ -29,8 +177,8 @@ const Comment = memo(({ comment, onCommentLike, onReply }) => (
     className="bg-white border border-gray-200 p-4 rounded-2xl"
   >
     <div className="flex items-center gap-3 mb-3">
-      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center">
-        <User className="w-5 h-5 text-gray-500" />
+      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-orange-200 to-orange-300 flex items-center justify-center">
+        <User className="w-5 h-5 text-orange-700" />
       </div>
       <div>
         <p className="font-medium text-gray-900 text-sm">
@@ -60,11 +208,10 @@ const Comment = memo(({ comment, onCommentLike, onReply }) => (
         onClick={() => onReply(comment)}
         className="flex items-center gap-1 hover:text-orange-600 transition-colors"
       >
-        <ReplyIcon className="w-4 h-4" /> Reply
+        Reply
       </button>
     </div>
 
-    {/* Replies */}
     {comment.replies?.length > 0 && (
       <div className="ml-8 mt-4 space-y-3">
         {comment.replies.map((reply) => (
@@ -75,12 +222,14 @@ const Comment = memo(({ comment, onCommentLike, onReply }) => (
   </motion.div>
 ));
 
-// Memoized Reply Component
+Comment.displayName = "Comment";
+
+// Reply Component
 const ReplyComponent = memo(({ reply }) => (
   <div className="bg-gray-50 border border-gray-100 p-3 rounded-xl">
     <div className="flex items-center gap-2 mb-2">
-      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center">
-        <User className="w-4 h-4 text-gray-500" />
+      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-orange-200 to-orange-300 flex items-center justify-center">
+        <User className="w-4 h-4 text-orange-700" />
       </div>
       <div>
         <p className="font-medium text-gray-900 text-sm">{reply.author_name}</p>
@@ -96,7 +245,9 @@ const ReplyComponent = memo(({ reply }) => (
   </div>
 ));
 
-// Memoized Comment Form Component
+ReplyComponent.displayName = "ReplyComponent";
+
+// Comment Form Component
 const CommentForm = memo(
   ({
     newComment,
@@ -129,7 +280,7 @@ const CommentForm = memo(
       )}
 
       <textarea
-        className="w-full p-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all resize-none"
+        className="w-full p-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all resize-none outline-none"
         placeholder={
           replyingTo ? "Write your reply..." : "Share your thoughts..."
         }
@@ -155,6 +306,8 @@ const CommentForm = memo(
   )
 );
 
+CommentForm.displayName = "CommentForm";
+
 export default function BlogPostDetail({ post }) {
   const [isLiked, setIsLiked] = useState(false);
   const [comments, setComments] = useState([]);
@@ -164,10 +317,8 @@ export default function BlogPostDetail({ post }) {
   const [user, setUser] = useState(null);
   const [isInitialized, setIsInitialized] = useState(false);
 
-  // Memoize post ID to prevent unnecessary re-renders
   const postId = useMemo(() => post?.id, [post?.id]);
 
-  // Get user once and cache it
   useEffect(() => {
     let mounted = true;
 
@@ -192,7 +343,6 @@ export default function BlogPostDetail({ post }) {
     };
   }, []);
 
-  // ✅ Optimized fetch comments with error handling
   const fetchComments = useCallback(async () => {
     if (!postId) return;
 
@@ -210,6 +360,7 @@ export default function BlogPostDetail({ post }) {
         author_email,
         content,
         status,
+        likes_count,
         created_at,
         replies:blog_comments!parent_id(
           id,
@@ -227,7 +378,8 @@ export default function BlogPostDetail({ post }) {
         )
         .eq("post_id", postId)
         .is("parent_id", null)
-        .order("created_at", { ascending: true });
+        .eq("status", "approved")
+        .order("created_at", { ascending: false });
 
       if (!error && data) {
         setComments(data);
@@ -237,11 +389,11 @@ export default function BlogPostDetail({ post }) {
     }
   }, [postId]);
 
-  // ✅ Optimized check user like with caching
   const checkUserLike = useCallback(async () => {
     if (!postId) return;
 
     try {
+      const guestId = getGuestId();
       let query = supabase
         .from("blog_likes")
         .select("id")
@@ -250,7 +402,6 @@ export default function BlogPostDetail({ post }) {
       if (user) {
         query = query.eq("user_id", user.id);
       } else {
-        const guestId = getGuestId();
         query = query.eq("guest_id", guestId);
       }
 
@@ -270,13 +421,10 @@ export default function BlogPostDetail({ post }) {
     return guestId;
   }
 
-  // ✅ Optimized handle post like with optimistic updates
   const handleLike = useCallback(async () => {
     if (!postId) return;
 
     const guestId = getGuestId();
-
-    // Optimistic update
     const newLikedState = !isLiked;
     setIsLiked(newLikedState);
 
@@ -294,17 +442,15 @@ export default function BlogPostDetail({ post }) {
       }
     } catch (error) {
       console.error("Error handling like:", error);
-      setIsLiked(isLiked); // revert
+      setIsLiked(isLiked);
     }
   }, [postId, isLiked]);
 
-  // ✅ Optimized handle comment submit with loading state
   const handleCommentSubmit = useCallback(async () => {
     const trimmedComment = newComment.trim();
     if (!trimmedComment || !postId) return;
 
     const guestId = getGuestId();
-
     setIsSubmitting(true);
 
     try {
@@ -312,7 +458,7 @@ export default function BlogPostDetail({ post }) {
         post_id: postId,
         parent_id: replyingTo?.id || null,
         guest_id: guestId,
-        author_name: "Guest User", // or prompt for a name
+        author_name: "Guest User",
         content: trimmedComment,
         status: "approved",
       });
@@ -329,7 +475,6 @@ export default function BlogPostDetail({ post }) {
     }
   }, [newComment, postId, replyingTo, fetchComments]);
 
-  // ✅ Optimized handle comment like with debouncing
   const handleCommentLike = useCallback(
     async (commentId) => {
       const guestId = getGuestId();
@@ -362,12 +507,29 @@ export default function BlogPostDetail({ post }) {
     [fetchComments]
   );
 
-  // Memoized handlers to prevent re-renders
   const handleReply = useCallback((comment) => {
     setReplyingTo(comment);
   }, []);
 
-  // ✅ Optimized real-time updates with cleanup
+  const handleShare = useCallback(async () => {
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: post.title,
+          text: post.excerpt || post.title,
+          url: window.location.href,
+        });
+      } catch (error) {
+        if (error.name !== "AbortError") {
+          console.error("Error sharing:", error);
+        }
+      }
+    } else {
+      navigator.clipboard.writeText(window.location.href);
+      alert("Link copied to clipboard!");
+    }
+  }, [post]);
+
   useEffect(() => {
     if (!isInitialized || !postId) return;
 
@@ -395,12 +557,8 @@ export default function BlogPostDetail({ post }) {
     };
   }, [postId, isInitialized, fetchComments, checkUserLike]);
 
-  // Memoized computed values
   const likesCount = useMemo(() => post?.likes_count || 0, [post?.likes_count]);
-  const commentsCount = useMemo(
-    () => post?.comments_count || 0,
-    [post?.comments_count]
-  );
+  const commentsCount = useMemo(() => comments.length, [comments.length]);
 
   const formatDate = useCallback((dateString) => {
     return new Date(dateString).toLocaleDateString("en-US", {
@@ -410,31 +568,13 @@ export default function BlogPostDetail({ post }) {
     });
   }, []);
 
-  // Early return if no post
   if (!post) {
-    return (
-      <div className="min-h-screen bg-white">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="animate-pulse">
-            <div className="h-8 bg-gray-200 rounded w-24 mb-6"></div>
-            <div className="h-12 bg-gray-200 rounded w-3/4 mb-4"></div>
-            <div className="h-4 bg-gray-200 rounded w-1/2 mb-8"></div>
-            <div className="h-96 bg-gray-200 rounded-2xl mb-8"></div>
-            <div className="space-y-3">
-              <div className="h-4 bg-gray-200 rounded"></div>
-              <div className="h-4 bg-gray-200 rounded w-5/6"></div>
-              <div className="h-4 bg-gray-200 rounded w-4/5"></div>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
+    return null;
   }
 
   return (
     <div className="min-h-screen bg-white">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Back Button */}
         <motion.div
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
@@ -449,13 +589,11 @@ export default function BlogPostDetail({ post }) {
           </Link>
         </motion.div>
 
-        {/* Article Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           className="mb-8"
         >
-          {/* Category Badge */}
           {post.blog_categories?.name && (
             <div className="mb-4">
               <span className="px-3 py-1 bg-orange-100 text-orange-700 text-xs font-medium rounded-full">
@@ -464,12 +602,10 @@ export default function BlogPostDetail({ post }) {
             </div>
           )}
 
-          {/* Title */}
-          <h1 className="text-2xl md:text-4xl font-bold text-gray-900 mb-4 leading-tight">
+          <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4 leading-tight">
             {post.title}
           </h1>
 
-          {/* Meta Information */}
           <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500 mb-6">
             <div className="flex items-center gap-1">
               <Calendar className="w-4 h-4" />
@@ -487,10 +623,9 @@ export default function BlogPostDetail({ post }) {
             </div>
           </div>
 
-          {/* Author Info */}
           <div className="flex items-center gap-3 pb-6 border-b border-gray-200">
-            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center">
-              <User className="w-5 h-5 text-gray-500" />
+            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-orange-200 to-orange-300 flex items-center justify-center">
+              <User className="w-5 h-5 text-orange-700" />
             </div>
             <div>
               <p className="font-medium text-gray-900 text-sm">Admin</p>
@@ -499,7 +634,6 @@ export default function BlogPostDetail({ post }) {
           </div>
         </motion.div>
 
-        {/* Featured Image */}
         {post.featured_image && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -508,37 +642,38 @@ export default function BlogPostDetail({ post }) {
             className="mb-8"
           >
             <div className="relative h-64 md:h-96 rounded-2xl overflow-hidden border border-gray-200">
-              <Image
+              <img
                 src={post.featured_image}
                 alt={post.title || "Blog post image"}
-                fill
-                className="object-cover"
-                priority
-                placeholder="blur"
-                blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R//2Q=="
+                className="w-full h-full object-cover"
+                loading="eager"
               />
             </div>
           </motion.div>
         )}
 
-        {/* Article Content */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="prose prose-gray max-w-none mb-8"
+          className="mb-8"
         >
-          <div className="text-gray-700 leading-relaxed text-sm md:text-base">
-            {post.excerpt && (
-              <p className="text-lg text-gray-600 font-medium mb-6 border-l-4 border-orange-500 pl-4 italic">
-                {post.excerpt}
-              </p>
-            )}
-            <div className="whitespace-pre-wrap">{post.content}</div>
-          </div>
+          {post.excerpt && (
+            <p className="text-lg text-gray-700 font-medium mb-6 border-l-4 border-orange-500 pl-4 italic">
+              {post.excerpt}
+            </p>
+          )}
+
+          <div
+            className="prose prose-lg max-w-none text-gray-700 leading-relaxed"
+            dangerouslySetInnerHTML={{ __html: post.content }}
+          />
+
+          {post.images && post.images.length > 0 && (
+            <ImageGallery images={post.images} />
+          )}
         </motion.div>
 
-        {/* Article Actions */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -556,7 +691,6 @@ export default function BlogPostDetail({ post }) {
                     ? "bg-red-500 text-white"
                     : "bg-white text-gray-700 border border-gray-200 hover:bg-red-50 hover:text-red-600"
                 }`}
-                disabled={!user}
               >
                 <Heart
                   className={`w-5 h-5 transition-all ${
@@ -575,6 +709,7 @@ export default function BlogPostDetail({ post }) {
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
+              onClick={handleShare}
               className="flex items-center gap-2 px-4 py-2 bg-white text-gray-700 border border-gray-200 rounded-xl hover:bg-gray-50 transition-all font-medium"
             >
               <Share2 className="w-4 h-4" />
@@ -583,18 +718,16 @@ export default function BlogPostDetail({ post }) {
           </div>
         </motion.div>
 
-        {/* Comments Section */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4 }}
           className="space-y-6"
         >
-          <h2 className="text-xl font-bold text-gray-900">
-            Comments ({comments.length})
+          <h2 className="text-2xl font-bold text-gray-900">
+            Comments ({commentsCount})
           </h2>
 
-          {/* Comment Form */}
           <CommentForm
             newComment={newComment}
             setNewComment={setNewComment}
@@ -604,7 +737,6 @@ export default function BlogPostDetail({ post }) {
             isSubmitting={isSubmitting}
           />
 
-          {/* Comments List */}
           <div className="space-y-4">
             {comments.length > 0 ? (
               comments.map((comment) => (
@@ -632,8 +764,3 @@ export default function BlogPostDetail({ post }) {
     </div>
   );
 }
-
-// Add display names for debugging
-Comment.displayName = "Comment";
-ReplyComponent.displayName = "ReplyComponent";
-CommentForm.displayName = "CommentForm";

@@ -7,17 +7,9 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   CheckCircle,
   ArrowRight,
-  Users,
-  TrendingUp,
-  Shield,
-  DollarSign,
-  Clock,
-  Star,
   X,
-  Truck,
   Globe,
   CreditCard,
-  BarChart3,
   Package,
   PhoneCall,
   Eye,
@@ -36,17 +28,12 @@ const SupplierSignUpPage = () => {
     confirmPassword: "",
     phoneNumber: "",
     address: "",
-    bankAccountNumber: "",
-    bankName: "",
     acceptedTerms: false,
   });
   const [isLoading, setIsLoading] = useState(false);
-  const [isCheckingUsername, setIsCheckingUsername] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [showTermsModal, setShowTermsModal] = useState(false);
-  const [step, setStep] = useState(1);
-  const [direction, setDirection] = useState(1);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
@@ -66,31 +53,38 @@ const SupplierSignUpPage = () => {
     setShowConfirmPassword((prev) => !prev);
   };
 
-  const validateBasicFields = () => {
+  const validateForm = () => {
     setError("");
+
     if (
       !form.fullName ||
       !form.email ||
       !form.username ||
       !form.password ||
-      !form.confirmPassword
+      !form.confirmPassword ||
+      !form.phoneNumber ||
+      !form.address
     ) {
-      setError("All basic fields are required.");
+      setError("All fields are required.");
       return false;
     }
+
     if (form.password !== form.confirmPassword) {
       setError("Passwords do not match.");
       return false;
     }
+
     if (form.password.length < 6) {
       setError("Password must be at least 6 characters long.");
       return false;
     }
+
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(form.email)) {
       setError("Please enter a valid email address.");
       return false;
     }
+
     const usernameRegex = /^[a-zA-Z0-9_]{3,20}$/;
     if (!usernameRegex.test(form.username)) {
       setError(
@@ -98,24 +92,19 @@ const SupplierSignUpPage = () => {
       );
       return false;
     }
-    return true;
-  };
 
-  const validateSupplierFields = () => {
-    if (!form.phoneNumber || !form.address) {
-      setError("All supplier fields are required.");
-      return false;
-    }
     if (!form.acceptedTerms) {
       setError("You must accept the supplier terms and conditions.");
       return false;
     }
+
     const cleanedPhone = form.phoneNumber.replace(/[\s.-]/g, "");
     const phoneRegex = /^[+]?[1-9][\d]{6,15}$/;
     if (!phoneRegex.test(cleanedPhone)) {
       setError("Please enter a valid phone number.");
       return false;
     }
+
     return true;
   };
 
@@ -135,14 +124,24 @@ const SupplierSignUpPage = () => {
   };
 
   const handleSupplierSignUp = async (e) => {
-    if (e && typeof e.preventDefault === "function") e.preventDefault();
+    e.preventDefault();
     setError("");
     setSuccess("");
 
-    if (!validateSupplierFields()) return;
+    if (!validateForm()) return;
+
     setIsLoading(true);
 
     try {
+      const isUsernameAvailable = await checkUsernameAvailability(
+        form.username
+      );
+      if (!isUsernameAvailable) {
+        setError("Username is already taken. Please choose another one.");
+        setIsLoading(false);
+        return;
+      }
+
       const userMetadata = {
         full_name: form.fullName,
         username: form.username,
@@ -175,34 +174,6 @@ const SupplierSignUpPage = () => {
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const handleNext = async (e) => {
-    e.preventDefault();
-    setError("");
-    if (!validateBasicFields()) return;
-
-    setIsCheckingUsername(true);
-    try {
-      const isUsernameAvailable = await checkUsernameAvailability(
-        form.username
-      );
-      if (!isUsernameAvailable) {
-        setError("Username is already taken. Please choose another one.");
-        return;
-      }
-
-      setDirection(1);
-      setStep(2);
-    } finally {
-      setIsCheckingUsername(false);
-    }
-  };
-
-  const handleBackToBasic = (e) => {
-    if (e) e.preventDefault();
-    setDirection(-1);
-    setStep(1);
   };
 
   const handleGetStarted = () => {
@@ -315,28 +286,6 @@ const SupplierSignUpPage = () => {
       </div>
     ) : null;
 
-  const slideVariants = {
-    initial: (dir) => ({
-      x: dir > 0 ? "100%" : "-100%",
-      opacity: 0,
-      position: "absolute",
-      width: "100%",
-    }),
-    animate: {
-      x: 0,
-      opacity: 1,
-      position: "relative",
-      transition: { duration: 0.35, ease: "easeInOut" },
-    },
-    exit: (dir) => ({
-      x: dir > 0 ? "-100%" : "100%",
-      opacity: 0,
-      position: "absolute",
-      width: "100%",
-      transition: { duration: 0.35, ease: "easeInOut" },
-    }),
-  };
-
   const successVariants = {
     hidden: { opacity: 0, scale: 0.8 },
     visible: {
@@ -353,7 +302,7 @@ const SupplierSignUpPage = () => {
   };
 
   const iconVariants = {
-    hover: { scale: 1.1, color: "#f97316" }, // Orange-600
+    hover: { scale: 1.1, color: "#f97316" },
     tap: { scale: 0.9 },
   };
 
@@ -489,6 +438,7 @@ const SupplierSignUpPage = () => {
           className="object-contain md:object-cover"
         />
       </div>
+
       <div className="flex w-full md:w-1/2 items-center justify-center p-6 sm:p-10">
         <div className="w-full max-w-md bg-white shadow-xl rounded-lg p-8 md:p-10 space-y-6 relative overflow-hidden">
           <div className="md:hidden flex justify-center">
@@ -500,6 +450,7 @@ const SupplierSignUpPage = () => {
               priority
             />
           </div>
+
           <div className="text-center">
             <h2 className="text-3xl font-semibold text-gray-800">
               Create A Seller Account
@@ -514,11 +465,13 @@ const SupplierSignUpPage = () => {
               Why sell on Mostore?
             </button>
           </div>
+
           {error && (
             <div className="text-red-600 bg-red-50 border border-red-200 text-sm text-center p-3 rounded-md">
               {error}
             </div>
           )}
+
           <AnimatePresence>
             {success && (
               <motion.div
@@ -557,299 +510,216 @@ const SupplierSignUpPage = () => {
             )}
           </AnimatePresence>
 
-          <div className="flex items-center justify-center space-x-4 mb-6">
-            <div
-              className={`flex items-center ${
-                step >= 1 ? "text-orange-600" : "text-gray-400"
-              }`}
-            >
-              <div
-                className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
-                  step >= 1 ? "bg-orange-600 text-white" : "bg-gray-200"
-                }`}
+          <form onSubmit={handleSupplierSignUp} className="space-y-4">
+            <div>
+              <label
+                htmlFor="fullName"
+                className="block text-sm font-medium text-gray-700 mb-1"
               >
-                1
-              </div>
-              <span className="ml-2 text-sm font-medium">Basic Info</span>
+                Full Name
+              </label>
+              <input
+                id="fullName"
+                name="fullName"
+                type="text"
+                value={form.fullName}
+                onChange={handleChange}
+                required
+                placeholder="Enter Your Full Name"
+                className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+              />
             </div>
-            <div
-              className={`w-8 h-0.5 ${
-                step >= 2 ? "bg-orange-600" : "bg-gray-200"
-              }`}
-            ></div>
-            <div
-              className={`flex items-center ${
-                step >= 2 ? "text-orange-600" : "text-gray-400"
-              }`}
-            >
-              <div
-                className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
-                  step >= 2 ? "bg-orange-600 text-white" : "bg-gray-200"
-                }`}
-              >
-                2
-              </div>
-              <span className="ml-2 text-sm font-medium">Supplier Details</span>
-            </div>
-          </div>
 
-          <div className="relative">
-            <AnimatePresence custom={direction} mode="wait">
-              {step === 1 && (
-                <motion.form
-                  key="step1"
-                  custom={direction}
-                  variants={slideVariants}
-                  initial="initial"
-                  animate="animate"
-                  exit="exit"
-                  onSubmit={handleNext}
-                  className="space-y-5"
+            <div>
+              <label
+                htmlFor="email"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
+                Email Address
+              </label>
+              <input
+                id="email"
+                name="email"
+                type="email"
+                value={form.email}
+                onChange={handleChange}
+                required
+                placeholder="Enter Your Email"
+                className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+              />
+            </div>
+
+            <div>
+              <label
+                htmlFor="username"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
+                Store Name
+              </label>
+              <input
+                id="username"
+                name="username"
+                type="text"
+                value={form.username}
+                onChange={handleChange}
+                required
+                placeholder="Enter Your Store Name"
+                className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                3-20 characters, letters, numbers, and underscores only
+              </p>
+            </div>
+
+            <div>
+              <label
+                htmlFor="phoneNumber"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
+                Phone Number
+              </label>
+              <input
+                id="phoneNumber"
+                name="phoneNumber"
+                type="tel"
+                value={form.phoneNumber}
+                onChange={handleChange}
+                required
+                placeholder="Enter your phone number"
+                className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+              />
+            </div>
+
+            <div>
+              <label
+                htmlFor="address"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
+                Business Address
+              </label>
+              <textarea
+                id="address"
+                name="address"
+                value={form.address}
+                onChange={handleChange}
+                required
+                placeholder="Enter your full business address"
+                rows="2"
+                className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+              />
+            </div>
+
+            <div>
+              <label
+                htmlFor="password"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
+                Password
+              </label>
+              <div className="relative">
+                <input
+                  id="password"
+                  name="password"
+                  type={showPassword ? "text" : "password"}
+                  value={form.password}
+                  onChange={handleChange}
+                  required
+                  placeholder="••••••••"
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                />
+                <motion.button
+                  type="button"
+                  onClick={togglePasswordVisibility}
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                  className="absolute inset-y-0 right-3 flex items-center text-gray-500"
+                  variants={iconVariants}
+                  whileHover="hover"
+                  whileTap="tap"
                 >
-                  <div>
-                    <label
-                      htmlFor="fullName"
-                      className="block text-sm font-medium text-gray-700 mb-1"
-                    >
-                      Full Name
-                    </label>
-                    <input
-                      id="fullName"
-                      name="fullName"
-                      type="text"
-                      value={form.fullName}
-                      onChange={handleChange}
-                      required
-                      placeholder="Enter Your Full Name"
-                      className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                    />
-                    <p className="text-xs text-gray-500 mt-1">
-                      Must be at least 6 characters
-                    </p>
-                  </div>
-                  <div>
-                    <label
-                      htmlFor="email"
-                      className="block text-sm font-medium text-gray-700 mb-1"
-                    >
-                      Email Address
-                    </label>
-                    <input
-                      id="email"
-                      name="email"
-                      type="email"
-                      value={form.email}
-                      onChange={handleChange}
-                      required
-                      placeholder="Enter Your Email"
-                      className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                    />
-                  </div>
-                  <div>
-                    <label
-                      htmlFor="username"
-                      className="block text-sm font-medium text-gray-700 mb-1"
-                    >
-                      Store Name
-                    </label>
-                    <input
-                      id="username"
-                      name="username"
-                      type="text"
-                      value={form.username}
-                      onChange={handleChange}
-                      required
-                      placeholder="Enter Your Store Name"
-                      className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                    />
-                    <p className="text-xs text-gray-500 mt-1">
-                      3-20 characters, letters, numbers, and underscores only
-                    </p>
-                  </div>
-                  <div>
-                    <label
-                      htmlFor="password"
-                      className="block text-sm font-medium text-gray-700 mb-1"
-                    >
-                      Password
-                    </label>
-                    <div className="relative">
-                      <input
-                        id="password"
-                        name="password"
-                        type={showPassword ? "text" : "password"}
-                        value={form.password}
-                        onChange={handleChange}
-                        required
-                        placeholder="••••••••"
-                        className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                      />
-                      <motion.button
-                        type="button"
-                        onClick={togglePasswordVisibility}
-                        aria-label={
-                          showPassword ? "Hide password" : "Show password"
-                        }
-                        className="absolute inset-y-0 right-3 flex items-center text-gray-500"
-                        variants={iconVariants}
-                        whileHover="hover"
-                        whileTap="tap"
-                      >
-                        {showPassword ? (
-                          <EyeOff className="w-5 h-5" />
-                        ) : (
-                          <Eye className="w-5 h-5" />
-                        )}
-                      </motion.button>
-                    </div>
-                    <p className="text-xs text-gray-500 mt-1">
-                      Must be at least 6 characters
-                    </p>
-                  </div>
-                  <div>
-                    <label
-                      htmlFor="confirmPassword"
-                      className="block text-sm font-medium text-gray-700 mb-1"
-                    >
-                      Confirm Password
-                    </label>
-                    <div className="relative">
-                      <input
-                        id="confirmPassword"
-                        name="confirmPassword"
-                        type={showConfirmPassword ? "text" : "password"}
-                        value={form.confirmPassword}
-                        onChange={handleChange}
-                        required
-                        placeholder="••••••••"
-                        className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                      />
-                      <motion.button
-                        type="button"
-                        onClick={toggleConfirmPasswordVisibility}
-                        aria-label={
-                          showConfirmPassword
-                            ? "Hide confirm password"
-                            : "Show confirm password"
-                        }
-                        className="absolute  inset-y-0 right-3 flex items-center text-gray-500"
-                        variants={iconVariants}
-                        whileHover="hover"
-                        whileTap="tap"
-                      >
-                        {showConfirmPassword ? (
-                          <EyeOff className="w-5 h-5" />
-                        ) : (
-                          <Eye className="w-5 h-5" />
-                        )}
-                      </motion.button>
-                    </div>
-                    <div className="flex items-start space-x-2">
-                      <input
-                        id="acceptedTerms"
-                        name="acceptedTerms"
-                        type="checkbox"
-                        checked={form.acceptedTerms}
-                        onChange={handleChange}
-                        required
-                        className="h-4 w-4 text-orange-600 focus:ring-orange-500 border-gray-300 rounded mt-0.5"
-                      />
-                      <div className="text-xs text-gray-700">
-                        I accept the{" "}
-                        <button
-                          type="button"
-                          onClick={() => setShowTermsModal(true)}
-                          className="text-orange-600 hover:underline font-medium"
-                        >
-                          supplier terms & conditions
-                        </button>{" "}
-                        of Mostore
-                      </div>
-                    </div>
-                  </div>
-                  <button
-                    type="submit"
-                    disabled={isLoading || isCheckingUsername}
-                    className="w-full bg-orange-600 hover:bg-orange-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white py-2 px-4 rounded-md transition-all duration-200"
-                  >
-                    {isCheckingUsername ? "Checking Username..." : "Next Step"}
-                  </button>
-                </motion.form>
-              )}
-              {step === 2 && (
-                <motion.form
-                  key="step2"
-                  custom={direction}
-                  variants={slideVariants}
-                  initial="initial"
-                  animate="animate"
-                  exit="exit"
-                  onSubmit={handleSupplierSignUp}
-                  className="space-y-5"
+                  {showPassword ? (
+                    <EyeOff className="w-5 h-5" />
+                  ) : (
+                    <Eye className="w-5 h-5" />
+                  )}
+                </motion.button>
+              </div>
+              <p className="text-xs text-gray-500 mt-1">
+                Must be at least 6 characters
+              </p>
+            </div>
+
+            <div>
+              <label
+                htmlFor="confirmPassword"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
+                Confirm Password
+              </label>
+              <div className="relative">
+                <input
+                  id="confirmPassword"
+                  name="confirmPassword"
+                  type={showConfirmPassword ? "text" : "password"}
+                  value={form.confirmPassword}
+                  onChange={handleChange}
+                  required
+                  placeholder="••••••••"
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                />
+                <motion.button
+                  type="button"
+                  onClick={toggleConfirmPasswordVisibility}
+                  aria-label={
+                    showConfirmPassword
+                      ? "Hide confirm password"
+                      : "Show confirm password"
+                  }
+                  className="absolute inset-y-0 right-3 flex items-center text-gray-500"
+                  variants={iconVariants}
+                  whileHover="hover"
+                  whileTap="tap"
                 >
-                  <div className="space-y-4 bg-orange-50 p-4 rounded-md border border-orange-200">
-                    <h3 className="text-sm font-semibold text-gray-800 mb-3">
-                      Business & Payment Information
-                    </h3>
-                    <div>
-                      <label
-                        htmlFor="phoneNumber"
-                        className="block text-sm font-medium text-gray-700 mb-1"
-                      >
-                        Phone Number
-                      </label>
-                      <input
-                        id="phoneNumber"
-                        name="phoneNumber"
-                        type="tel"
-                        value={form.phoneNumber}
-                        onChange={handleChange}
-                        required
-                        placeholder="Enter your phone number"
-                        className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                      />
-                    </div>
-                    <div>
-                      <label
-                        htmlFor="address"
-                        className="block text-sm font-medium text-gray-700 mb-1"
-                      >
-                        Complete Business Address
-                      </label>
-                      <textarea
-                        id="address"
-                        name="address"
-                        value={form.address}
-                        onChange={handleChange}
-                        required
-                        placeholder="Enter your full business address"
-                        rows="3"
-                        className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                      />
-                    </div>
-                  </div>
-                  <div className="flex gap-3">
-                    <button
-                      type="button"
-                      onClick={handleBackToBasic}
-                      className="flex-1 bg-gray-200 text-gray-700 py-2 px-4 rounded-md hover:bg-gray-300 transition-colors"
-                    >
-                      Back
-                    </button>
-                    <button
-                      type="submit"
-                      disabled={isLoading}
-                      className="flex-1 bg-orange-600 hover:bg-orange-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white py-2 px-4 rounded-md transition-all duration-200"
-                    >
-                      {isLoading
-                        ? "Creating Account..."
-                        : "Create Supplier Account"}
-                    </button>
-                  </div>
-                </motion.form>
-              )}
-            </AnimatePresence>
-          </div>
+                  {showConfirmPassword ? (
+                    <EyeOff className="w-5 h-5" />
+                  ) : (
+                    <Eye className="w-5 h-5" />
+                  )}
+                </motion.button>
+              </div>
+            </div>
+
+            <div className="flex items-start space-x-2">
+              <input
+                id="acceptedTerms"
+                name="acceptedTerms"
+                type="checkbox"
+                checked={form.acceptedTerms}
+                onChange={handleChange}
+                required
+                className="h-4 w-4 text-orange-600 focus:ring-orange-500 border-gray-300 rounded mt-0.5"
+              />
+              <div className="text-xs text-gray-700">
+                I accept the{" "}
+                <button
+                  type="button"
+                  onClick={() => setShowTermsModal(true)}
+                  className="text-orange-600 hover:underline font-medium"
+                >
+                  supplier terms & conditions
+                </button>{" "}
+                of Mostore
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="w-full bg-orange-600 hover:bg-orange-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white py-2 px-4 rounded-md transition-all duration-200 font-medium"
+            >
+              {isLoading ? "Creating Account..." : "Create Supplier Account"}
+            </button>
+          </form>
+
           <p className="text-center text-sm text-gray-500">
             Already have an account?{" "}
             <button

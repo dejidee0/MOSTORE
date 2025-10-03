@@ -5,6 +5,7 @@ import { useParams } from "next/navigation";
 import { useToast } from "@/lib/toast";
 import { useCart } from "@/lib/cart";
 import { supabase } from "@/lib/supabase-client";
+import { Package } from "lucide-react";
 
 export default function ProductDetails() {
   const params = useParams();
@@ -25,7 +26,6 @@ export default function ProductDetails() {
       try {
         setLoading(true);
 
-        // Fetch product by ID or slug
         const { data: productData, error: productError } = await supabase
           .from("products")
           .select(
@@ -43,7 +43,6 @@ export default function ProductDetails() {
           .single();
 
         if (productError) {
-          // Try fetching by slug if ID doesn't work
           const { data: productBySlug, error: slugError } = await supabase
             .from("products")
             .select(
@@ -66,7 +65,6 @@ export default function ProductDetails() {
 
           setProduct(productBySlug);
 
-          // Fetch related products
           if (
             productBySlug.related_products &&
             productBySlug.related_products.length > 0
@@ -76,7 +74,6 @@ export default function ProductDetails() {
         } else {
           setProduct(productData);
 
-          // Fetch related products
           if (
             productData.related_products &&
             productData.related_products.length > 0
@@ -201,7 +198,6 @@ export default function ProductDetails() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Breadcrumb */}
       <div className="bg-white border-b">
         <div className="container mx-auto px-4 py-3">
           <nav className="text-sm text-gray-500">
@@ -225,10 +221,8 @@ export default function ProductDetails() {
         </div>
       </div>
 
-      {/* Product Details */}
       <div className="container mx-auto px-4 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Product Images */}
           <div className="space-y-4">
             <div className="border border-gray-200 rounded-lg p-4 bg-white">
               <img
@@ -264,12 +258,24 @@ export default function ProductDetails() {
             )}
           </div>
 
-          {/* Product Info */}
           <div className="space-y-6">
             <div>
-              <h1 className="text-2xl font-bold text-gray-800 mb-2">
-                {product.name}
-              </h1>
+              <div className="flex items-center gap-3 mb-2">
+                <h1 className="text-2xl font-bold text-gray-800">
+                  {product.name}
+                </h1>
+                {product.condition && (
+                  <span
+                    className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                      product.condition === "new"
+                        ? "bg-green-100 text-green-700"
+                        : "bg-blue-100 text-blue-700"
+                    }`}
+                  >
+                    {product.condition === "new" ? "Brand New" : "Pre-Owned"}
+                  </span>
+                )}
+              </div>
               <StarRating
                 rating={product.rating}
                 totalReviews={product.total_reviews}
@@ -311,7 +317,6 @@ export default function ProductDetails() {
               {product.short_description || product.description}
             </div>
 
-            {/* Colors */}
             {hasColors && (
               <div>
                 <h3 className="font-semibold text-gray-800 mb-3">Colors:</h3>
@@ -333,7 +338,6 @@ export default function ProductDetails() {
               </div>
             )}
 
-            {/* Sizes */}
             {hasSizes && (
               <div>
                 <h3 className="font-semibold text-gray-800 mb-3">Size:</h3>
@@ -355,7 +359,6 @@ export default function ProductDetails() {
               </div>
             )}
 
-            {/* Quantity and Buy Button */}
             <div className="flex items-center gap-4">
               <div className="flex items-center border border-gray-300 rounded">
                 <button
@@ -404,28 +407,40 @@ export default function ProductDetails() {
               </button>
             </div>
 
-            {/* Product Details */}
             <div className="border border-gray-200 rounded-lg p-4">
-              <h4 className="font-semibold text-gray-800 mb-2">
+              <h4 className="font-semibold text-gray-800 mb-3">
                 Product Details
               </h4>
-              <div className="text-sm text-gray-600 space-y-1">
-                <p>
-                  <span className="font-medium">SKU:</span> {product.sku}
-                </p>
+              <div className="text-sm text-gray-600 space-y-2">
+                <div className="flex items-center justify-between py-2 border-b border-gray-100">
+                  <span className="font-medium">SKU:</span>
+                  <span>{product.sku}</span>
+                </div>
                 {product.brand && (
-                  <p>
-                    <span className="font-medium">Brand:</span> {product.brand}
-                  </p>
+                  <div className="flex items-center justify-between py-2 border-b border-gray-100">
+                    <span className="font-medium">Brand:</span>
+                    <span>{product.brand}</span>
+                  </div>
                 )}
-                <p>
-                  <span className="font-medium">Stock:</span>{" "}
-                  {product.stock_quantity} units
-                </p>
+                <div className="flex items-center justify-between py-2 border-b border-gray-100">
+                  <span className="font-medium">Condition:</span>
+                  <span
+                    className={`font-semibold ${
+                      product.condition === "new"
+                        ? "text-green-600"
+                        : "text-blue-600"
+                    }`}
+                  >
+                    {product.condition === "new" ? "Brand New" : "Pre-Owned"}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between py-2">
+                  <span className="font-medium">Stock:</span>
+                  <span>{product.stock_quantity} units</span>
+                </div>
               </div>
             </div>
 
-            {/* Delivery Info */}
             <div className="border border-gray-200 rounded-lg p-4 space-y-3">
               <div className="flex items-start gap-3">
                 <svg
@@ -444,7 +459,7 @@ export default function ProductDetails() {
                 <div>
                   <h4 className="font-semibold text-gray-800">Free Delivery</h4>
                   <p className="text-sm text-gray-600">
-                    Enter your postal code to delivery availability
+                    Enter your postal code to check delivery availability
                   </p>
                 </div>
               </div>
@@ -478,7 +493,6 @@ export default function ProductDetails() {
           </div>
         </div>
 
-        {/* Related Items */}
         {relatedProducts.length > 0 && (
           <div className="mt-16">
             <div className="flex items-center justify-between mb-6">
@@ -506,6 +520,17 @@ export default function ProductDetails() {
                     {relatedProduct.discount && (
                       <span className="absolute top-2 left-2 bg-orange-500 text-white text-xs px-2 py-1 rounded">
                         {relatedProduct.discount}%
+                      </span>
+                    )}
+                    {relatedProduct.condition && (
+                      <span
+                        className={`absolute top-2 right-2 text-white text-xs px-2 py-1 rounded ${
+                          relatedProduct.condition === "new"
+                            ? "bg-green-500"
+                            : "bg-blue-500"
+                        }`}
+                      >
+                        {relatedProduct.condition === "new" ? "New" : "Used"}
                       </span>
                     )}
                   </div>

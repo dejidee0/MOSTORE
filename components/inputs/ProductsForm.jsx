@@ -2,7 +2,15 @@
 
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase-client";
-import { Upload, X, Loader2, Plus, Check, X as XIcon } from "lucide-react";
+import {
+  Upload,
+  X,
+  Loader2,
+  Plus,
+  Check,
+  X as XIcon,
+  Package,
+} from "lucide-react";
 import { v4 as uuidv4 } from "uuid";
 
 export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
@@ -17,6 +25,7 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
     brand: "",
     stock_quantity: "",
     category_id: "",
+    condition: "new", // New field with default value
     colors: [],
     sizes: [],
     discount: "",
@@ -40,7 +49,6 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
   const [isEditMode, setIsEditMode] = useState(false);
   const [authUser, setAuthUser] = useState(user);
 
-  // Fetch user session if user prop is missing
   useEffect(() => {
     const fetchUser = async () => {
       if (!authUser) {
@@ -69,13 +77,11 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
     fetchUser();
   }, [authUser]);
 
-  // Generate random SKU
   const generateRandomSKU = async () => {
     const prefix = "PRD";
     const randomPart = uuidv4().split("-")[0].toUpperCase();
     const potentialSKU = `${prefix}-${randomPart}`;
 
-    // Check if SKU already exists
     const { data, error } = await supabase
       .from("products")
       .select("sku")
@@ -83,18 +89,16 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
 
     if (error) {
       console.error("Error checking SKU:", error.message);
-      return potentialSKU; // Fallback to generated SKU if check fails
+      return potentialSKU;
     }
 
     if (data && data.length > 0) {
-      // If SKU exists, try again
       return generateRandomSKU();
     }
 
     return potentialSKU;
   };
 
-  // Initialize form with product data if in edit mode
   useEffect(() => {
     if (productToEdit) {
       setIsEditMode(true);
@@ -109,6 +113,7 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
         brand: productToEdit.brand || "",
         stock_quantity: productToEdit.stock_quantity.toString(),
         category_id: productToEdit.category_id || "",
+        condition: productToEdit.condition || "new", // Load condition from product
         colors: productToEdit.colors || [],
         sizes: productToEdit.sizes || [],
         discount: productToEdit.discount?.toString() || "",
@@ -120,7 +125,6 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
     } else {
       setIsEditMode(false);
       resetForm();
-      // Generate SKU for new product
       generateRandomSKU().then((sku) => {
         setFormData((prev) => ({ ...prev, sku }));
       });
@@ -308,6 +312,7 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
       "sku",
       "stock_quantity",
       "category_id",
+      "condition",
     ];
     const missing = required.filter((field) => !formData[field]);
 
@@ -369,7 +374,6 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
     setIsLoading(true);
 
     try {
-      // 1. Check SKU uniqueness for new products
       if (!isEditMode) {
         const { data: existingSKU, error: skuError } = await supabase
           .from("products")
@@ -387,7 +391,6 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
         }
       }
 
-      // 2. Upload new images to Supabase Storage
       const uploadedImageUrls = [];
       for (const file of imageFiles) {
         const fileName = `${Date.now()}-${uuidv4()}-${file.name}`;
@@ -411,13 +414,11 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
         uploadedImageUrls.push(publicUrlData.publicUrl);
       }
 
-      // Combine existing images with new ones
       const allImages = [
         ...existingImages.map((img) => img.url),
         ...uploadedImageUrls,
       ];
 
-      // Prepare product data
       const productData = {
         name: formData.name,
         slug: formData.slug,
@@ -432,6 +433,7 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
         brand: formData.brand || null,
         stock_quantity: Number(formData.stock_quantity),
         category_id: formData.category_id || null,
+        condition: formData.condition, // Include condition in product data
         images: allImages,
         colors: formData.colors,
         sizes: formData.sizes,
@@ -441,7 +443,6 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
         is_featured: formData.is_featured,
       };
 
-      // 3. Insert or update product
       let result;
       if (isEditMode) {
         const { data, error } = await supabase
@@ -468,7 +469,6 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
         result = data;
       }
 
-      // 4. Reset + notify
       setSuccess(`Product ${isEditMode ? "updated" : "added"} successfully!`);
       setTimeout(() => {
         onClose();
@@ -496,6 +496,7 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
       brand: "",
       stock_quantity: "",
       category_id: "",
+      condition: "new", // Reset to default
       colors: [],
       sizes: [],
       discount: "",
@@ -510,7 +511,6 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
     setSizeInput("");
     setError("");
     setSuccess("");
-    // Generate new SKU for next product
     generateRandomSKU().then((sku) => {
       setFormData((prev) => ({ ...prev, sku }));
     });
@@ -566,7 +566,6 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
             )}
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Product Name - Required */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Product Name <span className="text-orange-500">*</span>
@@ -583,7 +582,6 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
                 />
               </div>
 
-              {/* Product Slug - Auto-generated */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Product Slug{" "}
@@ -600,7 +598,6 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
                 />
               </div>
 
-              {/* SKU - Auto-generated */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   SKU <span className="text-orange-500">*</span>{" "}
@@ -615,12 +612,11 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
                   onChange={handleInputChange}
                   placeholder="Auto-generated SKU"
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-gray-50"
-                  disabled={isLoading || true} // Always disabled as it's auto-generated
+                  disabled={isLoading || true}
                   required
                 />
               </div>
 
-              {/* Brand - Optional */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Brand <span className="text-gray-400">(Optional)</span>
@@ -637,7 +633,58 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
               </div>
             </div>
 
-            {/* Category Selection */}
+            {/* Product Condition - NEW FIELD */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Product Condition <span className="text-orange-500">*</span>
+              </label>
+              <div className="grid grid-cols-2 gap-4">
+                <button
+                  type="button"
+                  onClick={() =>
+                    setFormData((prev) => ({ ...prev, condition: "new" }))
+                  }
+                  className={`flex items-center justify-center gap-2 px-4 py-3 border-2 rounded-lg transition-all ${
+                    formData.condition === "new"
+                      ? "border-orange-500 bg-orange-50 text-orange-700"
+                      : "border-gray-300 bg-white text-gray-700 hover:border-gray-400"
+                  }`}
+                  disabled={isLoading}
+                >
+                  <Package className="w-5 h-5" />
+                  <div className="text-left">
+                    <div className="font-medium">New</div>
+                    <div className="text-xs opacity-75">Brand new product</div>
+                  </div>
+                  {formData.condition === "new" && (
+                    <Check className="w-5 h-5 ml-auto" />
+                  )}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    setFormData((prev) => ({ ...prev, condition: "used" }))
+                  }
+                  className={`flex items-center justify-center gap-2 px-4 py-3 border-2 rounded-lg transition-all ${
+                    formData.condition === "used"
+                      ? "border-orange-500 bg-orange-50 text-orange-700"
+                      : "border-gray-300 bg-white text-gray-700 hover:border-gray-400"
+                  }`}
+                  disabled={isLoading}
+                >
+                  <Package className="w-5 h-5" />
+                  <div className="text-left">
+                    <div className="font-medium">Used</div>
+                    <div className="text-xs opacity-75">Pre-owned product</div>
+                  </div>
+                  {formData.condition === "used" && (
+                    <Check className="w-5 h-5 ml-auto" />
+                  )}
+                </button>
+              </div>
+            </div>
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Category <span className="text-orange-500">*</span>
@@ -664,7 +711,6 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
                 </select>
               </div>
 
-              {/* New Category Input */}
               {showNewCategoryInput && (
                 <div className="mt-2 flex gap-2">
                   <input
@@ -691,9 +737,7 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
               )}
             </div>
 
-            {/* Descriptions */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Short Description - Optional */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Short Description{" "}
@@ -714,7 +758,6 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
                 </p>
               </div>
 
-              {/* Full Description - Required */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Full Description <span className="text-orange-500">*</span>
@@ -732,9 +775,7 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
               </div>
             </div>
 
-            {/* Pricing Information */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-              {/* Current Price - Required */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Current Price <span className="text-orange-500">*</span>
@@ -753,7 +794,6 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
                 />
               </div>
 
-              {/* Original Price - Optional */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Original Price{" "}
@@ -772,7 +812,6 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
                 />
               </div>
 
-              {/* Discount Percentage - Optional */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Discount % <span className="text-gray-400">(Optional)</span>
@@ -790,7 +829,6 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
                 />
               </div>
 
-              {/* Stock Quantity - Required */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Stock Quantity <span className="text-orange-500">*</span>
@@ -809,7 +847,6 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
               </div>
             </div>
 
-            {/* Product Images */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Product Images <span className="text-orange-500">*</span>
@@ -818,7 +855,6 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
                 </span>
               </label>
 
-              {/* Image Upload Button */}
               <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-orange-500 transition-colors">
                 <input
                   type="file"
@@ -851,10 +887,8 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
                 </label>
               </div>
 
-              {/* Image Previews */}
               {(images.length > 0 || existingImages.length > 0) && (
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
-                  {/* Existing images */}
                   {existingImages.map((image) => (
                     <div
                       key={`existing-${image.id}`}
@@ -879,7 +913,6 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
                     </div>
                   ))}
 
-                  {/* New images */}
                   {images.map((image) => (
                     <div key={`new-${image.id}`} className="relative group">
                       <img
@@ -904,9 +937,7 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
               )}
             </div>
 
-            {/* Colors and Sizes */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Colors */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Available Colors{" "}
@@ -933,7 +964,6 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
                     Add
                   </button>
                 </div>
-                {/* Color Tags */}
                 <div className="flex flex-wrap gap-2">
                   {formData.colors.map((color, index) => (
                     <span
@@ -954,7 +984,6 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
                 </div>
               </div>
 
-              {/* Sizes */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Available Sizes{" "}
@@ -981,7 +1010,6 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
                     Add
                   </button>
                 </div>
-                {/* Size Tags */}
                 <div className="flex flex-wrap gap-2">
                   {formData.sizes.map((size, index) => (
                     <span
@@ -1003,11 +1031,7 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
               </div>
             </div>
 
-            {/* Additional Options */}
-
-            {/* Additional Options */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {/* Rating */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Initial Rating{" "}
@@ -1029,7 +1053,6 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
                 </select>
               </div>
 
-              {/* Product Status Checkboxes */}
               <div className="space-y-3">
                 <div className="flex items-center">
                   <input
@@ -1060,7 +1083,6 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
               </div>
             </div>
 
-            {/* Form Actions */}
             <div className="flex justify-end gap-4 pt-6 border-t border-gray-200">
               <button
                 type="button"

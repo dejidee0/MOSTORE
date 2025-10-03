@@ -584,7 +584,7 @@ const ProductDashboard = () => {
         {/* Search and Filters */}
         <div className="mb-8 space-y-4">
           {/* Search Bar */}
-          <div className="relative">
+          <div className="relative mt-2">
             <Search
               className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"
               size={20}

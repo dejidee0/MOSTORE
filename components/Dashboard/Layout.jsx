@@ -32,7 +32,7 @@ export default function Layout({ children }) {
       />
       {/* Main content */}
       <div className="flex flex-col flex-1 min-w-0">
-        <main className="flex-1 w-full max-w-5xl mx-auto px-2 sm:px-4 md:px-8 py-6 md:py-8 overflow-auto">
+        <main className="flex-1 w-full max-w-8xl mx-auto px-2 sm:px-4 md:px-8 py-6 md:py-0 overflow-auto">
           {/* Responsive page title wrapper to avoid hamburger overlap */}
           <div className="relative">
             <div className="lg:hidden h-12"></div>

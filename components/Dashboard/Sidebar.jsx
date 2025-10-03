@@ -12,6 +12,7 @@ const navLinks = [
   { label: "Products", icon: Package, route: "/admin/dashboard" },
   { label: "Order", icon: Truck, route: "/admin/dashboard/order" },
   { label: "Suppliers", icon: Users, route: "/admin/dashboard/suppliers" },
+  { label: "Customers", icon: Users, route: "/admin/dashboard/customers" },
   { label: "Blog", icon: BookOpen, route: "/admin/dashboard/blog" },
   { label: "My Profile", icon: User, route: "/admin/dashboard/my-profile" },
 ];

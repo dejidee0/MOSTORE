@@ -23,8 +23,9 @@ import ProductForm from "@/components/inputs/ProductsForm";
 import { Tag, Calendar } from "lucide-react";
 import useUserStore from "@/lib/stores/useUserStore";
 
-const ProductDashboardClient = ({ isApproved, initialError, initialUser }) => {
+const ProductDashboardClient = ({ initialError }) => {
   const { user, setUser } = useUserStore();
+  const [realUser, setRealUser] = useState();
   const [prodUpload, setProdUpload] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [editingProduct, setEditingProduct] = useState(null);
@@ -39,31 +40,29 @@ const ProductDashboardClient = ({ isApproved, initialError, initialUser }) => {
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
+
   const [itemsPerPage, setItemsPerPage] = useState(10);
 
-  // Initialize user store with server-side user data
   useEffect(() => {
-    if (initialUser && !user) {
-      setUser(initialUser);
-    }
-  }, [initialUser, user, setUser]);
-
-  // Fetch user session on client side as fallback
-  useEffect(() => {
-    const fetchUserSession = async () => {
-      if (!user) {
+    const fetchUserInfo = async () => {
+      if (user && user?.id) {
         try {
-          const {
-            data: { user: authUser },
-            error,
-          } = await supabase.auth.getUser();
+          console.log("fetching...");
+          const { data, error } = await supabase
+            .from("profiles")
+            .select("*")
+            .eq("id", user.id)
+            .single();
+
           if (error) {
             console.error("Error fetching user session:", error);
             setError("Failed to authenticate user");
             return;
           }
-          if (authUser) {
-            setUser(authUser);
+
+          if (data) {
+            console.log(`data is`, data);
+            setRealUser(data);
           } else {
             setError("User not authenticated");
           }
@@ -74,8 +73,8 @@ const ProductDashboardClient = ({ isApproved, initialError, initialUser }) => {
       }
     };
 
-    fetchUserSession();
-  }, [user, setUser]);
+    fetchUserInfo();
+  }, [user, user?.id]);
 
   // Fetch products from Supabase
   const fetchProducts = async () => {
@@ -143,14 +142,14 @@ const ProductDashboardClient = ({ isApproved, initialError, initialUser }) => {
   };
 
   useEffect(() => {
-    if (isApproved && user) {
+    if (user && realUser?.is_approved) {
       fetchProducts();
     }
-  }, [isApproved, user]);
+  }, [realUser?.is_approved, user]);
 
   // Real-time subscription
   useEffect(() => {
-    if (isApproved && user) {
+    if (realUser?.is_approved && user) {
       const subscription = supabase
         .channel("products-changes")
         .on(
@@ -166,7 +165,7 @@ const ProductDashboardClient = ({ isApproved, initialError, initialUser }) => {
         subscription.unsubscribe();
       };
     }
-  }, [isApproved, user]);
+  }, [realUser?.is_approved, user]);
 
   const deleteProduct = async (productId) => {
     if (!confirm("Are you sure you want to delete this product?")) return;
@@ -230,9 +229,9 @@ const ProductDashboardClient = ({ isApproved, initialError, initialUser }) => {
   );
 
   const formatPrice = (price) => {
-    return new Intl.NumberFormat("en-US", {
+    return new Intl.NumberFormat("fr-FR", {
       style: "currency",
-      currency: "€",
+      currency: "EUR",
     }).format(price);
   };
 
@@ -262,6 +261,7 @@ const ProductDashboardClient = ({ isApproved, initialError, initialUser }) => {
     setEditingProduct(product);
     setProdUpload(true);
   };
+  console.log(`user is ${realUser}`);
 
   const ProductDetailModal = ({ product, isOpen, onClose }) => {
     if (!isOpen || !product) return null;
@@ -553,7 +553,7 @@ const ProductDashboardClient = ({ isApproved, initialError, initialUser }) => {
   };
 
   // Access denied UI for unapproved suppliers or unauthenticated users
-  if (!isApproved || !user) {
+  if (!realUser?.is_approved) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-orange-50 to-orange-100 flex items-center justify-center p-4">
         <div className="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full text-center border border-orange-200">

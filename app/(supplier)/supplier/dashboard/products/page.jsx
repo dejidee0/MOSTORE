@@ -20,6 +20,7 @@ export default async function ProductDashboard({ req }) {
     } else {
       user = authUser; // Store user data
       // Check approval status
+
       const { data, error } = await supabase
         .from("profiles")
         .select("is_approved, role")

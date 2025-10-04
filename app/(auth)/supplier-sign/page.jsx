@@ -85,14 +85,6 @@ const SupplierSignUpPage = () => {
       return false;
     }
 
-    const usernameRegex = /^[a-zA-Z0-9_]{3,20}$/;
-    if (!usernameRegex.test(form.username)) {
-      setError(
-        "Username must be 3-20 characters long and contain only letters, numbers, and underscores."
-      );
-      return false;
-    }
-
     if (!form.acceptedTerms) {
       setError("You must accept the supplier terms and conditions.");
       return false;
@@ -118,7 +110,7 @@ const SupplierSignUpPage = () => {
       if (error) throw error;
       return !(Array.isArray(data) && data.length > 0);
     } catch (err) {
-      console.error("Username check error:", err);
+      console.error("Storename check error:", err);
       return false;
     }
   };
@@ -137,7 +129,7 @@ const SupplierSignUpPage = () => {
         form.username
       );
       if (!isUsernameAvailable) {
-        setError("Username is already taken. Please choose another one.");
+        setError("Storename is already taken. Please choose another one.");
         setIsLoading(false);
         return;
       }

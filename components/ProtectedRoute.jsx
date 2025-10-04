@@ -116,9 +116,7 @@ export default function ProtectedRoute({ allowedRoles, children }) {
           router.push("/sign-in");
         }
       } else if (!profileStatus.isActive) {
-        if (pathname !== "/supplier/account-disabled") {
-          router.push("/supplier/account-disabled");
-        }
+        router.push("/supplier/account-disabled");
       } else if (!allowedRoles.includes(role)) {
         if (pathname !== "/") {
           router.push("/");
@@ -126,7 +124,7 @@ export default function ProtectedRoute({ allowedRoles, children }) {
       }
     }
   }, [user, loading, isAuthenticated, allowedRoles, router, profileStatus]);
-
+  console.log(user, profileStatus);
   if (
     loading ||
     profileStatus.loading ||

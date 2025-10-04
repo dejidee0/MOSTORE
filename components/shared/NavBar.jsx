@@ -78,6 +78,7 @@ const NavBar = () => {
   const [searchFocused, setSearchFocused] = useState(false);
 
   const role = user?.user_metadata?.role;
+  const realUser = user?.user_metadata;
 
   const userInfo = useMemo(() => {
     if (!user) return null;
@@ -166,7 +167,9 @@ const NavBar = () => {
   const navigateToDashboard = useCallback(
     (role) => {
       setIsProfileDropdownOpen(false);
-      router.push(`/${role}/dashboard`);
+      router.push(
+        `/${role}/dashboard${role === "supplier" ? "/products" : ""}`
+      );
     },
     [router]
   );
@@ -256,6 +259,10 @@ const NavBar = () => {
       [
         !user && { label: "Sign in", href: "/sign-in" },
         { label: "My Account", href: "/my-account?tab=profile" },
+        role !== "customer" && {
+          label: "My Dashboard",
+          href: `/${role}/dashboard${role === "supplier" ? "/products" : ""}`,
+        },
         { label: "My Orders", href: "/my-account?tab=orders" },
         { label: "Wishlist", href: "/wishlist" },
       ].filter(Boolean),
@@ -412,11 +419,14 @@ const NavBar = () => {
               </div>
             </div>
             <div className="flex items-center space-x-2 lg:space-x-4">
-              <Link href="/supplier-sign">
-                <button className="hidden lg:flex items-center text-white font-medium hover:text-orange-300 transition-colors duration-200 ml-2">
-                  Sell
-                </button>
-              </Link>
+              {!user && role !== "supplier" && role !== "admin" && (
+                <Link href="/supplier-sign">
+                  <button className="hidden lg:flex items-center text-white font-medium hover:text-orange-300 transition-colors duration-200 ml-2">
+                    Sell
+                  </button>
+                </Link>
+              )}
+
               <Link href="/products">
                 <button className="hidden lg:flex items-center text-white font-medium hover:text-orange-300 transition-colors duration-200 ml-2">
                   Shop
@@ -515,7 +525,7 @@ const NavBar = () => {
                           href="mailto:support@mostore.com"
                           className="text-orange-600 hover:text-orange-700 font-medium"
                         >
-                          support@mostore.com
+                          support@mostoreon.com
                         </a>
                       </p>
                     </div>
@@ -566,7 +576,7 @@ const NavBar = () => {
                           </div>
                           <div className="flex-1 min-w-0">
                             <p className="text-sm font-semibold text-gray-900 truncate">
-                              {userInfo?.email}
+                              {realUser?.full_name}
                             </p>
                             {role !== "customer" && (
                               <p className="text-xs text-orange-600 font-medium bg-orange-50 px-2 py-1 rounded-full inline-block mt-1">
@@ -693,22 +703,24 @@ const NavBar = () => {
                       </div>
                       <div className="border-b border-gray-200 pb-2 mb-2">
                         {" "}
-                        <Link
-                          href="/supplier-sign"
-                          className="flex justify-between items-center"
-                          prefetch
-                        >
-                          <span className=" text-black">
-                            Sell on{" "}
-                            <span className="font-bold text-orange-500">
-                              Mostore
+                        {!user && role !== "supplier" && role !== "admin" && (
+                          <Link
+                            href="/supplier-sign"
+                            className="flex justify-between items-center"
+                            prefetch
+                          >
+                            <span className=" text-black">
+                              Sell on{" "}
+                              <span className="font-bold text-orange-500">
+                                Mostore
+                              </span>
                             </span>
-                          </span>
 
-                          <span className="text-orange-500 text-xs">
-                            <ArrowRight />
-                          </span>
-                        </Link>
+                            <span className="text-orange-500 text-xs">
+                              <ArrowRight />
+                            </span>
+                          </Link>
+                        )}
                       </div>
 
                       <div className="border-b border-gray-200 pb-2 mb-2">

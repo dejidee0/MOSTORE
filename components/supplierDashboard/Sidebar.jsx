@@ -9,7 +9,7 @@ import { usePathname } from "next/navigation";
 import logo from "../../public/assets/Mostore logo 2.png";
 
 const navLinks = [
-  { label: "Products", icon: Package, route: "/products" },
+  { label: "Products", icon: Package, route: "/supplier/dashboard/products" },
   { label: "My Profile", icon: User, route: "/supplier/dashboard/my-profile" },
 ];
 

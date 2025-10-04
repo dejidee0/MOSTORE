@@ -23,7 +23,7 @@ export default function ProtectedRoute({ allowedRoles, children }) {
       try {
         const { data: profile, error } = await supabase
           .from("profiles")
-          .select("is_active, role")
+          .select("is_approved, role")
           .eq("id", user.id)
           .single();
 
@@ -37,7 +37,7 @@ export default function ProtectedRoute({ allowedRoles, children }) {
           return;
         }
 
-        const isActive = profile?.is_active !== false;
+        const isActive = profile?.is_approved !== false;
         setProfileStatus({
           loading: false,
           isActive: isActive,
@@ -77,10 +77,10 @@ export default function ProtectedRoute({ allowedRoles, children }) {
           filter: `id=eq.${user.id}`,
         },
         (payload) => {
-          if (payload.new.is_active === false) {
+          if (payload.new.is_approved === false) {
             setProfileStatus((prev) => ({ ...prev, isActive: false }));
             router.push("/supplier/account-disabled");
-          } else if (payload.new.is_active === true) {
+          } else if (payload.new.is_approved === true) {
             setProfileStatus((prev) => ({ ...prev, isActive: true }));
           }
         }

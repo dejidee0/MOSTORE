@@ -371,7 +371,7 @@ const SupplierSignUpPage = () => {
                     />
                     <div className="absolute inset-0 bg-black/40"></div>
                   </div>
-                  <div className="relative z-10 text-center py-44 px-8">
+                  <div className="relative z-10 text-center py-32 px-8">
                     <motion.button
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}

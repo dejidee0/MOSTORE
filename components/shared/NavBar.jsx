@@ -259,10 +259,11 @@ const NavBar = () => {
       [
         !user && { label: "Sign in", href: "/sign-in" },
         { label: "My Account", href: "/my-account?tab=profile" },
-        role !== "customer" && {
-          label: "My Dashboard",
-          href: `/${role}/dashboard${role === "supplier" ? "/products" : ""}`,
-        },
+        user &&
+          role !== "customer" && {
+            label: "My Dashboard",
+            href: `/${role}/dashboard${role === "supplier" ? "/products" : ""}`,
+          },
         { label: "My Orders", href: "/my-account?tab=orders" },
         { label: "Wishlist", href: "/wishlist" },
       ].filter(Boolean),

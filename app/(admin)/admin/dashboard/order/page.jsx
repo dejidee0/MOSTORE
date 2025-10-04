@@ -111,9 +111,9 @@ const Page = () => {
 
   // Format currency helper
   const formatCurrency = (amount) => {
-    return new Intl.NumberFormat("en-NG", {
+    return new Intl.NumberFormat("en-US", {
       style: "currency",
-      currency: "NGN",
+      currency: "EUR",
     }).format(amount);
   };
 

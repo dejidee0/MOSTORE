@@ -151,7 +151,6 @@ export default function ProtectedRoute({ allowedRoles, children }) {
     profileStatus.loading ||
     !isAuthenticated() ||
     !profileStatus.isActive ||
-    !profileStatus.hasApproved ||
     !allowedRoles.includes(user?.user_metadata?.role || "customer")
   ) {
     return (

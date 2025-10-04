@@ -4,8 +4,9 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useToast } from "@/lib/toast";
 import { useCart } from "@/lib/cart";
+import { useWishlist } from "@/hooks/useWishlist";
 import { supabase } from "@/lib/supabase-client";
-import { Package } from "lucide-react";
+import { Package, Heart } from "lucide-react";
 
 export default function ProductDetails() {
   const params = useParams();
@@ -20,6 +21,14 @@ export default function ProductDetails() {
 
   const { addItem } = useCart();
   const { addToast } = useToast();
+  const {
+    isInWishlist,
+    toggleItem: toggleWishlist,
+    isAuthenticated,
+  } = useWishlist();
+
+  // Check if product is in wishlist
+  const isWishlisted = product ? isInWishlist(product.id) : false;
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -153,6 +162,45 @@ export default function ProductDetails() {
 
     addItem(cartItem, quantity);
     addToast(`${product.name} added to cart!`, "success");
+  };
+
+  const handleWishlist = async () => {
+    if (!isAuthenticated) {
+      addToast("Please sign in to add items to wishlist", "error");
+      return;
+    }
+
+    if (!product) return;
+
+    // Calculate discounted price if applicable
+    const discountedPrice =
+      product.originalprice && product.discount
+        ? (product.originalprice * (1 - product.discount / 100)).toFixed(2)
+        : product.price;
+
+    // Format product data for wishlist
+    const wishlistProduct = {
+      id: product.id,
+      name: product.name,
+      price: parseFloat(discountedPrice),
+      images: product.images,
+      slug: product.slug,
+      category: product.categories?.name || product.category,
+      brand: product.brand,
+      stock_quantity: product.stock_quantity,
+      rating: product.rating,
+      review_count: product.total_reviews,
+      original_price: product.originalprice,
+      discount: product.discount,
+    };
+
+    await toggleWishlist(wishlistProduct);
+
+    if (isWishlisted) {
+      addToast(`${product.name} removed from wishlist`, "success");
+    } else {
+      addToast(`${product.name} added to wishlist!`, "success");
+    }
   };
 
   if (loading) {
@@ -298,12 +346,12 @@ export default function ProductDetails() {
 
             <div className="flex items-center gap-4">
               <div className="text-3xl font-bold text-gray-800">
-                ${product.price}
+                €{product.price}
               </div>
               {product.originalprice &&
                 product.originalprice > product.price && (
                   <div className="text-lg text-gray-400 line-through">
-                    ${product.originalprice}
+                    €{product.originalprice}
                   </div>
                 )}
               {product.discount && (
@@ -390,20 +438,22 @@ export default function ProductDetails() {
               >
                 {isInStock ? "Add to Cart" : "Out of Stock"}
               </button>
-              <button className="border border-gray-300 p-3 rounded hover:bg-gray-100">
-                <svg
-                  className="w-5 h-5 text-gray-600"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
-                  />
-                </svg>
+              <button
+                onClick={handleWishlist}
+                className={`border p-3 rounded transition-all duration-300 ${
+                  isWishlisted
+                    ? "bg-red-500 border-red-500 text-white hover:bg-red-600"
+                    : "border-gray-300 text-gray-600 hover:bg-gray-100 hover:border-gray-400"
+                }`}
+                title={
+                  isWishlisted ? "Remove from wishlist" : "Add to wishlist"
+                }
+              >
+                <Heart
+                  className={`w-5 h-5 transition-all duration-200 ${
+                    isWishlisted ? "fill-current" : ""
+                  }`}
+                />
               </button>
             </div>
 
@@ -540,12 +590,12 @@ export default function ProductDetails() {
                     </h3>
                     <div className="flex items-center gap-2">
                       <span className="text-orange-500 font-bold">
-                        ${relatedProduct.price}
+                        €{relatedProduct.price}
                       </span>
                       {relatedProduct.originalprice &&
                         relatedProduct.originalprice > relatedProduct.price && (
                           <span className="text-gray-400 line-through text-sm">
-                            ${relatedProduct.originalprice}
+                            €{relatedProduct.originalprice}
                           </span>
                         )}
                     </div>

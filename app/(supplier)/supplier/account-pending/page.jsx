@@ -73,7 +73,7 @@ export default function VendorPendingApproval() {
             <strong>Email:</strong> {user.email}
           </p>
           <p className="text-sm text-gray-600 mb-1">
-            <strong>Account Type:</strong> Vendor/Supplier
+            <strong>Account Type:</strong> Supplier
           </p>
           <p className="text-sm text-gray-600">
             <strong>Application ID:</strong> {user.id.slice(0, 8)}...

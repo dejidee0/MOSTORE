@@ -139,6 +139,7 @@ const SupplierSignUpPage = () => {
         username: form.username,
         is_supplier: true,
         is_approved: false,
+        has_approved: false,
         is_active: true,
         role: "supplier",
         phone: form.phoneNumber,

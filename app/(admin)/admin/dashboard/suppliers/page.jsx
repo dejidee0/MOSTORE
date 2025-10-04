@@ -176,7 +176,7 @@ export default function SuppliersPage() {
       try {
         const { error } = await supabase
           .from("profiles")
-          .update({ is_approved: true })
+          .update({ is_approved: true, has_approved: true })
           .eq("id", vendorId);
 
         if (error) throw error;
@@ -184,7 +184,7 @@ export default function SuppliersPage() {
         setProfiles((prev) =>
           prev.map((profile) =>
             profile.id === vendorId
-              ? { ...profile, is_approved: true }
+              ? { ...profile, is_approved: true, has_approved: true }
               : profile
           )
         );

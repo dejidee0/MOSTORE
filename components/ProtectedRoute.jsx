@@ -7,66 +7,71 @@ import { supabase } from "@/lib/supabase-client";
 export default function ProtectedRoute({ allowedRoles, children }) {
   const router = useRouter();
   const { user, loading, isAuthenticated } = useUserStore();
+
   const [profileStatus, setProfileStatus] = useState({
     loading: true,
+    hasApproved: true,
     isActive: true,
     error: null,
   });
 
+  // Fetch profile status
   useEffect(() => {
     const checkProfileStatus = async () => {
-      if (!user?.id || loading) {
-        setProfileStatus({ loading: true, isActive: true, error: null });
-        return;
-      }
+      if (!user?.id || loading) return;
 
       try {
         const { data: profile, error } = await supabase
           .from("profiles")
-          .select("is_approved, role")
+          .select("is_approved, has_approved, role")
           .eq("id", user.id)
           .single();
 
-        if (error) {
+        if (error || !profile) {
           console.error("Error fetching profile status:", error);
           setProfileStatus({
             loading: false,
             isActive: false,
+            hasApproved: false,
             error: "Failed to verify account status",
           });
           return;
         }
 
-        const isActive = profile?.is_approved !== false;
+        const isActive = profile.is_approved !== false;
+
         setProfileStatus({
           loading: false,
-          isActive: isActive,
+          isActive,
+          hasApproved: profile.has_approved,
           error: null,
         });
 
-        if (!isActive) {
+        if (!isActive && profile.has_approved) {
           router.push("/supplier/account-disabled");
-          return;
+        } else if (!profile.has_approved && !isActive) {
+          router.push("/supplier/account-pending");
         }
-      } catch (error) {
-        console.error("Profile status check error:", error);
+      } catch (err) {
+        console.error("Profile status check error:", err);
         setProfileStatus({
           loading: false,
           isActive: false,
+          hasApproved: false,
           error: "Account verification failed",
         });
       }
     };
 
-    if (user && !loading) {
-      checkProfileStatus();
-    }
+    checkProfileStatus();
   }, [user, loading, router]);
 
+  // Subscribe to profile changes
+  // Subscribe to profile changes
   useEffect(() => {
     if (!user?.id) return;
 
-    const subscription = supabase
+    const channel = supabase
       .channel(`profile-status-${user.id}`)
       .on(
         "postgres_changes",
@@ -77,59 +82,76 @@ export default function ProtectedRoute({ allowedRoles, children }) {
           filter: `id=eq.${user.id}`,
         },
         (payload) => {
-          if (payload.new.is_approved === false) {
-            setProfileStatus((prev) => ({ ...prev, isActive: false }));
+          const updated = payload.new;
+          const isActive = updated.is_approved !== false;
+          const hasApproved = updated.has_approved;
+
+          setProfileStatus((prev) => ({
+            ...prev,
+            isActive,
+            hasApproved,
+          }));
+
+          if (!isActive && hasApproved) {
             router.push("/supplier/account-disabled");
-          } else if (payload.new.is_approved === true) {
-            setProfileStatus((prev) => ({ ...prev, isActive: true }));
+          } else if (!hasApproved && !isActive) {
+            router.push("/supplier/account-pending");
           }
-        }
+        } // ✅ This closing brace was missing
       )
       .subscribe();
 
     return () => {
-      subscription.unsubscribe();
+      supabase.removeChannel(channel);
     };
   }, [user?.id, router]);
 
+  // Navigation logic
   useEffect(() => {
-    if (!loading && !profileStatus.loading && isAuthenticated()) {
-      const role = user?.user_metadata?.role || "customer";
-      const pathname = window.location.pathname;
+    if (loading || profileStatus.loading || !isAuthenticated()) {
+      return;
+    }
 
-      // Store last dashboard subpage
-      if (pathname.startsWith("/admin/dashboard/")) {
-        localStorage.setItem("lastDashboardSubpage", pathname);
-      }
+    const role = user?.user_metadata?.role || "customer";
+    const pathname = window.location.pathname;
 
-      // Restore last subpage only for root dashboard
-      if (pathname === "/admin/dashboard") {
-        const lastSubpage = localStorage.getItem("lastDashboardSubpage");
-        if (lastSubpage && lastSubpage.startsWith("/admin/dashboard/")) {
-          router.replace(lastSubpage);
-          return;
-        }
-      }
+    // Save last visited dashboard subpage
+    if (pathname.startsWith("/admin/dashboard/")) {
+      localStorage.setItem("lastDashboardSubpage", pathname);
+    }
 
-      if (!isAuthenticated()) {
-        if (pathname !== "/sign-in") {
-          router.push("/sign-in");
-        }
-      } else if (!profileStatus.isActive) {
-        router.push("/supplier/account-disabled");
-      } else if (!allowedRoles.includes(role)) {
-        if (pathname !== "/") {
-          router.push("/");
-        }
+    // Restore last dashboard subpage
+    if (pathname === "/admin/dashboard") {
+      const lastSubpage = localStorage.getItem("lastDashboardSubpage");
+      if (lastSubpage && lastSubpage.startsWith("/admin/dashboard/")) {
+        router.replace(lastSubpage);
+        return;
       }
     }
-  }, [user, loading, isAuthenticated, allowedRoles, router, profileStatus]);
-  console.log(user, profileStatus);
+
+    // Route restrictions
+    if (!isAuthenticated()) {
+      if (pathname !== "/sign-in") {
+        router.push("/sign-in");
+      }
+    } else if (!profileStatus.isActive && profileStatus.hasApproved) {
+      router.push("/supplier/account-disabled");
+    } else if (!profileStatus.hasApproved && !profileStatus.isActive) {
+      router.push("/supplier/account-pending");
+    } else if (!allowedRoles.includes(role)) {
+      if (pathname !== "/") {
+        router.push("/");
+      }
+    }
+  }, [user, loading, isAuthenticated, profileStatus, allowedRoles, router]);
+
+  // Loading or unauthorized
   if (
     loading ||
     profileStatus.loading ||
     !isAuthenticated() ||
     !profileStatus.isActive ||
+    !profileStatus.hasApproved ||
     !allowedRoles.includes(user?.user_metadata?.role || "customer")
   ) {
     return (
@@ -139,9 +161,11 @@ export default function ProtectedRoute({ allowedRoles, children }) {
           {profileStatus.error && (
             <p className="text-red-600 mt-4">{profileStatus.error}</p>
           )}
-          {!profileStatus.isActive && !profileStatus.loading && (
-            <p className="text-red-600 mt-4">Account has been disabled</p>
-          )}
+          {!profileStatus.isActive &&
+            !profileStatus.hasApproved &&
+            !profileStatus.loading && (
+              <p className="text-red-600 mt-4">Account has been disabled</p>
+            )}
         </div>
       </div>
     );

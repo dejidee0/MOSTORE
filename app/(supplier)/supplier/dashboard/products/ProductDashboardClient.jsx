@@ -26,6 +26,7 @@ import useUserStore from "@/lib/stores/useUserStore";
 const ProductDashboardClient = ({ initialError }) => {
   const { user, setUser } = useUserStore();
   const [realUser, setRealUser] = useState();
+  const [userLoading, setUserLoading] = useState(true);
   const [prodUpload, setProdUpload] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [editingProduct, setEditingProduct] = useState(null);
@@ -40,13 +41,13 @@ const ProductDashboardClient = ({ initialError }) => {
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
-
   const [itemsPerPage, setItemsPerPage] = useState(10);
 
   useEffect(() => {
     const fetchUserInfo = async () => {
       if (user && user?.id) {
         try {
+          setUserLoading(true);
           console.log("fetching...");
           const { data, error } = await supabase
             .from("profiles")
@@ -57,6 +58,7 @@ const ProductDashboardClient = ({ initialError }) => {
           if (error) {
             console.error("Error fetching user session:", error);
             setError("Failed to authenticate user");
+            setUserLoading(false);
             return;
           }
 
@@ -69,7 +71,11 @@ const ProductDashboardClient = ({ initialError }) => {
         } catch (err) {
           console.error("Client-side auth error:", err);
           setError("Failed to authenticate user");
+        } finally {
+          setUserLoading(false);
         }
+      } else if (!user) {
+        setUserLoading(false);
       }
     };
 
@@ -261,7 +267,6 @@ const ProductDashboardClient = ({ initialError }) => {
     setEditingProduct(product);
     setProdUpload(true);
   };
-  console.log(`user is ${realUser}`);
 
   const ProductDetailModal = ({ product, isOpen, onClose }) => {
     if (!isOpen || !product) return null;
@@ -551,6 +556,18 @@ const ProductDashboardClient = ({ initialError }) => {
       </div>
     );
   };
+
+  // Show loading state while fetching user data
+  if (userLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-orange-50 to-orange-100 flex items-center justify-center p-4">
+        <div className="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   // Access denied UI for unapproved suppliers or unauthenticated users
   if (!realUser?.is_approved) {

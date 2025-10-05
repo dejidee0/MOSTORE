@@ -15,6 +15,9 @@ export default function ProtectedRoute({ allowedRoles, children }) {
     error: null,
   });
 
+  const [isRedirecting, setIsRedirecting] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
+
   // Fetch profile status
   useEffect(() => {
     const checkProfileStatus = async () => {
@@ -35,6 +38,7 @@ export default function ProtectedRoute({ allowedRoles, children }) {
             hasApproved: false,
             error: "Failed to verify account status",
           });
+          setIsInitialized(true);
           return;
         }
 
@@ -48,9 +52,13 @@ export default function ProtectedRoute({ allowedRoles, children }) {
         });
 
         if (!isActive && profile.has_approved) {
+          setIsRedirecting(true);
           router.push("/supplier/account-disabled");
         } else if (!profile.has_approved && !isActive) {
+          setIsRedirecting(true);
           router.push("/supplier/account-pending");
+        } else {
+          setIsInitialized(true);
         }
       } catch (err) {
         console.error("Profile status check error:", err);
@@ -60,13 +68,13 @@ export default function ProtectedRoute({ allowedRoles, children }) {
           hasApproved: false,
           error: "Account verification failed",
         });
+        setIsInitialized(true);
       }
     };
 
     checkProfileStatus();
   }, [user, loading, router]);
 
-  // Subscribe to profile changes
   // Subscribe to profile changes
   useEffect(() => {
     if (!user?.id) return;
@@ -93,11 +101,13 @@ export default function ProtectedRoute({ allowedRoles, children }) {
           }));
 
           if (!isActive && hasApproved) {
+            setIsRedirecting(true);
             router.push("/supplier/account-disabled");
           } else if (!hasApproved && !isActive) {
+            setIsRedirecting(true);
             router.push("/supplier/account-pending");
           }
-        } // ✅ This closing brace was missing
+        }
       )
       .subscribe();
 
@@ -132,26 +142,44 @@ export default function ProtectedRoute({ allowedRoles, children }) {
     // Route restrictions
     if (!isAuthenticated()) {
       if (pathname !== "/sign-in") {
+        setIsRedirecting(true);
         router.push("/sign-in");
       }
     } else if (!profileStatus.isActive && profileStatus.hasApproved) {
-      router.push("/supplier/account-disabled");
+      if (pathname !== "/supplier/account-disabled") {
+        setIsRedirecting(true);
+        router.push("/supplier/account-disabled");
+      }
     } else if (!profileStatus.hasApproved && !profileStatus.isActive) {
-      router.push("/supplier/account-pending");
+      if (pathname !== "/supplier/account-pending") {
+        setIsRedirecting(true);
+        router.push("/supplier/account-pending");
+      }
     } else if (!allowedRoles.includes(role)) {
       if (pathname !== "/") {
+        setIsRedirecting(true);
         router.push("/");
       }
     }
   }, [user, loading, isAuthenticated, profileStatus, allowedRoles, router]);
 
-  // Loading or unauthorized
+  // Check if user should have access
+  const hasAccess = () => {
+    if (!isAuthenticated() || !user) return false;
+    if (!profileStatus.isActive) return false;
+    if (!profileStatus.hasApproved) return false;
+
+    const role = user?.user_metadata?.role || "customer";
+    return allowedRoles.includes(role);
+  };
+
+  // Show loading state until fully initialized and checks pass
   if (
     loading ||
     profileStatus.loading ||
-    !isAuthenticated() ||
-    !profileStatus.isActive ||
-    !allowedRoles.includes(user?.user_metadata?.role || "customer")
+    isRedirecting ||
+    !isInitialized ||
+    !hasAccess()
   ) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -160,11 +188,6 @@ export default function ProtectedRoute({ allowedRoles, children }) {
           {profileStatus.error && (
             <p className="text-red-600 mt-4">{profileStatus.error}</p>
           )}
-          {!profileStatus.isActive &&
-            !profileStatus.hasApproved &&
-            !profileStatus.loading && (
-              <p className="text-red-600 mt-4">Account has been disabled</p>
-            )}
         </div>
       </div>
     );

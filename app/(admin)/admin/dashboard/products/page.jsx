@@ -168,9 +168,9 @@ const ProductDashboard = () => {
   );
 
   const formatPrice = (price) => {
-    return new Intl.NumberFormat("en-US", {
+    return new Intl.NumberFormat("fr-FR", {
       style: "currency",
-      currency: "GBP",
+      currency: "EUR",
     }).format(price);
   };
 

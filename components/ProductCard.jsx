@@ -25,13 +25,13 @@ export const ProductCard = ({ product }) => {
     product?.originalprice != null
       ? (product.originalprice * (1 - (product.discount || 0) / 100)).toFixed(2)
       : product?.price != null
-        ? product.price.toFixed(2)
-        : "0.00";
+      ? product.price.toFixed(2)
+      : "0.00";
 
   const formatPrice = (price) =>
-    new Intl.NumberFormat("en-US", {
+    new Intl.NumberFormat("fr-FR", {
       style: "currency",
-      currency: "USD",
+      currency: "EUR",
       minimumFractionDigits: 2,
     }).format(price);
 
@@ -268,8 +268,8 @@ export const ProductCard = ({ product }) => {
                 product.stock_quantity === 0
                   ? "bg-gray-300 text-gray-500 cursor-not-allowed"
                   : inCart
-                    ? "bg-green-500 text-white hover:bg-green-600"
-                    : "bg-orange-500 text-white hover:bg-orange-600"
+                  ? "bg-green-500 text-white hover:bg-green-600"
+                  : "bg-orange-500 text-white hover:bg-orange-600"
               }`}
         >
           {isAddingToCart ? (
@@ -280,10 +280,10 @@ export const ProductCard = ({ product }) => {
           {product.stock_quantity === 0
             ? "Out of Stock"
             : isAddingToCart
-              ? "Adding..."
-              : inCart
-                ? `In Cart (${cartQuantity})`
-                : "Add to Cart"}
+            ? "Adding..."
+            : inCart
+            ? `In Cart (${cartQuantity})`
+            : "Add to Cart"}
         </motion.button>
       </div>
     </motion.div>

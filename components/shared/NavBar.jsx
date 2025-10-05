@@ -588,7 +588,7 @@ const NavBar = () => {
                         </div>
                       </div>
                       <div className="py-2">
-                        {role !== "admin" && (
+                        {role !== "admin" && role !== "supplier" && (
                           <MenuButton
                             onClick={navigateToOrders}
                             icon={<Package className="w-5 h-5" />}
@@ -599,10 +599,10 @@ const NavBar = () => {
                           <MenuButton
                             onClick={() => navigateToDashboard(role)}
                             icon={<Home className="w-5 h-5" />}
-                            label="My Dashboard"
+                            label="My Account"
                           />
                         )}
-                        {(role !== "supplier" || role !== "admin") && (
+                        {role !== "supplier" && role !== "admin" && (
                           <MenuButton
                             onClick={() => router.push("/my-account")}
                             icon={<Home className="w-5 h-5" />}

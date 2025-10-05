@@ -181,7 +181,7 @@ const MyProfile = () => {
                   </div>
                   <div>
                     <label className="block text-sm font-medium mb-1">
-                      Username
+                      Store Name
                     </label>
                     <input
                       type="text"

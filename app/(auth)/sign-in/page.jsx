@@ -107,33 +107,6 @@ const SignInPage = () => {
     }
   };
 
-  const handleForgotPassword = async () => {
-    if (!form.email) {
-      setError("Please enter your email address first.");
-      return;
-    }
-
-    if (isSubmitting || loading) return;
-
-    setError("");
-    setIsSubmitting(true);
-
-    try {
-      const { error: resetError } = await resetPassword(form.email);
-
-      if (resetError) {
-        setError(resetError.message || "Failed to send password reset email.");
-      } else {
-        setError("Password reset email sent! Check your inbox.");
-      }
-    } catch (err) {
-      console.error("Password reset error:", err);
-      setError("Failed to send password reset email.");
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
   // Show loading spinner while initializing
   if (!initialized) {
     return (

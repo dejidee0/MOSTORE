@@ -232,6 +232,7 @@ export default function CheckoutContent() {
           quantity: item.quantity,
           selectedColor: item.selectedColor || "",
           selectedSize: item.selectedSize || "",
+          vendor_id: item.supplier_id || null,
           image: item.image || "",
         })),
         pricing: {

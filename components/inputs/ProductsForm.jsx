@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/lib/supabase-client";
 import {
   Upload,
@@ -10,10 +10,13 @@ import {
   Check,
   X as XIcon,
   Package,
+  Save,
 } from "lucide-react";
 import { v4 as uuidv4 } from "uuid";
 
 export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
+  const AUTOSAVE_KEY = "product_form_autosave";
+
   const [formData, setFormData] = useState({
     name: "",
     slug: "",
@@ -25,7 +28,7 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
     brand: "",
     stock_quantity: "",
     category_id: "",
-    condition: "new", // New field with default value
+    condition: "new",
     colors: [],
     sizes: [],
     discount: "",
@@ -48,6 +51,94 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
   const [success, setSuccess] = useState("");
   const [isEditMode, setIsEditMode] = useState(false);
   const [authUser, setAuthUser] = useState(user);
+  const [lastSaved, setLastSaved] = useState(null);
+
+  // Autosave form data to localStorage
+  const saveToLocalStorage = useCallback(() => {
+    if (!isEditMode) {
+      // Only autosave for new products, not edits
+      const dataToSave = {
+        formData,
+        images: images.map((img) => ({
+          id: img.id,
+          preview: img.preview,
+          name: img.name,
+        })),
+        timestamp: new Date().toISOString(),
+      };
+      localStorage.setItem(AUTOSAVE_KEY, JSON.stringify(dataToSave));
+      setLastSaved(new Date());
+    }
+  }, [formData, images, isEditMode]);
+
+  // Load from localStorage on mount
+  useEffect(() => {
+    if (!productToEdit) {
+      const saved = localStorage.getItem(AUTOSAVE_KEY);
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          const savedTime = new Date(parsed.timestamp);
+          const hoursSinceLastSave =
+            (new Date() - savedTime) / (1000 * 60 * 60);
+
+          // Only restore if less than 24 hours old
+          if (hoursSinceLastSave < 24) {
+            setFormData(parsed.formData);
+            // Note: We can't restore actual file objects, user will need to re-upload
+            if (parsed.images.length > 0) {
+              setSuccess(
+                `Draft restored from ${savedTime.toLocaleString()}. Please re-upload images.`
+              );
+            }
+            setLastSaved(savedTime);
+          } else {
+            // Clear old autosave
+            localStorage.removeItem(AUTOSAVE_KEY);
+          }
+        } catch (err) {
+          console.error("Error loading autosave:", err);
+          localStorage.removeItem(AUTOSAVE_KEY);
+        }
+      }
+    }
+  }, [productToEdit]);
+
+  // Autosave on form changes (debounced)
+  useEffect(() => {
+    if (!isEditMode && isOpen) {
+      const timer = setTimeout(() => {
+        saveToLocalStorage();
+      }, 2000); // Save 2 seconds after last change
+
+      return () => clearTimeout(timer);
+    }
+  }, [formData, images, isEditMode, isOpen, saveToLocalStorage]);
+
+  // Save on visibility change (tab switch)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.hidden && !isEditMode && isOpen) {
+        saveToLocalStorage();
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () =>
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+  }, [saveToLocalStorage, isEditMode, isOpen]);
+
+  // Save on beforeunload (browser close/refresh)
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      if (!isEditMode && isOpen) {
+        saveToLocalStorage();
+      }
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [saveToLocalStorage, isEditMode, isOpen]);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -113,7 +204,7 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
         brand: productToEdit.brand || "",
         stock_quantity: productToEdit.stock_quantity.toString(),
         category_id: productToEdit.category_id || "",
-        condition: productToEdit.condition || "new", // Load condition from product
+        condition: productToEdit.condition || "new",
         colors: productToEdit.colors || [],
         sizes: productToEdit.sizes || [],
         discount: productToEdit.discount?.toString() || "",
@@ -124,10 +215,12 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
       setExistingImages(productToEdit.images || []);
     } else {
       setIsEditMode(false);
-      resetForm();
-      generateRandomSKU().then((sku) => {
-        setFormData((prev) => ({ ...prev, sku }));
-      });
+      if (!localStorage.getItem(AUTOSAVE_KEY)) {
+        resetForm();
+        generateRandomSKU().then((sku) => {
+          setFormData((prev) => ({ ...prev, sku }));
+        });
+      }
     }
   }, [productToEdit]);
 
@@ -433,7 +526,7 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
         brand: formData.brand || null,
         stock_quantity: Number(formData.stock_quantity),
         category_id: formData.category_id || null,
-        condition: formData.condition, // Include condition in product data
+        condition: formData.condition,
         images: allImages,
         colors: formData.colors,
         sizes: formData.sizes,
@@ -469,6 +562,9 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
         result = data;
       }
 
+      // Clear autosave on successful submission
+      localStorage.removeItem(AUTOSAVE_KEY);
+
       setSuccess(`Product ${isEditMode ? "updated" : "added"} successfully!`);
       setTimeout(() => {
         onClose();
@@ -496,7 +592,7 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
       brand: "",
       stock_quantity: "",
       category_id: "",
-      condition: "new", // Reset to default
+      condition: "new",
       colors: [],
       sizes: [],
       discount: "",
@@ -511,9 +607,18 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
     setSizeInput("");
     setError("");
     setSuccess("");
+    setLastSaved(null);
     generateRandomSKU().then((sku) => {
       setFormData((prev) => ({ ...prev, sku }));
     });
+  };
+
+  const clearAutosave = () => {
+    if (confirm("Are you sure you want to discard the saved draft?")) {
+      localStorage.removeItem(AUTOSAVE_KEY);
+      resetForm();
+      setSuccess("Draft cleared successfully!");
+    }
   };
 
   if (!isOpen) return null;
@@ -537,6 +642,12 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
                     ? "Update this product in your catalog"
                     : "Create a new product for your catalog"}
                 </p>
+                {lastSaved && !isEditMode && (
+                  <p className="text-orange-200 text-sm mt-2 flex items-center gap-1">
+                    <Save size={14} />
+                    Last saved: {lastSaved.toLocaleTimeString()}
+                  </p>
+                )}
               </div>
               <button
                 onClick={onClose}
@@ -562,6 +673,24 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
             {success && (
               <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-md">
                 {success}
+              </div>
+            )}
+
+            {!isEditMode && lastSaved && (
+              <div className="bg-blue-50 border border-blue-200 px-4 py-3 rounded-md flex items-center justify-between">
+                <div className="flex items-center gap-2 text-blue-700">
+                  <Save size={16} />
+                  <span className="text-sm">
+                    Draft auto-saved at {lastSaved.toLocaleTimeString()}
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={clearAutosave}
+                  className="text-sm text-blue-600 hover:text-blue-800 underline"
+                >
+                  Clear Draft
+                </button>
               </div>
             )}
 
@@ -633,7 +762,6 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
               </div>
             </div>
 
-            {/* Product Condition - NEW FIELD */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Product Condition <span className="text-orange-500">*</span>
@@ -709,6 +837,14 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
                     </option>
                   ))}
                 </select>
+                <button
+                  type="button"
+                  onClick={() => setShowNewCategoryInput(!showNewCategoryInput)}
+                  className="px-4 py-2 bg-orange-500 text-white rounded-md hover:bg-orange-600 transition-colors disabled:opacity-50"
+                  disabled={isLoading}
+                >
+                  <Plus size={20} />
+                </button>
               </div>
 
               {showNewCategoryInput && (

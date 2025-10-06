@@ -12,6 +12,7 @@ const MyAccountPage = () => {
   // Profile state
   const [profile, setProfile] = useState({
     fullName: "",
+    username: "",
     email: "",
     phone: "",
     gender: "",
@@ -50,6 +51,7 @@ const MyAccountPage = () => {
         if (data) {
           setProfile({
             fullName: data.full_name || "",
+            username: data.username || "",
             email: user.email || data.email || "",
             phone: data.phone || "",
             gender: data.gender || "",
@@ -103,6 +105,7 @@ const MyAccountPage = () => {
       if (data) {
         setProfile({
           fullName: data.full_name || "",
+          username: data.username || "",
           email: user.email || data.email || "",
           phone: data.phone || "",
           gender: data.gender || "",
@@ -217,6 +220,9 @@ const MyAccountPage = () => {
             <div>
               <p className="font-medium text-gray-900">
                 {profile?.fullName || "John Doe"}
+              </p>
+              <p className="font-medium text-gray-900">
+                {profile?.username || "Mostore"}
               </p>
               <div className="flex items-center gap-2 mt-1">
                 <svg

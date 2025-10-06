@@ -6,7 +6,6 @@ import AuthProvider from "@/components/AuthProvider";
 import { CartProvider } from "@/lib/cart";
 import NavBar from "@/components/shared/NavBar";
 
-// Initialize the Raleway font with desired properties
 const raleway = Raleway({
   subsets: ["latin"],
   variable: "--font-raleway",

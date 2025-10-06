@@ -20,7 +20,38 @@ import {
   ChevronRight,
   X,
   ImageIcon,
+  Check,
+  Copy,
 } from "lucide-react";
+
+// Toast Notification Component
+const Toast = memo(({ message, type = "success", onClose }) => (
+  <motion.div
+    initial={{ opacity: 0, y: 50 }}
+    animate={{ opacity: 1, y: 0 }}
+    exit={{ opacity: 0, y: 50 }}
+    className="fixed bottom-4 right-4 z-50"
+  >
+    <div
+      className={`flex items-center gap-3 px-6 py-4 rounded-xl shadow-lg ${
+        type === "success"
+          ? "bg-green-500 text-white"
+          : type === "error"
+          ? "bg-red-500 text-white"
+          : "bg-gray-800 text-white"
+      }`}
+    >
+      {type === "success" && <Check className="w-5 h-5" />}
+      {type === "error" && <X className="w-5 h-5" />}
+      {type === "info" && <Copy className="w-5 h-5" />}
+      <span className="font-medium">{message}</span>
+      <button onClick={onClose} className="ml-2 hover:opacity-80">
+        <X className="w-4 h-4" />
+      </button>
+    </div>
+  </motion.div>
+));
+Toast.displayName = "Toast";
 
 // Image Gallery Component
 const ImageGallery = memo(({ images }) => {
@@ -316,8 +347,14 @@ export default function BlogPostDetail({ post }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [user, setUser] = useState(null);
   const [isInitialized, setIsInitialized] = useState(false);
+  const [toast, setToast] = useState(null);
 
   const postId = useMemo(() => post?.id, [post?.id]);
+
+  const showToast = useCallback((message, type = "success") => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 3000);
+  }, []);
 
   useEffect(() => {
     let mounted = true;
@@ -467,13 +504,17 @@ export default function BlogPostDetail({ post }) {
         setNewComment("");
         setReplyingTo(null);
         fetchComments();
+        showToast("Comment posted successfully!", "success");
+      } else {
+        showToast("Failed to post comment", "error");
       }
     } catch (error) {
       console.error("Error submitting comment:", error);
+      showToast("Failed to post comment", "error");
     } finally {
       setIsSubmitting(false);
     }
-  }, [newComment, postId, replyingTo, fetchComments]);
+  }, [newComment, postId, replyingTo, fetchComments, showToast]);
 
   const handleCommentLike = useCallback(
     async (commentId) => {
@@ -512,23 +553,65 @@ export default function BlogPostDetail({ post }) {
   }, []);
 
   const handleShare = useCallback(async () => {
-    if (navigator.share) {
+    if (!post?.title) {
+      showToast("Unable to share this post", "error");
+      return;
+    }
+
+    const shareData = {
+      title: post.title,
+      text: post.excerpt || post.title,
+      url: typeof window !== "undefined" ? window.location.href : "",
+    };
+
+    // Check if Web Share API is supported
+    if (typeof navigator !== "undefined" && navigator.share) {
       try {
-        await navigator.share({
-          title: post.title,
-          text: post.excerpt || post.title,
-          url: window.location.href,
-        });
+        await navigator.share(shareData);
+        showToast("Post shared successfully!", "success");
       } catch (error) {
-        if (error.name !== "AbortError") {
-          console.error("Error sharing:", error);
+        // User cancelled or share failed
+        if (error.name === "AbortError") {
+          // User cancelled - don't show error
+          return;
         }
+        console.error("Error sharing:", error);
+        // Fall back to clipboard
+        copyToClipboard(shareData.url);
       }
     } else {
-      navigator.clipboard.writeText(window.location.href);
-      alert("Link copied to clipboard!");
+      // Fallback to copying link
+      copyToClipboard(shareData.url);
     }
-  }, [post]);
+  }, [post, showToast]);
+
+  const copyToClipboard = async (text) => {
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(text);
+        showToast("Link copied to clipboard!", "info");
+      } else {
+        // Fallback for older browsers
+        const textArea = document.createElement("textarea");
+        textArea.value = text;
+        textArea.style.position = "fixed";
+        textArea.style.left = "-999999px";
+        document.body.appendChild(textArea);
+        textArea.select();
+        try {
+          document.execCommand("copy");
+          showToast("Link copied to clipboard!", "info");
+        } catch (err) {
+          console.error("Fallback copy failed:", err);
+          showToast("Failed to copy link", "error");
+        }
+        document.body.removeChild(textArea);
+      }
+    } catch (error) {
+      console.error("Error copying to clipboard:", error);
+      showToast("Failed to copy link", "error");
+    }
+  };
 
   useEffect(() => {
     if (!isInitialized || !postId) return;
@@ -617,10 +700,6 @@ export default function BlogPostDetail({ post }) {
                 {post.read_time} min read
               </div>
             )}
-            <div className="flex items-center gap-1">
-              <Eye className="w-4 h-4" />
-              {post.views_count || 0} views
-            </div>
           </div>
 
           <div className="flex items-center gap-3 pb-6 border-b border-gray-200">
@@ -761,6 +840,17 @@ export default function BlogPostDetail({ post }) {
           </div>
         </motion.div>
       </div>
+
+      {/* Toast Notifications */}
+      <AnimatePresence>
+        {toast && (
+          <Toast
+            message={toast.message}
+            type={toast.type}
+            onClose={() => setToast(null)}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }

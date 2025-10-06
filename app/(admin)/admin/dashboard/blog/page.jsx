@@ -944,11 +944,7 @@ export default function BlogAdmin() {
             value={stats.draft}
             icon={<EyeOff className="w-5 h-5 text-yellow-600" />}
           />
-          <StatCard
-            label="Views"
-            value={stats.totalViews.toLocaleString()}
-            icon={<TrendingUp className="w-5 h-5 text-blue-600" />}
-          />
+
           <StatCard
             label="Likes"
             value={stats.totalLikes}
@@ -1487,10 +1483,6 @@ const PostRow = React.memo(({ post, onEdit, onDelete, prettyDate }) => {
       </td>
       <td className="p-4">
         <div className="flex items-center gap-4 text-sm text-gray-600">
-          <div className="flex items-center gap-1">
-            <Eye className="w-4 h-4" />
-            {post.views_count || 0}
-          </div>
           <div className="flex items-center gap-1">
             <Heart className="w-4 h-4" />
             {post.likes_count || 0}

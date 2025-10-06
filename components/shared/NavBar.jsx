@@ -167,9 +167,7 @@ const NavBar = () => {
   const navigateToDashboard = useCallback(
     (role) => {
       setIsProfileDropdownOpen(false);
-      router.push(
-        `/${role}/dashboard${role === "supplier" ? "/products" : ""}`
-      );
+      router.push(`/${role}/dashboard${role === "supplier" ? "" : ""}`);
     },
     [router]
   );

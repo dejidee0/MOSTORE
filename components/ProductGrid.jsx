@@ -15,7 +15,7 @@ export default function ProductGrid() {
       try {
         setLoading(true);
         setError(null);
-        const featuredProducts = await getFeaturedProducts(12); // Increased for better grid
+        const featuredProducts = await getFeaturedProducts(8); // Increased for better grid
         setProducts(featuredProducts || []);
       } catch (err) {
         console.error("Error loading products:", err);

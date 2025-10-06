@@ -13,6 +13,8 @@ export default function CustomersPage() {
   const [selectedCustomer, setSelectedCustomer] = useState(null);
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [customerToDelete, setCustomerToDelete] = useState(null);
 
   useEffect(() => {
     const fetchCustomers = async () => {
@@ -87,6 +89,56 @@ export default function CustomersPage() {
     } catch (error) {
       console.error("Error updating customer status:", error);
       alert("Error updating customer status. Please try again.");
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const openDeleteModal = (customer) => {
+    setCustomerToDelete(customer);
+    setShowDeleteModal(true);
+  };
+
+  const closeDeleteModal = () => {
+    setShowDeleteModal(false);
+    setCustomerToDelete(null);
+  };
+
+  const deleteCustomer = async () => {
+    if (!customerToDelete) return;
+
+    setActionLoading(true);
+    try {
+      // First, delete all orders associated with the customer
+      const { error: ordersError } = await supabase
+        .from("orders")
+        .delete()
+        .eq("customer_id", customerToDelete.id);
+
+      if (ordersError) throw ordersError;
+
+      // Then delete the customer profile
+      const { error: profileError } = await supabase
+        .from("profiles")
+        .delete()
+        .eq("id", customerToDelete.id);
+
+      if (profileError) throw profileError;
+
+      // Update local state
+      setCustomers(customers.filter((c) => c.id !== customerToDelete.id));
+
+      // Close modals
+      closeDeleteModal();
+      if (selectedCustomer?.id === customerToDelete.id) {
+        setShowProfileModal(false);
+        setSelectedCustomer(null);
+      }
+
+      alert("Customer deleted successfully!");
+    } catch (error) {
+      console.error("Error deleting customer:", error);
+      alert("Error deleting customer. Please try again.");
     } finally {
       setActionLoading(false);
     }
@@ -252,12 +304,74 @@ export default function CustomersPage() {
                     ? "Enable Account"
                     : "Disable Account"}
                 </button>
+
+                <button
+                  onClick={() => openDeleteModal(customer)}
+                  disabled={actionLoading}
+                  className="w-full py-2 rounded-lg font-medium transition-colors bg-red-600 hover:bg-red-700 text-white disabled:opacity-50"
+                >
+                  Delete Customer
+                </button>
               </div>
             </div>
           ))}
         </div>
       )}
 
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal && customerToDelete && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 border-2 border-red-200">
+            <div className="flex items-center justify-center w-16 h-16 mx-auto mb-4 bg-red-100 rounded-full">
+              <svg
+                className="w-8 h-8 text-red-600"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                />
+              </svg>
+            </div>
+
+            <h3 className="text-xl font-bold text-gray-900 text-center mb-2">
+              Delete Customer?
+            </h3>
+
+            <p className="text-gray-600 text-center mb-6">
+              Are you sure you want to delete{" "}
+              <span className="font-semibold text-gray-900">
+                {customerToDelete.full_name || customerToDelete.email}
+              </span>
+              ? This action cannot be undone and will also delete all associated
+              orders ({ordersCount[customerToDelete.id] || 0} orders).
+            </p>
+
+            <div className="flex gap-3">
+              <button
+                onClick={closeDeleteModal}
+                disabled={actionLoading}
+                className="flex-1 px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg font-medium transition-colors disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={deleteCustomer}
+                disabled={actionLoading}
+                className="flex-1 px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-colors disabled:opacity-50"
+              >
+                {actionLoading ? "Deleting..." : "Delete"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Profile Modal */}
       {showProfileModal && selectedCustomer && (
         <div className="fixed inset-0 bg-white/40 backdrop-blur-md flex items-center justify-center p-4 z-50">
           <div className="bg-white/90 backdrop-blur-xl shadow-2xl rounded-2xl border border-white/50 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
@@ -426,8 +540,8 @@ export default function CustomersPage() {
                   </p>
                 </div>
               </div>
-              <div className="mt-6 flex justify-between">
-                <div className="flex gap-3">
+              <div className="mt-6 flex justify-between flex-wrap gap-3">
+                <div className="flex gap-3 flex-wrap">
                   <button
                     onClick={() => viewOrderHistory(selectedCustomer.id)}
                     className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-medium transition-colors"
@@ -451,6 +565,13 @@ export default function CustomersPage() {
                     {selectedCustomer.is_active === false
                       ? "Enable Account"
                       : "Disable Account"}
+                  </button>
+                  <button
+                    onClick={() => openDeleteModal(selectedCustomer)}
+                    disabled={actionLoading}
+                    className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-colors disabled:opacity-50"
+                  >
+                    Delete Customer
                   </button>
                 </div>
                 <button

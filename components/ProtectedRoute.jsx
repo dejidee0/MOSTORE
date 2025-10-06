@@ -125,20 +125,6 @@ export default function ProtectedRoute({ allowedRoles, children }) {
     const role = user?.user_metadata?.role || "customer";
     const pathname = window.location.pathname;
 
-    // Save last visited dashboard subpage
-    if (pathname.startsWith("/admin/dashboard/")) {
-      localStorage.setItem("lastDashboardSubpage", pathname);
-    }
-
-    // Restore last dashboard subpage
-    if (pathname === "/admin/dashboard") {
-      const lastSubpage = localStorage.getItem("lastDashboardSubpage");
-      if (lastSubpage && lastSubpage.startsWith("/admin/dashboard/")) {
-        router.replace(lastSubpage);
-        return;
-      }
-    }
-
     // Route restrictions
     if (!isAuthenticated()) {
       if (pathname !== "/sign-in") {

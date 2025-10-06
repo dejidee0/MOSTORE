@@ -15,12 +15,12 @@ const raleway = Raleway({
 
 export const metadata = {
   title:
-    "MOStore | Online Shopping Store That is More Than a Store That Gives You More Value, More Quality, More Choice, More Varieties, Get More Out of Every Store",
-  description: `Online Shopping Built For Used and New For Household Equipments, Electronics, Phones, Computers, Autoparts And Accessories, Automobiles And More..`,
+    "MOStore | Online Shopping Store That is More Than a Store, That Gives You More Value, More Quality, More Choice, More Varieties, Get More Out of Every Store",
+  description: `Online Shopping Store Built For Used and New Household Appliances, Autoparts, Electronics, Phones, Computers, Automobiles And More..`,
   openGraph: {
     title:
-      "MOStore | Online Shopping Store That is More Than a Store That Gives You More Value, More Quality, More Choice, More Varieties, Get More Out of Every Store",
-    description: `Online Shopping Built For Used and New For Household Equipments, Electronics, Phones, Computers, Autoparts And Accessories, Automobiles And More..`,
+      "MOStore | Online Shopping Store That is More Than a Store, That Gives You More Value, More Quality, More Choice, More Varieties, Get More Out of Every Store",
+    description: `Online Shopping Store Built For Used and New Household Appliances, Autoparts, Electronics, Phones, Computers, Automobiles And More..`,
     images: [
       {
         url: "/logo-black.png",

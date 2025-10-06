@@ -74,19 +74,9 @@ const WelcomePage = () => {
                 Welcome back,
               </motion.h1>
               <p className="text-3xl md:text-4xl font-semibold bg-gradient-to-r from-gray-900 to-orange-600 bg-clip-text text-transparent">
-                {fullName}
+                {fullName}!
               </p>
             </div>
-
-            <motion.button
-              onClick={handleLogout}
-              className="flex items-center gap-2 px-4 py-2 text-sm text-gray-600 hover:text-orange-600 hover:bg-orange-50 rounded-lg transition-all duration-200"
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-            >
-              <LogOut size={16} />
-              <span className="hidden sm:inline">Logout</span>
-            </motion.button>
           </div>
         </div>
 
@@ -104,7 +94,7 @@ const WelcomePage = () => {
                 <Calendar size={20} className="text-orange-600" />
               </div>
               <h2 className="text-lg font-medium text-gray-900">
-                Account Details
+                Account Overview
               </h2>
             </div>
 

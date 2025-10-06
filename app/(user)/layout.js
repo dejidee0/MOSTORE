@@ -24,7 +24,7 @@ export const metadata = {
     Get more out of every store - Online Shopping Built For Used and New Household Equipment, Electronics, Phones, Computers, Autoparts, Accessories, Automobiles And More.`,
     images: [
       {
-        url: "/logo.png",
+        url: "/logo-black.png",
         width: 1200,
         height: 630,
         alt: "MOSTORE Logo",

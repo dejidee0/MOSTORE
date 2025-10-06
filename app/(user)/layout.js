@@ -6,6 +6,7 @@ import AuthProvider from "@/components/AuthProvider";
 import { CartProvider } from "@/lib/cart";
 import NavBar from "@/components/shared/NavBar";
 
+// Initialize the Raleway font with desired properties
 const raleway = Raleway({
   subsets: ["latin"],
   variable: "--font-raleway",
@@ -15,10 +16,12 @@ const raleway = Raleway({
 
 export const metadata = {
   title: "MOSTORE",
-  description: "Undergoing construction...",
+  description: `MOStore | Online Shopping Store That Gives You More Value, More Quality, More Choice, More Variety And More More Than a Store. 
+  Get more out of every store - Online Shopping Built For Used and New Household Equipment, Electronics, Phones, Computers, Autoparts, Accessories, Automobiles And More.`,
   openGraph: {
     title: "MOSTORE",
-    description: "Undergoing construction...",
+    description: `MOStore | Online Shopping Store That Gives You More Value, More Quality, More Choice, More Variety And More More Than a Store. 
+    Get more out of every store - Online Shopping Built For Used and New Household Equipment, Electronics, Phones, Computers, Autoparts, Accessories, Automobiles And More.`,
     images: [
       {
         url: "/logo.png",
@@ -43,7 +46,6 @@ export default function UserLayout({ children }) {
             <ToastProvider>
               <NavBar />
               <main className="flex-1">{children}</main>
-
               <Footer />
             </ToastProvider>
           </CartProvider>

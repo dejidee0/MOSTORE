@@ -23,7 +23,7 @@ export const metadata = {
     description: `Online Shopping Store Built For Used and New Household Appliances, Autoparts, Electronics, Phones, Computers, Automobiles And More..`,
     images: [
       {
-        url: "/logo-black.png",
+        url: "/favicon.png",
         width: 1200,
         height: 630,
         alt: "MOSTORE Logo",

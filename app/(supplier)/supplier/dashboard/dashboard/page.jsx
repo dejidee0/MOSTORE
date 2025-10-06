@@ -74,7 +74,7 @@ const WelcomePage = () => {
                 Welcome back,
               </motion.h1>
               <p className="text-3xl md:text-4xl font-semibold bg-gradient-to-r from-gray-900 to-orange-600 bg-clip-text text-transparent">
-                {fullName}
+                {fullName}!
               </p>
             </div>
           </div>

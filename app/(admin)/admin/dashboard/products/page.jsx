@@ -40,8 +40,18 @@ const ProductDashboard = () => {
 
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
+  useEffect(() => {
+    if (user?.id) {
+      fetchProducts();
+    }
+  }, [user?.id]); // Add user.id as dependency
 
   const fetchProducts = async () => {
+    if (!user?.id) {
+      setLoading(false);
+      return;
+    }
+
     try {
       setLoading(true);
       setError(null);
@@ -50,12 +60,12 @@ const ProductDashboard = () => {
         .from("products")
         .select(
           `
-          *,
-          categories (
-            id,
-            name
-          )
-        `
+        *,
+        categories (
+          id,
+          name
+        )
+      `
         )
         .eq("supplier_id", user.id)
         .order("created_at", { ascending: false });
@@ -121,26 +131,6 @@ const ProductDashboard = () => {
     } catch (error) {
       console.error("Error deleting product:", error);
       alert("Failed to delete product: " + error.message);
-    }
-  };
-
-  const toggleProductStatus = async (productId, currentStatus) => {
-    try {
-      const { error } = await supabase
-        .from("products")
-        .update({ is_active: !currentStatus })
-        .eq("id", productId);
-
-      if (error) throw error;
-
-      setProducts(
-        products.map((p) =>
-          p.id === productId ? { ...p, is_active: !currentStatus } : p
-        )
-      );
-    } catch (error) {
-      console.error("Error updating product status:", error);
-      alert("Failed to update product: " + error.message);
     }
   };
 

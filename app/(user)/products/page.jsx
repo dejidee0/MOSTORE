@@ -196,7 +196,6 @@ const ProductsContent = () => {
       setCategories(categoriesData);
     } catch (error) {
       console.error("Error loading data:", error);
-      // Handle error state appropriately
       setProducts([]);
       setCategories([]);
     } finally {
@@ -228,7 +227,7 @@ const ProductsContent = () => {
     return brands.sort();
   }, [products]);
 
-  // Optimized filtering logic with early returns
+  // Optimized filtering logic with early returns and type conversion fix
   const filteredProducts = useMemo(() => {
     if (!products.length) return [];
 
@@ -249,12 +248,11 @@ const ProductsContent = () => {
         if (!searchableFields.includes(searchLower)) return false;
       }
 
-      // Category filter
-      if (
-        filters.category !== "all" &&
-        product.category_id !== filters.category
-      ) {
-        return false;
+      // Category filter - FIXED: Convert both to strings for comparison
+      if (filters.category !== "all") {
+        if (String(product.category_id) !== String(filters.category)) {
+          return false;
+        }
       }
 
       // Price range filter
@@ -400,8 +398,9 @@ const ProductsContent = () => {
             <div>
               <h1 className="text-3xl font-bold text-gray-900">
                 {filters.category !== "all"
-                  ? categories.find((c) => c.id === filters.category)?.name +
-                    " Products"
+                  ? categories.find(
+                      (c) => String(c.id) === String(filters.category)
+                    )?.name + " Products"
                   : "Our Products"}
               </h1>
               <p className="text-gray-600 mt-2">

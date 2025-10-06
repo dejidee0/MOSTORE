@@ -31,7 +31,6 @@ const SignInPage = () => {
   // Initialize the store if not already initialized
   useEffect(() => {
     if (!initialized) {
-      console.log("Initializing user store...");
       initialize();
     }
   }, [initialized, initialize]);

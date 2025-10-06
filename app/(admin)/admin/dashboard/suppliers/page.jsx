@@ -740,7 +740,7 @@ export default function SuppliersPage() {
                           <FiUser className="h-5 w-5 text-orange-500 mt-0.5 flex-shrink-0" />
                           <div>
                             <p className="text-xs text-gray-500 mb-0.5">
-                              Storename
+                              Username
                             </p>
                             <p className="text-sm font-medium text-gray-900">
                               {selectedProfile.username || "—"}

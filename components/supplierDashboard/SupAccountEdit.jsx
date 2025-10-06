@@ -85,7 +85,7 @@ const AccountEdit = ({
         <form onSubmit={onSubmit} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Full Name *
+              Store Name *
             </label>
             <input
               type="text"

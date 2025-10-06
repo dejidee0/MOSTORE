@@ -188,8 +188,8 @@ const MyAccountPage = () => {
             Account Information
           </h1>
           <p className="text-gray-600 text-sm leading-relaxed">
-            Manage your personal information, preferences, and account settings
-            all in one place.
+            Manage your personal and store information, and account settings all
+            in one place.
           </p>
         </motion.div>
 

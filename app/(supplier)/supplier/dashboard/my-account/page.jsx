@@ -1,302 +1,433 @@
 "use client";
-
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Save, RotateCcw, CheckCircle, AlertCircle } from "lucide-react";
-import { useRouter } from "next/navigation";
+import AccountEdit from "../../../../../components/supplierDashboard/SupAccountEdit";
+import BankDetailsEdit from "../../../../../components/supplierDashboard/BankDetailsEdit";
 import useUserStore from "@/lib/stores/useUserStore";
 import { supabase } from "@/lib/supabase-client";
-import Breadcrumbs from "@/components/shared/user/BreadCrumbs";
-import LoadingSpinner from "@/components/shared/user/LoadingSpinner";
 
-const MyProfile = () => {
-  const router = useRouter();
-  const { user, loading, isAuthenticated, initialized } = useUserStore();
+const MyAccountPage = () => {
+  const { user } = useUserStore();
 
-  const [profileForm, setProfileForm] = useState({
-    full_name: "",
-    username: "",
+  // Profile state
+  const [profile, setProfile] = useState({
+    fullName: "",
+    email: "",
     phone: "",
+    gender: "",
+    dateOfBirth: "",
     address: "",
-    bank_account_number: "",
-    bank_name: "",
-    bic_swiftCode: "",
+    bankName: "",
+    accountNumber: "",
+    SwiftCode: "",
     bankAddress: "",
-    is_active: true,
   });
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [message, setMessage] = useState({ type: "", text: "" });
 
+  // Modal states
+  const [isPersonalModalOpen, setIsPersonalModalOpen] = useState(false);
+  const [isBankModalOpen, setIsBankModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+
+  const [error, setError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  // Fetch profile data
   useEffect(() => {
-    if (user) {
-      (async () => {
+    const fetchProfile = async () => {
+      if (!user?.id) return;
+
+      try {
+        setLoading(true);
         const { data, error } = await supabase
           .from("profiles")
-          .select(
-            "full_name,username,phone,address,bank_account_number,bank_name,bankAddress,bic_swiftCode,is_active"
-          )
+          .select("*")
           .eq("id", user.id)
           .single();
-        if (data) setProfileForm(data);
-      })();
-    }
+
+        if (error) throw error;
+
+        if (data) {
+          setProfile({
+            fullName: data.full_name || "",
+            email: user.email || data.email || "",
+            phone: data.phone || "",
+            gender: data.gender || "",
+            address: data.address || "",
+            bankName: data.bank_name || "",
+            accountNumber: data.bank_account_number || "",
+            SwiftCode: data.bic_swiftCode || "",
+            dateOfBirth: data.dateOfBirth || "",
+            bankAddress: data.bank_address || "",
+          });
+        }
+      } catch (err) {
+        console.error("Error fetching profile:", err);
+        setError("Failed to load profile data");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProfile();
   }, [user]);
 
-  useEffect(() => {
-    if (initialized && !loading && !isAuthenticated()) {
-      router.push("/sign-in");
-    }
-  }, [initialized, loading, isAuthenticated, router]);
-
-  const handleChange = (e) => {
+  // Handle profile changes
+  const handleProfileChange = (e) => {
     const { name, value } = e.target;
-    setProfileForm((prev) => ({ ...prev, [name]: value }));
+    setProfile((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-    setMessage({ type: "", text: "" });
+  // Handle profile submission
+  const handleProfileSubmit = async (profileData) => {
+    if (!user?.id) return;
 
-    const { is_active, ...updateData } = profileForm;
+    try {
+      setIsSubmitting(true);
+      setError("");
 
-    const { error } = await supabase
-      .from("profiles")
-      .update(updateData)
-      .eq("id", user.id);
-    if (error) {
-      setMessage({ type: "error", text: error.message });
-    } else {
-      setMessage({ type: "success", text: "Profile updated successfully!" });
+      const { error } = await supabase
+        .from("profiles")
+        .update(profileData)
+        .eq("id", user.id);
+
+      if (error) throw error;
+
+      // Refetch profile to update state
+      const { data } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", user.id)
+        .single();
+
+      if (data) {
+        setProfile({
+          fullName: data.full_name || "",
+          email: user.email || data.email || "",
+          phone: data.phone || "",
+          gender: data.gender || "",
+          address: data.address || "",
+          bankName: data.bank_name || "",
+          accountNumber: data.bank_account_number || "",
+          SwiftCode: data.bic_swiftCode || "",
+          dateOfBirth: data.dateOfBirth || "",
+          bankAddress: data.bank_address || "",
+        });
+      }
+
+      setIsPersonalModalOpen(false);
+      setIsBankModalOpen(false);
+    } catch (err) {
+      console.error("Error updating profile:", err);
+      setError(err.message || "Failed to update profile");
+      throw err;
+    } finally {
+      setIsSubmitting(false);
     }
-    setIsSubmitting(false);
   };
 
+  // Reset form
   const resetForm = () => {
-    if (user) {
-      (async () => {
-        const { data } = await supabase
-          .from("profiles")
-          .select(
-            "full_name,username,phone,address,bank_account_number,bank_name,bic_swiftCode,bankAddress,is_active"
-          )
-          .eq("id", user.id)
-          .single();
-        if (data) setProfileForm(data);
-      })();
-    }
-    setMessage({ type: "", text: "" });
+    setError("");
   };
 
-  if (!initialized || loading) {
+  // Handle account deletion
+  const handleDeleteAccount = async () => {
+    if (!user?.id) return;
+
+    if (
+      !window.confirm(
+        "Are you sure you want to delete your account? This action cannot be undone."
+      )
+    ) {
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+
+      // Delete profile
+      const { error } = await supabase
+        .from("profiles")
+        .delete()
+        .eq("id", user.id);
+
+      if (error) throw error;
+
+      // Sign out user
+      await supabase.auth.signOut();
+
+      // Redirect to home or login page
+      window.location.href = "/";
+    } catch (err) {
+      console.error("Error deleting account:", err);
+      setError(err.message || "Failed to delete account");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[calc(100vh-4rem)] bg-gray-50">
-        <LoadingSpinner size="lg" />
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-gray-600">Loading...</div>
       </div>
     );
   }
 
-  if (!isAuthenticated()) return null;
-
   return (
-    <div className="min-h-[calc(100vh-4rem)] bg-gray-50">
-      <div className="lg:grid lg:grid-cols-12 gap-4 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <main className="lg:col-span-9 py-4 lg:pl-28">
-          <Breadcrumbs activeTab="profile" />
+    <div className="">
+      <div className="px-4 py-6">
+        <motion.div
+          className="text-center mb-8"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+        >
+          <h1 className="text-2xl font-bold text-gray-900 mb-3">
+            Account Information
+          </h1>
+          <p className="text-gray-600 text-sm leading-relaxed">
+            Manage your personal information, preferences, and account settings
+            all in one place.
+          </p>
+        </motion.div>
 
-          {message.text && (
+        {/* Personal Details Section */}
+        <motion.div
+          className="bg-white rounded-lg p-6 mb-6 shadow-sm"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2, duration: 0.5 }}
+        >
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-lg font-semibold text-gray-900">
+              Personal details
+            </h2>
+            <motion.button
+              onClick={() => setIsPersonalModalOpen(true)}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="px-4 py-2 bg-orange-500 text-white rounded-lg text-sm font-medium hover:bg-orange-600 transition"
+            >
+              Edit
+            </motion.button>
+          </div>
+          <div className="space-y-3">
+            <div>
+              <p className="font-medium text-gray-900">
+                {profile?.fullName || "John Doe"}
+              </p>
+              <div className="flex items-center gap-2 mt-1">
+                <svg
+                  className="w-4 h-4 text-green-500"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+                <span className="text-sm text-green-600 font-medium">
+                  Verified
+                </span>
+              </div>
+            </div>
+
+            <div>
+              <p className="text-sm text-gray-500">Email</p>
+              <p className="text-gray-900">
+                {profile?.email || "user@example.com"}
+              </p>
+            </div>
+
+            {profile?.phone && (
+              <div>
+                <p className="text-sm text-gray-500">Phone</p>
+                <p className="text-gray-900">{profile.phone}</p>
+              </div>
+            )}
+
+            <div className="pt-4 border-t border-gray-100">
+              <p className="text-sm text-gray-500 mb-1">Store Address</p>
+              <p className="text-gray-900 text-sm">
+                {profile?.address ||
+                  "No store address on file. Add one to complete your profile."}
+              </p>
+            </div>
+          </div>
+        </motion.div>
+
+        {/* Bank Details Section */}
+        <motion.div
+          className="bg-white rounded-lg p-6 mb-6 shadow-sm"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3, duration: 0.5 }}
+        >
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-lg font-semibold text-gray-900">
+              Bank details
+            </h2>
+            <motion.button
+              onClick={() => setIsBankModalOpen(true)}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="px-4 py-2 bg-orange-500 text-white rounded-lg text-sm font-medium hover:bg-orange-600 transition"
+            >
+              Edit
+            </motion.button>
+          </div>
+          <div className="space-y-3">
+            {profile?.bankName ||
+            profile?.accountNumber ||
+            profile?.SwiftCode ||
+            profile?.bankAddress ? (
+              <>
+                <div>
+                  <p className="text-sm text-gray-500">Bank Name</p>
+                  <p className="text-gray-900">
+                    {profile.bankName || "Set your Bank Name"}
+                  </p>
+                </div>
+
+                <div>
+                  <p className="text-sm text-gray-500">Account Number</p>
+                  <p className="text-gray-900 font-mono">
+                    {profile.accountNumber || "Set your account number"}
+                  </p>
+                </div>
+
+                <div>
+                  <p className="text-sm text-gray-500">SWIFT/BIC Code</p>
+                  <p className="text-gray-900 font-mono">
+                    {profile.SwiftCode || "Set your SWIFT/BIC code"}
+                  </p>
+                </div>
+
+                <div>
+                  <p className="text-sm text-gray-500">Bank Address</p>
+                  <p className="text-gray-900">
+                    {profile.bankAddress || "Set your Bank Address"}
+                  </p>
+                </div>
+              </>
+            ) : (
+              <p className="text-gray-600 text-sm">
+                No bank details on file. Add your bank information to receive
+                payments.
+              </p>
+            )}
+          </div>
+        </motion.div>
+
+        {/* Delete Account Section */}
+        <motion.div
+          className="bg-white rounded-lg p-6 shadow-sm"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4, duration: 0.5 }}
+        >
+          <h2 className="text-lg font-semibold text-gray-900 mb-2">
+            Danger Zone
+          </h2>
+          <p className="text-gray-600 text-sm mb-4">
+            Once you delete your account, there is no going back. Please be
+            certain.
+          </p>
+          <button
+            onClick={() => setIsDeleteModalOpen(true)}
+            className="px-4 py-2 bg-red-50 text-red-600 rounded-lg text-sm font-medium hover:bg-red-100 transition border border-red-200"
+          >
+            Delete account
+          </button>
+        </motion.div>
+
+        {error && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="text-red-600 text-sm mt-4 text-center bg-red-50 p-3 rounded-lg"
+          >
+            {error}
+          </motion.div>
+        )}
+
+        <AnimatePresence>
+          {isPersonalModalOpen && (
+            <AccountEdit
+              profileForm={profile}
+              handleProfileChange={handleProfileChange}
+              handleProfileSubmit={handleProfileSubmit}
+              resetForm={resetForm}
+              isSubmitting={isSubmitting}
+              message={{ type: "", text: "" }}
+              setIsEditing={setIsPersonalModalOpen}
+            />
+          )}
+        </AnimatePresence>
+
+        <AnimatePresence>
+          {isBankModalOpen && (
+            <BankDetailsEdit
+              profileForm={profile}
+              handleProfileChange={handleProfileChange}
+              handleProfileSubmit={handleProfileSubmit}
+              resetForm={resetForm}
+              isSubmitting={isSubmitting}
+              message={{ type: "", text: "" }}
+              setIsEditing={setIsBankModalOpen}
+            />
+          )}
+        </AnimatePresence>
+
+        <AnimatePresence>
+          {isDeleteModalOpen && (
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className={`text-sm text-center mb-4 ${
-                message.type === "error" ? "text-red-600" : "text-green-600"
-              }`}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
             >
-              {message.text}
+              <motion.div
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.9, opacity: 0 }}
+                className="bg-white rounded-lg p-6 w-full max-w-md mx-auto shadow-2xl"
+              >
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                  Delete Account
+                </h3>
+                <p className="text-gray-600 mb-6">
+                  Are you sure you want to delete your account? This action
+                  cannot be undone and all your data will be permanently
+                  removed.
+                </p>
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setIsDeleteModalOpen(false)}
+                    className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition"
+                    disabled={isSubmitting}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleDeleteAccount}
+                    className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition disabled:opacity-50"
+                    disabled={isSubmitting}
+                  >
+                    {isSubmitting ? "Deleting..." : "Delete Account"}
+                  </button>
+                </div>
+              </motion.div>
             </motion.div>
           )}
-
-          <AnimatePresence mode="wait">
-            <motion.div
-              key="profile-page"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.3 }}
-            >
-              <div className="bg-white rounded-xl shadow-sm p-6">
-                <h2 className="text-2xl font-bold text-gray-800 mb-2">
-                  My Profile
-                </h2>
-                <p className="mb-6 text-gray-500">
-                  View and update your information
-                </p>
-
-                {/* Account Status Display */}
-                <div className="bg-gray-50 rounded-lg p-4 mb-6">
-                  <h3 className="text-sm font-medium text-gray-900 mb-2">
-                    Account Status
-                  </h3>
-                  <div className="flex items-center gap-2">
-                    <span
-                      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                        profileForm.is_active !== false
-                          ? "bg-green-100 text-green-800"
-                          : "bg-red-100 text-red-800"
-                      }`}
-                    >
-                      {profileForm.is_active !== false ? (
-                        <>
-                          <CheckCircle className="w-3 h-3 mr-1" />
-                          Active
-                        </>
-                      ) : (
-                        <>
-                          <AlertCircle className="w-3 h-3 mr-1" />
-                          Disabled
-                        </>
-                      )}
-                    </span>
-                    {profileForm.is_active === false && (
-                      <span className="text-xs text-red-600">
-                        Contact support if you believe this is an error
-                      </span>
-                    )}
-                  </div>
-                </div>
-
-                <form onSubmit={handleSubmit} className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium mb-1">
-                      Full Name
-                    </label>
-                    <input
-                      type="text"
-                      name="full_name"
-                      value={profileForm.full_name}
-                      onChange={handleChange}
-                      className="w-full border rounded px-3 py-2"
-                      disabled={isSubmitting}
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-1">
-                      Store Name
-                    </label>
-                    <input
-                      type="text"
-                      name="username"
-                      value={profileForm.username}
-                      onChange={handleChange}
-                      className="w-full border rounded px-3 py-2"
-                      disabled={isSubmitting}
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-1">
-                      Phone
-                    </label>
-                    <input
-                      type="text"
-                      name="phone"
-                      value={profileForm.phone}
-                      onChange={handleChange}
-                      className="w-full border rounded px-3 py-2"
-                      disabled={isSubmitting}
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-1">
-                      Address
-                    </label>
-                    <input
-                      type="text"
-                      name="address"
-                      value={profileForm.address}
-                      onChange={handleChange}
-                      className="w-full border rounded px-3 py-2"
-                      disabled={isSubmitting}
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-1">
-                      Bank Account Number
-                    </label>
-                    <input
-                      type="text"
-                      name="bank_account_number"
-                      value={profileForm.bank_account_number}
-                      onChange={handleChange}
-                      className="w-full border rounded px-3 py-2"
-                      disabled={isSubmitting}
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-1">
-                      Bank Name
-                    </label>
-                    <input
-                      type="text"
-                      name="bank_name"
-                      value={profileForm.bank_name}
-                      onChange={handleChange}
-                      className="w-full border rounded px-3 py-2"
-                      disabled={isSubmitting}
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-1">
-                      BIC/Swift Code
-                    </label>
-                    <input
-                      type="text"
-                      name="bank_bic_swiftCode"
-                      value={profileForm.bic_swiftCode}
-                      onChange={handleChange}
-                      className="w-full border rounded px-3 py-2"
-                      disabled={isSubmitting}
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-1">
-                      Bank Address
-                    </label>
-                    <input
-                      type="text"
-                      name="bank_address"
-                      value={profileForm.bankAddress}
-                      onChange={handleChange}
-                      className="w-full border rounded px-3 py-2"
-                      disabled={isSubmitting}
-                    />
-                  </div>
-                  <div className="flex gap-2 justify-end">
-                    <button
-                      type="button"
-                      onClick={resetForm}
-                      className="flex items-center gap-1 px-3 py-2 bg-gray-100 rounded hover:bg-gray-200 text-gray-700"
-                      disabled={isSubmitting}
-                    >
-                      <RotateCcw className="w-4 h-4" />
-                      Reset
-                    </button>
-                    <button
-                      type="submit"
-                      className="flex items-center gap-1 px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded disabled:bg-gray-400"
-                      disabled={isSubmitting}
-                    >
-                      <Save className="w-4 h-4" />
-                      {isSubmitting ? "Saving..." : "Save Changes"}
-                    </button>
-                  </div>
-                </form>
-              </div>
-            </motion.div>
-          </AnimatePresence>
-        </main>
+        </AnimatePresence>
       </div>
     </div>
   );
 };
 
-export default MyProfile;
+export default MyAccountPage;

@@ -111,14 +111,14 @@ const BankDetailsEdit = ({
               value={profileForm.bankName}
               onChange={handleProfileChange}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
-              placeholder="e.g., Chase Bank, Bank of America"
+              placeholder="Enter your bank's name"
               required
             />
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Account Number *
+              Account Number /IBAN*
             </label>
             <input
               type="text"
@@ -141,13 +141,11 @@ const BankDetailsEdit = ({
               value={profileForm.SwiftCode}
               onChange={handleProfileChange}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 font-mono uppercase"
-              placeholder="e.g., CHASUS33 or BOFAUS3N"
+              placeholder=""
               maxLength="11"
               required
             />
-            <p className="text-xs text-gray-500 mt-1">
-              8 or 11 character code (e.g., CHASUS33XXX)
-            </p>
+            <p className="text-xs text-gray-500 mt-1">8 or 11 character code</p>
           </div>
 
           <div>

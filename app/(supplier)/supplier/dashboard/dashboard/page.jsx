@@ -77,16 +77,6 @@ const WelcomePage = () => {
                 {fullName}
               </p>
             </div>
-
-            <motion.button
-              onClick={handleLogout}
-              className="flex items-center gap-2 px-4 py-2 text-sm text-gray-600 hover:text-orange-600 hover:bg-orange-50 rounded-lg transition-all duration-200"
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-            >
-              <LogOut size={16} />
-              <span className="hidden sm:inline">Logout</span>
-            </motion.button>
           </div>
         </div>
 
@@ -104,7 +94,7 @@ const WelcomePage = () => {
                 <Calendar size={20} className="text-orange-600" />
               </div>
               <h2 className="text-lg font-medium text-gray-900">
-                Account Details
+                Account Overview
               </h2>
             </div>
 
@@ -135,34 +125,7 @@ const WelcomePage = () => {
               Upgrade Plan
             </button>
           </motion.div>
-          <motion.div
-            className="bg-gray-50 p-5 rounded-lg border border-gray-100 shadow-sm"
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.3, duration: 0.5 }}
-          >
-            <h2 className="text-xl font-semibold text-gray-700 mb-4">
-              Membership Overview
-            </h2>
-            <div className="space-y-4">
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-900 font-bold">Plan:</span>
-                <span className="text-gray-500 font-medium">Free Tier</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-900 font-bold">Join Date:</span>
-                <span className="text-gray-500 font-medium">
-                  September 23, 2025
-                </span>
-              </div>
-              <a
-                href="#"
-                className="inline-block text-sm text-orange-500 hover:text-orange-600 font-medium underline underline-offset-4 transition-colors"
-              >
-                Upgrade Plan
-              </a>
-            </div>
-          </motion.div>
+
           {/* Recent Orders */}
           <motion.div
             className="bg-white rounded-2xl shadow-sm border border-orange-100 p-6"

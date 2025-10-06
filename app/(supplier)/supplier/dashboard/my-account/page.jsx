@@ -294,7 +294,7 @@ const MyAccountPage = () => {
                 </div>
 
                 <div>
-                  <p className="text-sm text-gray-500">Account Number</p>
+                  <p className="text-sm text-gray-500">Account Number / IBAN</p>
                   <p className="text-gray-900 font-mono">
                     {profile.accountNumber || "Set your account number"}
                   </p>

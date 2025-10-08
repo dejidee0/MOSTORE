@@ -256,16 +256,19 @@ const NavBar = () => {
     () =>
       [
         !user && { label: "Sign in", href: "/sign-in" },
-        { label: "My Account", href: "/my-account?tab=profile" },
+        user &&
+          role === "customer" && {
+            label: "My Account",
+            href: "/my-account?tab=profile",
+          },
         user &&
           role !== "customer" && {
-            label: "My Dashboard",
+            label: "My Account",
             href: `/${role}/dashboard${role === "supplier" ? "/products" : ""}`,
           },
-        { label: "My Orders", href: "/my-account?tab=orders" },
-        { label: "Wishlist", href: "/wishlist" },
+        user && role === "customer" && { label: "Wishlist", href: "/wishlist" },
       ].filter(Boolean),
-    [user]
+    [user, role]
   );
 
   if (!isClient) return null;
@@ -699,10 +702,9 @@ const NavBar = () => {
                             {link.label}
                           </Link>
                         ))}
-                      </div>
-                      <div className="border-b border-gray-200 pb-2 mb-2">
-                        {" "}
-                        {!user && role !== "supplier" && role !== "admin" && (
+                      </div>{" "}
+                      {!user && role !== "supplier" && role !== "admin" && (
+                        <div className="border-b border-gray-200 pb-2 mb-2">
                           <Link
                             href="/supplier-sign"
                             className="flex justify-between items-center"
@@ -719,9 +721,8 @@ const NavBar = () => {
                               <ArrowRight />
                             </span>
                           </Link>
-                        )}
-                      </div>
-
+                        </div>
+                      )}
                       <div className="border-b border-gray-200 pb-2 mb-2">
                         <div className="flex justify-between items-center">
                           <span className="font-bold text-sm uppercase text-black">

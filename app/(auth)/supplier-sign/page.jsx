@@ -385,9 +385,9 @@ const SupplierSignUpPage = () => {
                   </div>
                 </div>
               </div>
-              <div className="max-w-4xl mx-auto">
-                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-                  <h1 className="text-center text-2xl font-bold mt-8">
+              <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
+                  <h1 className="col-span-full text-center text-xl sm:text-2xl lg:text-3xl font-bold mt-6 sm:mt-8 mb-4 sm:mb-6">
                     Why Sell on Mostore
                   </h1>
                   {benefits.map((benefit, index) => (
@@ -396,22 +396,22 @@ const SupplierSignUpPage = () => {
                       initial={{ y: 30, opacity: 0 }}
                       animate={{ y: 0, opacity: 1 }}
                       transition={{ delay: 0.1 * index }}
-                      className="bg-white rounded-xl p-2 flex gap-4 items-center shadow-sm hover:shadow-md transition-all duration-300"
+                      className="bg-white rounded-xl p-4 sm:p-6 flex flex-col sm:flex-row gap-4 items-center shadow-sm hover:shadow-md transition-all duration-300"
                     >
-                      <div>{benefit.icon}</div>
-                      <div className="flex flex-col">
-                        <h3 className="text-lg font-semibold text-gray-900 mb-3">
+                      <div className="flex-shrink-0">{benefit.icon}</div>
+                      <div className="flex flex-col w-full">
+                        <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-2 sm:mb-3">
                           {benefit.title}
                         </h3>
-                        <p className="text-gray-600 text-sm leading-relaxed">
+                        <p className="text-gray-600 text-sm sm:text-base leading-relaxed">
                           {benefit.description}
                         </p>
                       </div>
                     </motion.div>
                   ))}
                 </div>
-                <div className="text-center">
-                  <p className="text-gray-500 mt-4 max-w-md mx-auto text-sm">
+                <div className="text-center mt-6 sm:mt-8">
+                  <p className="text-gray-500 text-sm sm:text-base max-w-md sm:max-w-lg mx-auto px-4">
                     Join thousands of successful sellers already making money on
                     Mostore. Get started in minutes.
                   </p>

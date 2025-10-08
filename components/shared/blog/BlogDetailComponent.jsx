@@ -54,15 +54,29 @@ const Toast = memo(({ message, type = "success", onClose }) => (
 Toast.displayName = "Toast";
 
 // Image Gallery Component
-const ImageGallery = memo(({ images }) => {
+const ImageGallery = memo(({ images, featuredImage, postTitle }) => {
   const [selectedImage, setSelectedImage] = useState(null);
   const [currentIndex, setCurrentIndex] = useState(0);
 
-  if (!images || images.length === 0) return null;
+  // Combine featured image with additional images, ensuring featured image is first
+  const allImages = useMemo(() => {
+    const imagesArray = featuredImage
+      ? [
+          {
+            url: featuredImage,
+            alt: postTitle || "Featured image",
+            caption: "Featured Image",
+          },
+        ]
+      : [];
+    return imagesArray.concat(images || []);
+  }, [featuredImage, images, postTitle]);
+
+  if (!allImages || allImages.length === 0) return null;
 
   const openGallery = (index) => {
     setCurrentIndex(index);
-    setSelectedImage(images[index]);
+    setSelectedImage(allImages[index]);
   };
 
   const closeGallery = () => {
@@ -70,15 +84,15 @@ const ImageGallery = memo(({ images }) => {
   };
 
   const nextImage = () => {
-    const newIndex = (currentIndex + 1) % images.length;
+    const newIndex = (currentIndex + 1) % allImages.length;
     setCurrentIndex(newIndex);
-    setSelectedImage(images[newIndex]);
+    setSelectedImage(allImages[newIndex]);
   };
 
   const prevImage = () => {
-    const newIndex = (currentIndex - 1 + images.length) % images.length;
+    const newIndex = (currentIndex - 1 + allImages.length) % allImages.length;
     setCurrentIndex(newIndex);
-    setSelectedImage(images[newIndex]);
+    setSelectedImage(allImages[newIndex]);
   };
 
   const handleKeyDown = useCallback((e) => {
@@ -99,24 +113,26 @@ const ImageGallery = memo(({ images }) => {
       <div className="my-8">
         <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
           <ImageIcon className="w-5 h-5 text-orange-600" />
-          Image Gallery ({images.length})
+          Image Gallery ({allImages.length})
         </h3>
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-          {images.map((img, index) => (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 auto-rows-fr">
+          {allImages.map((img, index) => (
             <motion.div
               key={img.id || index}
               whileHover={{ scale: 1.02 }}
-              className="relative aspect-video rounded-lg overflow-hidden cursor-pointer border-2 border-gray-200 hover:border-orange-500 transition-colors"
+              className={`relative rounded-lg overflow-hidden cursor-pointer border border-gray-200 hover:border-orange-500 transition-colors ${
+                index === 0 ? "sm:col-span-2 sm:row-span-2" : "aspect-square"
+              }`}
               onClick={() => openGallery(index)}
             >
               <img
                 src={img.url}
                 alt={img.alt || `Gallery image ${index + 1}`}
                 className="w-full h-full object-cover"
-                loading="lazy"
+                loading={index === 0 ? "eager" : "lazy"}
               />
               {img.caption && (
-                <div className="absolute bottom-0 left-0 right-0 bg-black/70 text-white text-xs p-2 truncate">
+                <div className="absolute bottom-0 left-0 right-0 bg-black/70 text-white text-xs sm:text-sm p-2 truncate">
                   {img.caption}
                 </div>
               )}
@@ -131,7 +147,7 @@ const ImageGallery = memo(({ images }) => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center p-4"
+            className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center p-4 sm:p-6"
             onClick={closeGallery}
           >
             <button
@@ -142,17 +158,17 @@ const ImageGallery = memo(({ images }) => {
               <X className="w-8 h-8" />
             </button>
 
-            {images.length > 1 && (
+            {allImages.length > 1 && (
               <>
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
                     prevImage();
                   }}
-                  className="absolute left-4 text-white hover:text-gray-300 transition-colors z-10"
+                  className="absolute left-4 top-1/2 -translate-y-1/2 text-white hover:text-gray-300 transition-colors z-10"
                   aria-label="Previous image"
                 >
-                  <ChevronLeft className="w-12 h-12" />
+                  <ChevronLeft className="w-10 h-10 sm:w-12 sm:h-12" />
                 </button>
 
                 <button
@@ -160,10 +176,10 @@ const ImageGallery = memo(({ images }) => {
                     e.stopPropagation();
                     nextImage();
                   }}
-                  className="absolute right-4 text-white hover:text-gray-300 transition-colors z-10"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-white hover:text-gray-300 transition-colors z-10"
                   aria-label="Next image"
                 >
-                  <ChevronRight className="w-12 h-12" />
+                  <ChevronRight className="w-10 h-10 sm:w-12 sm:h-12" />
                 </button>
               </>
             )}
@@ -172,7 +188,7 @@ const ImageGallery = memo(({ images }) => {
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
-              className="max-w-5xl max-h-[90vh] flex flex-col"
+              className="max-w-[90vw] max-h-[90vh] flex flex-col"
               onClick={(e) => e.stopPropagation()}
             >
               <img
@@ -182,11 +198,11 @@ const ImageGallery = memo(({ images }) => {
               />
               {(selectedImage.caption || selectedImage.alt) && (
                 <div className="mt-4 text-center">
-                  <p className="text-white text-sm">
+                  <p className="text-white text-sm sm:text-base">
                     {selectedImage.caption || selectedImage.alt}
                   </p>
-                  <p className="text-gray-400 text-xs mt-1">
-                    {currentIndex + 1} / {images.length}
+                  <p className="text-gray-400 text-xs sm:text-sm mt-1">
+                    {currentIndex + 1} / {allImages.length}
                   </p>
                 </div>
               )}

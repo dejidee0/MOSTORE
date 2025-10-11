@@ -120,6 +120,33 @@ const ProductDashboard = () => {
     if (!confirm("Are you sure you want to delete this product?")) return;
 
     try {
+      // Fetch the product to get images
+      const { data: product, error: fetchError } = await supabase
+        .from("products")
+        .select("images")
+        .eq("id", productId)
+        .single();
+
+      if (fetchError) throw fetchError;
+
+      // Delete images from storage
+      if (product.images && product.images.length > 0) {
+        const paths = product.images.map((url) => {
+          const parts = url.split("/");
+          return parts[parts.length - 1];
+        });
+
+        const { error: storageError } = await supabase.storage
+          .from("product-images")
+          .remove(paths);
+
+        if (storageError) {
+          console.error("Error deleting images:", storageError);
+          // Continue with deletion even if images fail to delete
+        }
+      }
+
+      // Delete the product
       const { error } = await supabase
         .from("products")
         .delete()

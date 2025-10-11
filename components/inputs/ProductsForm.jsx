@@ -212,7 +212,14 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
         is_active: productToEdit.is_active,
         is_featured: productToEdit.is_featured,
       });
-      setExistingImages(productToEdit.images || []);
+      setExistingImages(
+        (productToEdit.images || []).map((url, index) => ({
+          id: `existing-${index}`,
+          url,
+          name: `Image ${index + 1}`,
+          isNew: false,
+        }))
+      );
     } else {
       setIsEditMode(false);
       if (!localStorage.getItem(AUTOSAVE_KEY)) {
@@ -312,7 +319,7 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
     e.target.value = "";
   };
 
-  const removeImage = (imageId) => {
+  const removeImage = async (imageId) => {
     const imageToRemove =
       images.find((img) => img.id === imageId) ||
       existingImages.find((img) => img.id === imageId);
@@ -323,6 +330,20 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
         prev.filter((file) => file !== imageToRemove.file)
       );
     } else {
+      // Delete from storage
+      const path = imageToRemove.url.split("/").pop();
+      const { error: storageError } = await supabase.storage
+        .from("product-images")
+        .remove([path]);
+
+      if (storageError) {
+        console.error("Error deleting image from storage:", storageError);
+        setError(
+          "Failed to delete image from storage: " + storageError.message
+        );
+        return;
+      }
+
       setExistingImages((prev) => prev.filter((img) => img.id !== imageId));
     }
   };
@@ -440,6 +461,14 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
         Number(formData.discount) > 100)
     ) {
       setError("Discount must be between 0 and 100 if provided");
+      return false;
+    }
+
+    if (
+      isNaN(Number(formData.stock_quantity)) ||
+      Number(formData.stock_quantity) < 0
+    ) {
+      setError("Stock quantity must be a non-negative number");
       return false;
     }
 

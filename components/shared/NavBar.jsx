@@ -716,7 +716,6 @@ const NavBar = () => {
                                 Mostore
                               </span>
                             </span>
-
                             <span className="text-orange-500 text-xs">
                               <ArrowRight />
                             </span>

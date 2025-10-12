@@ -475,6 +475,20 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
     return true;
   };
 
+  const getLocationFromIP = async () => {
+    try {
+      const response = await fetch("https://ipapi.co/json/");
+      if (!response.ok) {
+        throw new Error("Failed to fetch location");
+      }
+      const data = await response.json();
+      return `${data.region || "Unknown"}, ${data.country_name || "Unknown"}`;
+    } catch (err) {
+      console.error("Error fetching location:", err);
+      return null;
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     e.stopPropagation();
@@ -541,6 +555,8 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
         ...uploadedImageUrls,
       ];
 
+      const location = await getLocationFromIP();
+
       const productData = {
         name: formData.name,
         slug: formData.slug,
@@ -563,6 +579,7 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
         rating: formData.rating ? Number(formData.rating) : null,
         is_active: formData.is_active,
         is_featured: formData.is_featured,
+        location: location || null,
       };
 
       let result;

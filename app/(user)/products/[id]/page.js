@@ -7,6 +7,7 @@ import { useCart } from "@/lib/cart";
 import { useWishlist } from "@/hooks/useWishlist";
 import { supabase } from "@/lib/supabase-client";
 import { Package, Heart } from "lucide-react";
+import { motion } from "framer-motion";
 
 export default function ProductDetails() {
   const params = useParams();
@@ -44,6 +45,9 @@ export default function ProductDetails() {
               id,
               name,
               description
+            ),
+            profiles(
+            full_name
             )
           `
           )
@@ -61,7 +65,10 @@ export default function ProductDetails() {
                 id,
                 name,
                 description
-              )
+              ),
+                   profiles(
+            full_name
+            )
             `
             )
             .eq("slug", params.id)
@@ -462,17 +469,32 @@ export default function ProductDetails() {
                 Product Details
               </h4>
               <div className="text-sm text-gray-600 space-y-2">
-                <div className="flex items-center justify-between py-2 border-b border-gray-100">
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3, delay: 0.1 }}
+                  className="flex items-center justify-between py-2 border-b border-gray-100"
+                >
                   <span className="font-medium">SKU:</span>
                   <span>{product.sku}</span>
-                </div>
+                </motion.div>
                 {product.brand && (
-                  <div className="flex items-center justify-between py-2 border-b border-gray-100">
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3, delay: 0.2 }}
+                    className="flex items-center justify-between py-2 border-b border-gray-100"
+                  >
                     <span className="font-medium">Brand:</span>
                     <span>{product.brand}</span>
-                  </div>
+                  </motion.div>
                 )}
-                <div className="flex items-center justify-between py-2 border-b border-gray-100">
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3, delay: 0.3 }}
+                  className="flex items-center justify-between py-2 border-b border-gray-100"
+                >
                   <span className="font-medium">Condition:</span>
                   <span
                     className={`font-semibold ${
@@ -483,11 +505,46 @@ export default function ProductDetails() {
                   >
                     {product.condition === "new" ? "Brand New" : "Pre-Owned"}
                   </span>
-                </div>
-                <div className="flex items-center justify-between py-2">
+                </motion.div>
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3, delay: 0.4 }}
+                  className="flex items-center justify-between py-2 border-b border-gray-100"
+                >
                   <span className="font-medium">Stock:</span>
                   <span>{product.stock_quantity} units</span>
-                </div>
+                </motion.div>
+                {product.location && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3, delay: 0.5 }}
+                    className="flex items-center justify-between py-2"
+                  >
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium">Location:</span>
+                    </div>
+                    <span className="text-orange-500 font-semibold">
+                      {product.location}
+                    </span>
+                  </motion.div>
+                )}
+                {product?.profiles.full_name && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3, delay: 0.5 }}
+                    className="flex items-center justify-between py-2"
+                  >
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium">Uploaded By:</span>
+                    </div>
+                    <span className="text-black font-semibold">
+                      {product?.profiles.full_name}
+                    </span>
+                  </motion.div>
+                )}
               </div>
             </div>
 

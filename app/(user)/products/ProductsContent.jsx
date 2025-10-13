@@ -175,7 +175,7 @@ const ListViewProductCard = memo(({ product }) => {
 ListViewProductCard.displayName = "ListViewProductCard";
 
 // Loading skeleton component
-const LoadingSkeleton = memo(() => (
+export const LoadingSkeleton = memo(() => (
   <div className="bg-white rounded-xl shadow-sm overflow-hidden animate-pulse">
     <div className="w-full h-64 bg-gray-200"></div>
     <div className="p-4">

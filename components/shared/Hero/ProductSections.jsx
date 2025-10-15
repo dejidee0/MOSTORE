@@ -1,35 +1,33 @@
-import React, { useEffect, useState } from "react";
+"use client";
 
+import React, { useEffect, useState } from "react";
 import { recentlyAddedProducts } from "@/lib/data/products";
-import ProductGrid from "@/components/ProductGrid";
+import ProductsGrid from "./ProductsGrid";
 
 export default function ProductSections() {
-  const [dealProduct, setDealProduct] = useState(null);
   const [recentProducts, setRecentProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    const fetchAll = async () => {
+    const fetchProducts = async () => {
       try {
-        const [deal, recent] = await Promise.all([recentlyAddedProducts()]);
-
-        setDealProduct(deal);
+        const recent = await recentlyAddedProducts();
         setRecentProducts(recent);
       } catch (error) {
         console.error("Error fetching products:", error);
+        setError("Failed to load products. Please try again.");
       } finally {
         setLoading(false);
       }
     };
 
-    fetchAll();
+    fetchProducts();
   }, []);
 
   return (
     <div className="min-h-max bg-orange-50">
-      <div className="max-w-7xl mx-auto px-4 space-y-3 py-6">
-        {/* Deal of the Day Section */}
-
+      <div className="max-w-7xl mx-auto px-4 space-y-6 py-6">
         {/* Recently Added Section */}
         <section className="max-w-7xl mx-auto">
           <div className="flex flex-col">
@@ -40,17 +38,28 @@ export default function ProductSections() {
               Don't miss out on this week's deals
             </p>
           </div>
+          {error && (
+            <div className="text-center py-12">
+              <p className="text-red-600 mb-4 text-sm">{error}</p>
+              <button
+                onClick={() => window.location.reload()}
+                className="px-4 py-2 bg-orange-500 text-white rounded text-sm hover:bg-orange-600 transition-colors"
+              >
+                Try Again
+              </button>
+            </div>
+          )}
           {loading ? (
-            <div className="flex gap-4 overflow-x-auto py-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 sm:gap-3 md:gap-4">
               {[1, 2, 3, 4, 5, 6].map((i) => (
                 <div
                   key={i}
-                  className="min-w-[250px] h-64 bg-gray-200 rounded-xl animate-pulse"
+                  className="min-w-[150px] h-64 bg-gray-200 rounded-xl animate-pulse"
                 />
               ))}
             </div>
           ) : (
-            <ProductGrid products={recentProducts} />
+            <ProductsGrid products={recentProducts} />
           )}
         </section>
 

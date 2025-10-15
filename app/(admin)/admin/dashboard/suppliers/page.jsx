@@ -1079,7 +1079,7 @@ export default function SuppliersPage() {
                         </div>
                         <div className="text-right">
                           <p className="text-lg font-bold text-orange-600">
-                            ${product.price.toFixed(2)}
+                            €{product.price.toFixed(2)}
                           </p>
                           <p className="text-sm text-gray-500">
                             Stock: {product.stock_quantity}

@@ -188,6 +188,8 @@ const ProductDashboard = () => {
     return new Intl.NumberFormat("fr-FR", {
       style: "currency",
       currency: "EUR",
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
     }).format(price);
   };
 
@@ -290,12 +292,12 @@ const ProductDashboard = () => {
 
                   <div className="flex items-center gap-4">
                     <span className="text-4xl font-bold text-gray-900">
-                      {formatPrice(product.price)}
+                      €{product.price.toFixed(2)}
                     </span>
                     {product.originalprice &&
                       product.originalprice > product.price && (
                         <span className="text-xl text-gray-500 line-through">
-                          {formatPrice(product.originalprice)}
+                          € {product.originalprice.toFixed(2)}
                         </span>
                       )}
                     {product.discount && (
@@ -756,11 +758,11 @@ const ProductDashboard = () => {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="text-sm font-medium text-gray-900">
-                            {formatPrice(product.price)}
+                            €{product.price.toFixed(2)}
                           </div>
                           {product.originalprice && (
                             <div className="text-xs text-gray-500 line-through">
-                              {formatPrice(product.originalprice)}
+                              €{product.originalprice.toFixed(2)}
                             </div>
                           )}
                         </td>

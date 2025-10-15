@@ -242,15 +242,15 @@ export const ProductCard = ({ product }) => {
             {product.originalprice && product.discount ? (
               <>
                 <span className="text-sm sm:text-lg font-bold text-gray-900">
-                  {formatPrice(discountedPrice)}
+                  €{discountedPrice.toFixed(2)}
                 </span>
                 <span className="text-[10px] sm:text-xs line-through text-gray-400 mb-0.5">
-                  {formatPrice(product.originalprice)}
+                  €{product.originalprice.toFixed(2)}
                 </span>
               </>
             ) : (
               <span className="text-sm sm:text-lg font-bold text-gray-900">
-                {formatPrice(product.price)}
+                €{product.price.toFixed(2)}
               </span>
             )}
           </div>

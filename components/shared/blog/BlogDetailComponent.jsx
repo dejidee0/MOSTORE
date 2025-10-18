@@ -19,6 +19,7 @@ import {
   ChevronLeft,
   ChevronRight,
   X,
+  ImageIcon,
   Check,
   Copy,
 } from "lucide-react";
@@ -52,37 +53,31 @@ const Toast = memo(({ message, type = "success", onClose }) => (
 ));
 Toast.displayName = "Toast";
 
-// Image Gallery Modal Component
-const ImageGalleryModal = memo(({ post }) => {
+// Image Gallery Component
+const ImageGallery = memo(({ images, featuredImage, postTitle }) => {
   const [selectedImage, setSelectedImage] = useState(null);
   const [currentIndex, setCurrentIndex] = useState(0);
 
-  // Combine featured image with additional images
+  // Combine featured image with additional images, ensuring featured image is first
   const allImages = useMemo(() => {
-    const imagesArray = post?.featured_image
+    const imagesArray = featuredImage
       ? [
           {
-            url: post.featured_image,
-            alt: post.title || "Featured image",
+            url: featuredImage,
+            alt: postTitle || "Featured image",
             caption: "Featured Image",
           },
         ]
       : [];
-    return imagesArray.concat(post?.images || []);
-  }, [post?.featured_image, post?.images, post?.title]);
+    return imagesArray.concat(images || []);
+  }, [featuredImage, images, postTitle]);
 
-  useEffect(() => {
-    const handleOpenGallery = (event) => {
-      const index = event.detail;
-      if (allImages[index]) {
-        setCurrentIndex(index);
-        setSelectedImage(allImages[index]);
-      }
-    };
+  if (!allImages || allImages.length === 0) return null;
 
-    window.addEventListener("openGallery", handleOpenGallery);
-    return () => window.removeEventListener("openGallery", handleOpenGallery);
-  }, [allImages]);
+  const openGallery = (index) => {
+    setCurrentIndex(index);
+    setSelectedImage(allImages[index]);
+  };
 
   const closeGallery = () => {
     setSelectedImage(null);
@@ -100,94 +95,120 @@ const ImageGalleryModal = memo(({ post }) => {
     setSelectedImage(allImages[newIndex]);
   };
 
+  const handleKeyDown = useCallback((e) => {
+    if (e.key === "Escape") closeGallery();
+    if (e.key === "ArrowRight") nextImage();
+    if (e.key === "ArrowLeft") prevImage();
+  }, []);
+
   useEffect(() => {
-    const handleKeyDown = (e) => {
-      if (!selectedImage) return;
-      if (e.key === "Escape") closeGallery();
-      if (e.key === "ArrowRight") nextImage();
-      if (e.key === "ArrowLeft") prevImage();
-    };
-
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [selectedImage, currentIndex]);
-
-  if (!allImages || allImages.length === 0) return null;
+    if (selectedImage) {
+      document.addEventListener("keydown", handleKeyDown);
+      return () => document.removeEventListener("keydown", handleKeyDown);
+    }
+  }, [selectedImage, handleKeyDown]);
 
   return (
-    <AnimatePresence>
-      {selectedImage && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center p-4 sm:p-6"
-          onClick={closeGallery}
-        >
-          <button
-            onClick={closeGallery}
-            className="absolute top-4 right-4 text-white hover:text-gray-300 transition-colors z-10"
-            aria-label="Close gallery"
-          >
-            <X className="w-8 h-8" />
-          </button>
+    <>
+      <div className="my-8">
+        <div className="space-y-6">
+          {allImages.map((img, index) => (
+            <motion.div
+              key={img.id || index}
+              whileHover={{ scale: 1.01 }}
+              className="relative h-64 md:h-96 rounded-2xl overflow-hidden cursor-pointer border border-gray-200 hover:border-orange-500 transition-all shadow-sm hover:shadow-md"
+              onClick={() => openGallery(index)}
+            >
+              <img
+                src={img.url}
+                alt={img.alt || `Gallery image ${index + 1}`}
+                className="w-full h-full object-cover"
+                loading={index === 0 ? "eager" : "lazy"}
+              />
+              {img.caption && (
+                <div className="absolute bottom-0 left-0 right-0 bg-black/70 text-white text-sm p-3">
+                  {img.caption}
+                </div>
+              )}
+            </motion.div>
+          ))}
+        </div>
+      </div>
 
-          {allImages.length > 1 && (
-            <>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  prevImage();
-                }}
-                className="absolute left-4 top-1/2 -translate-y-1/2 text-white hover:text-gray-300 transition-colors z-10"
-                aria-label="Previous image"
-              >
-                <ChevronLeft className="w-10 h-10 sm:w-12 sm:h-12" />
-              </button>
-
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  nextImage();
-                }}
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-white hover:text-gray-300 transition-colors z-10"
-                aria-label="Next image"
-              >
-                <ChevronRight className="w-10 h-10 sm:w-12 sm:h-12" />
-              </button>
-            </>
-          )}
-
+      <AnimatePresence>
+        {selectedImage && (
           <motion.div
-            initial={{ scale: 0.9, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0.9, opacity: 0 }}
-            className="max-w-[90vw] max-h-[90vh] flex flex-col"
-            onClick={(e) => e.stopPropagation()}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center p-4 sm:p-6"
+            onClick={closeGallery}
           >
-            <img
-              src={selectedImage.url}
-              alt={selectedImage.alt || "Gallery image"}
-              className="max-w-full max-h-[80vh] object-contain rounded-lg"
-            />
-            {(selectedImage.caption || selectedImage.alt) && (
-              <div className="mt-4 text-center">
-                <p className="text-white text-sm sm:text-base">
-                  {selectedImage.caption || selectedImage.alt}
-                </p>
-                <p className="text-gray-400 text-xs sm:text-sm mt-1">
-                  {currentIndex + 1} / {allImages.length}
-                </p>
-              </div>
+            <button
+              onClick={closeGallery}
+              className="absolute top-4 right-4 text-white hover:text-gray-300 transition-colors z-10"
+              aria-label="Close gallery"
+            >
+              <X className="w-8 h-8" />
+            </button>
+
+            {allImages.length > 1 && (
+              <>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    prevImage();
+                  }}
+                  className="absolute left-4 top-1/2 -translate-y-1/2 text-white hover:text-gray-300 transition-colors z-10"
+                  aria-label="Previous image"
+                >
+                  <ChevronLeft className="w-10 h-10 sm:w-12 sm:h-12" />
+                </button>
+
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    nextImage();
+                  }}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-white hover:text-gray-300 transition-colors z-10"
+                  aria-label="Next image"
+                >
+                  <ChevronRight className="w-10 h-10 sm:w-12 sm:h-12" />
+                </button>
+              </>
             )}
+
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="max-w-[90vw] max-h-[90vh] flex flex-col"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <img
+                src={selectedImage.url}
+                alt={selectedImage.alt || "Gallery image"}
+                className="max-w-full max-h-[80vh] object-contain rounded-lg"
+              />
+              {(selectedImage.caption || selectedImage.alt) && (
+                <div className="mt-4 text-center">
+                  <p className="text-white text-sm sm:text-base">
+                    {selectedImage.caption || selectedImage.alt}
+                  </p>
+                  <p className="text-gray-400 text-xs sm:text-sm mt-1">
+                    {currentIndex + 1} / {allImages.length}
+                  </p>
+                </div>
+              )}
+            </motion.div>
           </motion.div>
-        </motion.div>
-      )}
-    </AnimatePresence>
+        )}
+      </AnimatePresence>
+    </>
   );
 });
 
-ImageGalleryModal.displayName = "ImageGalleryModal";
+ImageGallery.displayName = "ImageGallery";
 
 // Comment Component
 const Comment = memo(({ comment, onCommentLike, onReply }) => (
@@ -702,194 +723,21 @@ export default function BlogPostDetail({ post }) {
           </div>
         </motion.div>
 
-        {/* Unified Image Gallery at Top */}
-        {(post.featured_image || (post.images && post.images.length > 0)) && (
+        {post.featured_image && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
             className="mb-8"
           >
-            {(() => {
-              const allImages = post.featured_image
-                ? [
-                    {
-                      url: post.featured_image,
-                      alt: post.title || "Featured image",
-                      caption: "Featured Image",
-                    },
-                  ].concat(post.images || [])
-                : post.images || [];
-
-              if (allImages.length === 1) {
-                // Single image - full width hero
-                return (
-                  <div
-                    className="relative h-64 md:h-96 rounded-2xl overflow-hidden border border-gray-200 cursor-pointer group"
-                    onClick={() => {
-                      const gallery = document.querySelector(
-                        "[data-gallery-open]"
-                      );
-                      if (gallery) gallery.click();
-                    }}
-                  >
-                    <img
-                      src={allImages[0].url}
-                      alt={allImages[0].alt || "Blog post image"}
-                      className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                      loading="eager"
-                    />
-                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center">
-                      <Eye className="w-8 h-8 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
-                    </div>
-                    <button
-                      data-gallery-open
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        const event = new CustomEvent("openGallery", {
-                          detail: 0,
-                        });
-                        window.dispatchEvent(event);
-                      }}
-                      className="hidden"
-                    />
-                  </div>
-                );
-              } else if (allImages.length === 2) {
-                // Two images - split layout
-                return (
-                  <div className="grid grid-cols-2 gap-4 h-64 md:h-96">
-                    {allImages.map((img, index) => (
-                      <div
-                        key={img.id || index}
-                        className="relative rounded-2xl overflow-hidden border border-gray-200 cursor-pointer group"
-                        onClick={() => {
-                          const event = new CustomEvent("openGallery", {
-                            detail: index,
-                          });
-                          window.dispatchEvent(event);
-                        }}
-                      >
-                        <img
-                          src={img.url}
-                          alt={img.alt || `Image ${index + 1}`}
-                          className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                          loading={index === 0 ? "eager" : "lazy"}
-                        />
-                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center">
-                          <Eye className="w-6 h-6 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                );
-              } else if (allImages.length === 3) {
-                // Three images - hero with two thumbnails
-                return (
-                  <div className="grid grid-cols-2 gap-4 h-64 md:h-96">
-                    <div
-                      className="col-span-2 md:col-span-1 relative rounded-2xl overflow-hidden border border-gray-200 cursor-pointer group"
-                      onClick={() => {
-                        const event = new CustomEvent("openGallery", {
-                          detail: 0,
-                        });
-                        window.dispatchEvent(event);
-                      }}
-                    >
-                      <img
-                        src={allImages[0].url}
-                        alt={allImages[0].alt || "Featured image"}
-                        className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                        loading="eager"
-                      />
-                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center">
-                        <Eye className="w-8 h-8 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
-                      </div>
-                    </div>
-                    <div className="col-span-2 md:col-span-1 grid grid-cols-2 md:grid-cols-1 gap-4">
-                      {allImages.slice(1, 3).map((img, index) => (
-                        <div
-                          key={img.id || index}
-                          className="relative rounded-2xl overflow-hidden border border-gray-200 cursor-pointer group"
-                          onClick={() => {
-                            const event = new CustomEvent("openGallery", {
-                              detail: index + 1,
-                            });
-                            window.dispatchEvent(event);
-                          }}
-                        >
-                          <img
-                            src={img.url}
-                            alt={img.alt || `Image ${index + 2}`}
-                            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                            loading="lazy"
-                          />
-                          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center">
-                            <Eye className="w-6 h-6 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                );
-              } else {
-                // Four or more images - hero with thumbnail grid
-                return (
-                  <div className="space-y-4">
-                    <div
-                      className="relative h-64 md:h-96 rounded-2xl overflow-hidden border border-gray-200 cursor-pointer group"
-                      onClick={() => {
-                        const event = new CustomEvent("openGallery", {
-                          detail: 0,
-                        });
-                        window.dispatchEvent(event);
-                      }}
-                    >
-                      <img
-                        src={allImages[0].url}
-                        alt={allImages[0].alt || "Featured image"}
-                        className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                        loading="eager"
-                      />
-                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center">
-                        <Eye className="w-8 h-8 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
-                      </div>
-                    </div>
-                    {allImages.length > 1 && (
-                      <div className="grid grid-cols-3 md:grid-cols-4 gap-3">
-                        {allImages.slice(1, 5).map((img, index) => (
-                          <div
-                            key={img.id || index}
-                            className="relative aspect-square rounded-xl overflow-hidden border border-gray-200 cursor-pointer group"
-                            onClick={() => {
-                              const event = new CustomEvent("openGallery", {
-                                detail: index + 1,
-                              });
-                              window.dispatchEvent(event);
-                            }}
-                          >
-                            <img
-                              src={img.url}
-                              alt={img.alt || `Image ${index + 2}`}
-                              className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                              loading="lazy"
-                            />
-                            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
-                              <Eye className="w-5 h-5 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
-                            </div>
-                            {index === 3 && allImages.length > 5 && (
-                              <div className="absolute inset-0 bg-black/60 flex items-center justify-center text-white font-bold text-lg">
-                                +{allImages.length - 5}
-                              </div>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                );
-              }
-            })()}
+            <div className="relative h-64 md:h-96 rounded-2xl overflow-hidden border border-gray-200">
+              <img
+                src={post.featured_image}
+                alt={post.title || "Blog post image"}
+                className="w-full h-full object-cover"
+                loading="eager"
+              />
+            </div>
           </motion.div>
         )}
 
@@ -909,6 +757,10 @@ export default function BlogPostDetail({ post }) {
             className="prose prose-lg max-w-none text-gray-700 leading-relaxed"
             dangerouslySetInnerHTML={{ __html: post.content }}
           />
+
+          {post.images && post.images.length > 0 && (
+            <ImageGallery images={post.images} />
+          )}
         </motion.div>
 
         <motion.div
@@ -998,9 +850,6 @@ export default function BlogPostDetail({ post }) {
           </div>
         </motion.div>
       </div>
-
-      {/* Image Gallery Modal */}
-      <ImageGalleryModal post={post} />
 
       {/* Toast Notifications */}
       <AnimatePresence>

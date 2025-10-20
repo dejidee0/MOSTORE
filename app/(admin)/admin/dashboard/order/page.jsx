@@ -322,7 +322,7 @@ const Page = () => {
                         </span>
                       </td>
                       <td className="py-3 text-sm text-gray-900">
-                        {formatCurrency(order.total)}
+                        €{order.total}
                       </td>
                       <td className="py-3 text-sm text-gray-500">
                         {formatDate(order.created_at)}

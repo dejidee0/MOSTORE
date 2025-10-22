@@ -22,6 +22,7 @@ import {
 import { supabase } from "@/lib/supabase-client";
 import ProductForm from "@/components/inputs/ProductsForm";
 import useUserStore from "@/lib/stores/useUserStore";
+import { User } from "lucide-react";
 
 const ProductDashboard = () => {
   const { user } = useUserStore();
@@ -64,10 +65,13 @@ const ProductDashboard = () => {
         categories (
           id,
           name
+        ), profiles (
+        id,
+        username
         )
       `
         )
-        .eq("supplier_id", user.id)
+        .eq("is_active", true)
         .order("created_at", { ascending: false });
 
       if (error) {
@@ -343,119 +347,128 @@ const ProductDashboard = () => {
                       <Tag className="text-gray-400" size={16} />
                       <span className="text-gray-600">SKU: {product.sku}</span>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <Package className="text-gray-400" size={16} />
-                      <span className="text-gray-600">
-                        Category: {product.category_name || "Uncategorized"}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Package className="text-gray-400" size={16} />
-                      <span className="text-gray-600">
-                        Condition:{" "}
-                        <span
-                          className={`font-medium ${
-                            product.condition === "new"
-                              ? "text-green-600"
-                              : "text-blue-600"
-                          }`}
-                        >
-                          {product.condition === "new" ? "New" : "Used"}
-                        </span>
-                      </span>
-                    </div>
-                    {product.created_at && (
+
+                    <div className="space-y-2">
                       <div className="flex items-center gap-2">
-                        <Calendar className="text-gray-400" size={16} />
+                        <User className="text-gray-400" size={16} />
                         <span className="text-gray-600">
-                          Added:{" "}
-                          {new Date(product.created_at).toLocaleDateString()}
+                          Vendor: {product.profiles.username}
                         </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Package className="text-gray-400" size={16} />
+                        <span className="text-gray-600">
+                          Category: {product.category_name || "Uncategorized"}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Package className="text-gray-400" size={16} />
+                        <span className="text-gray-600">
+                          Condition:{" "}
+                          <span
+                            className={`font-medium ${
+                              product.condition === "new"
+                                ? "text-green-600"
+                                : "text-blue-600"
+                            }`}
+                          >
+                            {product.condition === "new" ? "New" : "Used"}
+                          </span>
+                        </span>
+                      </div>
+                      {product.created_at && (
+                        <div className="flex items-center gap-2">
+                          <Calendar className="text-gray-400" size={16} />
+                          <span className="text-gray-600">
+                            Added:{" "}
+                            {new Date(product.created_at).toLocaleDateString()}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <h3 className="text-xl font-semibold text-gray-900">
+                    Description
+                  </h3>
+                  <div className="space-y-3">
+                    {product.short_description && (
+                      <p className="text-lg text-gray-700 bg-gray-50 p-4 rounded-lg">
+                        {product.short_description}
+                      </p>
+                    )}
+                    <p className="text-gray-600 leading-relaxed">
+                      {product.description}
+                    </p>
+                  </div>
+                </div>
+
+                {(product.colors?.length > 0 || product.sizes?.length > 0) && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {product.colors?.length > 0 && (
+                      <div>
+                        <h4 className="font-semibold text-gray-900 mb-3">
+                          Available Colors
+                        </h4>
+                        <div className="flex flex-wrap gap-2">
+                          {product.colors.map((color, index) => (
+                            <span
+                              key={index}
+                              className="px-3 py-2 bg-gray-100 text-gray-700 rounded-lg"
+                            >
+                              {color}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    {product.sizes?.length > 0 && (
+                      <div>
+                        <h4 className="font-semibold text-gray-900 mb-3">
+                          Available Sizes
+                        </h4>
+                        <div className="flex flex-wrap gap-2">
+                          {product.sizes.map((size, index) => (
+                            <span
+                              key={index}
+                              className="px-3 py-2 bg-gray-100 text-gray-700 rounded-lg"
+                            >
+                              {size}
+                            </span>
+                          ))}
+                        </div>
                       </div>
                     )}
                   </div>
-                </div>
-              </div>
-
-              <div className="space-y-4">
-                <h3 className="text-xl font-semibold text-gray-900">
-                  Description
-                </h3>
-                <div className="space-y-3">
-                  {product.short_description && (
-                    <p className="text-lg text-gray-700 bg-gray-50 p-4 rounded-lg">
-                      {product.short_description}
-                    </p>
-                  )}
-                  <p className="text-gray-600 leading-relaxed">
-                    {product.description}
-                  </p>
-                </div>
-              </div>
-
-              {(product.colors?.length > 0 || product.sizes?.length > 0) && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {product.colors?.length > 0 && (
-                    <div>
-                      <h4 className="font-semibold text-gray-900 mb-3">
-                        Available Colors
-                      </h4>
-                      <div className="flex flex-wrap gap-2">
-                        {product.colors.map((color, index) => (
-                          <span
-                            key={index}
-                            className="px-3 py-2 bg-gray-100 text-gray-700 rounded-lg"
-                          >
-                            {color}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                  {product.sizes?.length > 0 && (
-                    <div>
-                      <h4 className="font-semibold text-gray-900 mb-3">
-                        Available Sizes
-                      </h4>
-                      <div className="flex flex-wrap gap-2">
-                        {product.sizes.map((size, index) => (
-                          <span
-                            key={index}
-                            className="px-3 py-2 bg-gray-100 text-gray-700 rounded-lg"
-                          >
-                            {size}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              <div className="flex flex-wrap gap-3">
-                <span
-                  className={`px-3 py-1 rounded-lg text-sm font-medium ${
-                    product.is_active
-                      ? "bg-green-100 text-green-700"
-                      : "bg-red-100 text-red-700"
-                  }`}
-                >
-                  {product.is_active ? "Active" : "Inactive"}
-                </span>
-                {product.is_featured && (
-                  <span className="px-3 py-1 bg-orange-100 text-orange-700 rounded-lg text-sm font-medium">
-                    Featured Product
-                  </span>
                 )}
-                <span
-                  className={`px-3 py-1 rounded-lg text-sm font-medium ${
-                    product.condition === "new"
-                      ? "bg-green-100 text-green-700"
-                      : "bg-blue-100 text-blue-700"
-                  }`}
-                >
-                  {product.condition === "new" ? "Brand New" : "Pre-Owned"}
-                </span>
+
+                <div className="flex flex-wrap gap-3">
+                  <span
+                    className={`px-3 py-1 rounded-lg text-sm font-medium ${
+                      product.is_active
+                        ? "bg-green-100 text-green-700"
+                        : "bg-red-100 text-red-700"
+                    }`}
+                  >
+                    {product.is_active ? "Active" : "Inactive"}
+                  </span>
+                  {product.is_featured && (
+                    <span className="px-3 py-1 bg-orange-100 text-orange-700 rounded-lg text-sm font-medium">
+                      Featured Product
+                    </span>
+                  )}
+                  <span
+                    className={`px-3 py-1 rounded-lg text-sm font-medium ${
+                      product.condition === "new"
+                        ? "bg-green-100 text-green-700"
+                        : "bg-blue-100 text-blue-700"
+                    }`}
+                  >
+                    {product.condition === "new" ? "Brand New" : "Pre-Owned"}
+                  </span>
+                </div>
               </div>
             </div>
           </div>
@@ -483,6 +496,9 @@ const ProductDashboard = () => {
           </div>
           <div className="flex-1">
             <h3 className="font-medium text-gray-900">{product.name}</h3>
+            <h3 className="font-medium text-gray-900">
+              {product.profiles.username}
+            </h3>
             <p className="text-sm text-gray-500">{product.sku}</p>
             <div className="mt-1 flex items-center gap-2">
               <span
@@ -686,6 +702,12 @@ const ProductDashboard = () => {
                         scope="col"
                         className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                       >
+                        Vendor
+                      </th>
+                      <th
+                        scope="col"
+                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                      >
                         Condition
                       </th>
                       <th
@@ -740,9 +762,15 @@ const ProductDashboard = () => {
                             </div>
                           </div>
                         </td>
+
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="text-sm text-gray-900">
                             {product.category_name || "Uncategorized"}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm text-gray-900">
+                            {product.profiles.username || "No vendor"}
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">

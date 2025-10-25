@@ -6,8 +6,8 @@ import { useRouter } from "next/navigation";
 // ✅ Category image mapping
 const getCategoryImage = (name) => {
   const lower = name?.toLowerCase() || "";
-  if (lower.includes("tech"))
-    return "https://images.unsplash.com/photo-1468495244123-6c6c332eeece?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8M3x8Z2FkZ2V0fGVufDB8fDB8fHww";
+  if (lower.includes("security")) return "/hero/security.jpg";
+
   if (lower.includes("used"))
     return "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQgZDEwZZgSnycmWsPozIjbE0-blgA4UX_8X4HdgwYK8vQZchlFtafjVxSWYZs7k1Ld6Q8&usqp=CAU";
   if (lower.includes("electric"))
@@ -22,8 +22,9 @@ const getCategoryImage = (name) => {
     return "https://images.unsplash.com/photo-1746014995761-bf045dc83b0a?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MjF8fG1vdG9yJTIwb2lsfGVufDB8fDB8fHww";
   if (lower.includes("kids"))
     return "https://images.unsplash.com/photo-1594608661623-aa0bd3a69d98?q=80&w=948&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D";
-  if (lower.includes("devices")) return "/hero/phones.jpg";
-  if (lower.includes("appliances")) return "/hero/gadgets.jpg";
+  if (lower.includes("devices"))
+    return "https://images.unsplash.com/photo-1468495244123-6c6c332eeece?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8M3x8Z2FkZ2V0fGVufDB8fDB8fHww";
+  if (lower.includes("appliances")) return "/hero/appliances.jpg";
   if (lower.includes("accessories")) return "/hero/accessories.jpg";
   if (lower.includes("others"))
     return "https://plus.unsplash.com/premium_photo-1678402542628-3d0ccf1224b7?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MXx8aG91c2Vob2xkJTIwaXRlbXN8ZW58MHx8MHx8fDA%3D";

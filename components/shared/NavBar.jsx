@@ -39,6 +39,7 @@ import {
   LifeBuoy,
 } from "lucide-react";
 import { useCart } from "@/lib/cart";
+import { PiSecurityCameraDuotone } from "react-icons/pi";
 import Link from "next/link";
 import { useWishlist } from "@/hooks/useWishlist";
 import { Gift, HeartPulse, Laptop, Ship, Baby } from "lucide-react";
@@ -126,12 +127,14 @@ const NavBar = () => {
     if (name.includes("electric") || name.includes("motorcycle"))
       return <Bike className="w-4 h-4" />;
     if (name.includes("fitters")) return <FaOilCan className="w-4 h-4" />;
-    if (name.includes("tech")) return <Smartphone className="w-4 h-4" />;
+
     if (name.includes("used")) return <Monitor className="w-4 h-4" />;
     if (name.includes("autopart") || name.includes("accessories"))
       return <Wrench className="w-4 h-4" />;
     if (name.includes("boating")) return <Ship className="w-4 h-4" />;
     if (name.includes("kids")) return <Baby className="w-4 h-4" />;
+    if (name.includes("security"))
+      return <PiSecurityCameraDuotone className="w-4 h-4" />;
     return <BsGear className="w-4 h-4" />;
   }, []);
 

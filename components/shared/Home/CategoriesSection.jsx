@@ -25,6 +25,7 @@ const getCategoryImage = (name) => {
   if (lower.includes("devices")) return "/hero/phones.jpg";
   if (lower.includes("appliances")) return "/hero/gadgets.jpg";
   if (lower.includes("accessories")) return "/hero/accessories.jpg";
+  if (lower.includes("others")) return "/hero/othes.jpg";
   return "https://images.unsplash.com/photo-1558618047-3c8c76ca7d13?w=400&h=300&fit=crop";
 };
 

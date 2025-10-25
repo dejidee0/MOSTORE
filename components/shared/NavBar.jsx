@@ -697,7 +697,7 @@ const NavBar = () => {
                             key={link.label}
                             href={link.href}
                             onClick={() => setIsDrawerOpen(false)}
-                            className="block py-2 pl-2 hover:text-blue-600"
+                            className="block py-2  hover:text-blue-600"
                           >
                             {link.label}
                           </Link>
@@ -710,7 +710,7 @@ const NavBar = () => {
                             className="flex justify-between items-center"
                             prefetch
                           >
-                            <span className=" text-black">
+                            <span className=" text-black font-bold">
                               Sell on{" "}
                               <span className="font-bold text-orange-500">
                                 Mostore

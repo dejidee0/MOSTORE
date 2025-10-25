@@ -9,7 +9,7 @@ const getCategoryImage = (name) => {
   if (lower.includes("tech"))
     return "https://images.unsplash.com/photo-1468495244123-6c6c332eeece?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8M3x8Z2FkZ2V0fGVufDB8fDB8fHww";
   if (lower.includes("used"))
-    return "https://plus.unsplash.com/premium_photo-1678402542628-3d0ccf1224b7?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MXx8aG91c2Vob2xkJTIwaXRlbXN8ZW58MHx8MHx8fDA%3D";
+    return "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQgZDEwZZgSnycmWsPozIjbE0-blgA4UX_8X4HdgwYK8vQZchlFtafjVxSWYZs7k1Ld6Q8&usqp=CAU";
   if (lower.includes("electric"))
     return "https://images.unsplash.com/photo-1635560019796-e256b3737dc2?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8N3x8ZWxlY3RyaWMlMjBiaWtlc3xlbnwwfHwwfHx8MA%3D%3D";
   if (lower.includes("automobiles"))
@@ -25,7 +25,8 @@ const getCategoryImage = (name) => {
   if (lower.includes("devices")) return "/hero/phones.jpg";
   if (lower.includes("appliances")) return "/hero/gadgets.jpg";
   if (lower.includes("accessories")) return "/hero/accessories.jpg";
-  if (lower.includes("others")) return "/hero/othes.jpg";
+  if (lower.includes("others"))
+    return "https://plus.unsplash.com/premium_photo-1678402542628-3d0ccf1224b7?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MXx8aG91c2Vob2xkJTIwaXRlbXN8ZW58MHx8MHx8fDA%3D";
   return "https://images.unsplash.com/photo-1558618047-3c8c76ca7d13?w=400&h=300&fit=crop";
 };
 

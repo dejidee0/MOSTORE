@@ -16,8 +16,8 @@ const raleway = Raleway({
 
 export const metadata = {
   title:
-    "MOStore | Online Shopping Store That is More Than a Store, That Gives You More Value, More Quality, More Choice, More Varieties, Get More Out of Every Store",
-  description: `Online Shopping Store Built For Used and New Household Appliances, Autoparts, Electronics, Phones, Computers, Automobiles And More..`,
+    "MOSTORE | Online Shopping Store Built for Automobiles, Autoparts, Electronics,  Home Appliances and More…",
+  description: `Mostore is an Online Shopping Store that gives your more value More choice and varieties for less. Shop more out of every products from Automobiles, Autoparts, Electronics to Home Appliances and so much more…. Start Shopping Now…`,
 
   icons: {
     icon: [
@@ -49,8 +49,8 @@ export const metadata = {
   },
   openGraph: {
     title:
-      "MOStore | Online Shopping Store That is More Than a Store, That Gives You More Value, More Quality, More Choice, More Varieties, Get More Out of Every Store",
-    description: `Online Shopping Store Built For Used and New Household Appliances, Autoparts, Electronics, Phones, Computers, Automobiles And More..`,
+      "MOSTORE | Online Shopping Store Built for Automobiles, Autoparts, Electronics,  Home Appliances and More…",
+    description: `Mostore is an Online Shopping Store that gives your more value More choice and varieties for less. Shop more out of every products from Automobiles, Autoparts, Electronics to Home Appliances and so much more…. Start Shopping Now…`,
 
     images: [
       {

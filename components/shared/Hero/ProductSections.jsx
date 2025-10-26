@@ -50,7 +50,7 @@ export default function ProductSections() {
             </div>
           )}
           {loading ? (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 sm:gap-3 md:gap-4">
+            <div className="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-4 gap-2 sm:gap-3 md:gap-4">
               {[1, 2, 3, 4, 5, 6].map((i) => (
                 <div
                   key={i}

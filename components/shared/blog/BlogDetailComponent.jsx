@@ -400,7 +400,7 @@ export default function BlogPostDetail({ post }) {
           `
         id,
         post_id,
-        parent_id,
+      
         guest_id,
         user_id,
         author_name,
@@ -408,23 +408,12 @@ export default function BlogPostDetail({ post }) {
         content,
         status,
         likes_count,
-        created_at,
-        replies:blog_comments!parent_id(
-          id,
-          post_id,
-          parent_id,
-          guest_id,
-          user_id,
-          author_name,
-          author_email,
-          content,
-          status,
-          created_at
-        )
+        created_at
+ 
       `
         )
         .eq("post_id", postId)
-        .is("parent_id", null)
+
         .eq("status", "approved")
         .order("created_at", { ascending: false });
 
@@ -503,7 +492,6 @@ export default function BlogPostDetail({ post }) {
     try {
       const { error } = await supabase.from("blog_comments").insert({
         post_id: postId,
-        parent_id: replyingTo?.id || null,
         guest_id: guestId,
         author_name: "Guest User",
         content: trimmedComment,

@@ -118,7 +118,7 @@ export default function ProductShowcaseSection() {
 
           {/* Product Grid - Jumia Style */}
           <div className="lg:col-span-9">
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-2 sm:gap-3">
+            <div className="grid grid-cols-3 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-2 sm:gap-3">
               {products.map((product) => (
                 <Link key={product.id} href={`/products/${product.id}`}>
                   <div className="bg-white rounded-lg border border-gray-100 hover:shadow-md transition-shadow duration-200 overflow-hidden group cursor-pointer">

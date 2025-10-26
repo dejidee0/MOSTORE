@@ -12,12 +12,13 @@ const BlogLandingSection = () => {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    const fetchPosts = async () => {
+    const fetchPostsAndComments = async () => {
       try {
         setIsLoading(true);
         setError(null);
 
-        const { data, error: fetchError } = await supabase
+        // Fetch blog posts
+        const { data: postsData, error: postsError } = await supabase
           .from("blog_posts")
           .select(
             `
@@ -30,7 +31,6 @@ const BlogLandingSection = () => {
             read_time,
             views_count,
             likes_count,
-            comments_count,
             category_id,
             author_id,
             blog_categories (
@@ -43,13 +43,39 @@ const BlogLandingSection = () => {
           .order("published_at", { ascending: false })
           .limit(4);
 
-        if (fetchError) {
-          console.error("Error fetching posts:", fetchError);
-          setError(fetchError.message);
+        if (postsError) {
+          console.error("Error fetching posts:", postsError);
+          setError(postsError.message);
           return;
         }
 
-        setPosts(data || []);
+        // Fetch approved comments count for each post
+        const postIds = postsData.map((post) => post.id);
+        const { data: commentsData, error: commentsError } = await supabase
+          .from("blog_comments")
+          .select("post_id")
+          .in("post_id", postIds)
+          .eq("status", "approved");
+
+        if (commentsError) {
+          console.error("Error fetching comments:", commentsError);
+          setError("Failed to load comment counts");
+          return;
+        }
+
+        // Aggregate comment counts by post_id
+        const commentsCountMap = commentsData.reduce((acc, comment) => {
+          acc[comment.post_id] = (acc[comment.post_id] || 0) + 1;
+          return acc;
+        }, {});
+
+        // Combine posts with their respective comment counts
+        const postsWithComments = postsData.map((post) => ({
+          ...post,
+          comments_count: commentsCountMap[post.id] || 0,
+        }));
+
+        setPosts(postsWithComments || []);
       } catch (err) {
         console.error("Unexpected error:", err);
         setError("Failed to load blog posts");
@@ -58,7 +84,7 @@ const BlogLandingSection = () => {
       }
     };
 
-    fetchPosts();
+    fetchPostsAndComments();
   }, []);
 
   const formatDate = (dateString) => {
@@ -100,7 +126,7 @@ const BlogLandingSection = () => {
       <section className="py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center py-12">
-            <p className="text-red-600 mb-4">Failed to load blog posts</p>
+            <p className="text-red-600 mb-4">{error}</p>
             <button
               onClick={() => window.location.reload()}
               className="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600"

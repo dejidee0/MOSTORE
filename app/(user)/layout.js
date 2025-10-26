@@ -16,7 +16,7 @@ const raleway = Raleway({
 
 export const metadata = {
   title:
-    "MOSTORE | Online Shopping Store Built for Automobiles, Autoparts, Electronics,  Home Appliances and More…",
+    "MOSTORE | Online Shopping Store built for Automobiles, Autoparts, Electronics,  Home Appliances and More…",
   description: `Mostore is an Online Shopping Store that gives your more value More choice and varieties for less. Shop more out of every products from Automobiles, Autoparts, Electronics to Home Appliances and so much more…. Start Shopping Now…`,
 
   icons: {
@@ -49,12 +49,12 @@ export const metadata = {
   },
   openGraph: {
     title:
-      "MOSTORE | Online Shopping Store Built for Automobiles, Autoparts, Electronics,  Home Appliances and More…",
+      "MOSTORE | Online Shopping Store built for Automobiles, Autoparts, Electronics,  Home Appliances and More…",
     description: `Mostore is an Online Shopping Store that gives your more value More choice and varieties for less. Shop more out of every products from Automobiles, Autoparts, Electronics to Home Appliances and so much more…. Start Shopping Now…`,
 
     images: [
       {
-        url: "/favicon.png", // Recommended: Upload a dedicated 1200x630 PNG/JPG to /public
+        url: "/favicon.jpg", // Recommended: Upload a dedicated 1200x630 PNG/JPG to /public
         width: 1200,
         height: 630,
         alt: "MOSTORE Logo",

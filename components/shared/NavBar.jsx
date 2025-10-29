@@ -45,7 +45,9 @@ import { useWishlist } from "@/hooks/useWishlist";
 import { Gift, HeartPulse, Laptop, Ship, Baby } from "lucide-react";
 import { FaChildDress, FaOilCan } from "react-icons/fa6";
 import { BsGear } from "react-icons/bs";
+import { IoPhonePortraitSharp } from "react-icons/io5";
 import { ArrowRight } from "lucide-react";
+import { Tv } from "lucide-react";
 
 const MenuButton = ({ onClick, icon, label, className = "" }) => {
   return (
@@ -129,8 +131,10 @@ const NavBar = () => {
     if (name.includes("fitters")) return <FaOilCan className="w-4 h-4" />;
 
     if (name.includes("used")) return <Monitor className="w-4 h-4" />;
-    if (name.includes("autopart") || name.includes("accessories"))
-      return <Wrench className="w-4 h-4" />;
+    if (name.includes("accessories"))
+      return <IoPhonePortraitSharp className="w-4 h-4" />;
+    if (name.includes("autopart")) return <Wrench className="w-4 h-4" />;
+    if (name.includes("appliances")) return <Tv className="w-4 h-4" />;
     if (name.includes("boating")) return <Ship className="w-4 h-4" />;
     if (name.includes("kids")) return <Baby className="w-4 h-4" />;
     if (name.includes("security"))

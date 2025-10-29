@@ -369,7 +369,7 @@ export default function ProductDetails() {
             </div>
 
             <div className="text-gray-600 leading-relaxed">
-              {product.short_description || product.description}
+              {product.description || product.short_description}
             </div>
 
             {hasColors && (

@@ -185,7 +185,7 @@ export default function CheckoutContent() {
   const subtotal = total || 0;
   const shippingFee = subtotal > 50 ? 0 : 5;
   const tax = subtotal * 0.08;
-  const finalTotal = subtotal + shippingFee + tax;
+  const finalTotal = subtotal;
 
   const validateForm = () => {
     const errors = {};
@@ -594,26 +594,6 @@ export default function CheckoutContent() {
                 </div>
 
                 <div className="border-t border-gray-200 pt-4 space-y-3">
-                  {[
-                    { label: "Subtotal", value: subtotal },
-                    {
-                      label: "Shipping",
-                      value: shippingFee,
-                      free: shippingFee === 0,
-                    },
-                    { label: "Tax (8%)", value: tax },
-                  ].map(({ label, value, free }) => (
-                    <div key={label} className="flex justify-between text-sm">
-                      <span className="text-gray-600">{label}:</span>
-                      <span
-                        className={
-                          free ? "text-green-600" : "text-gray-900 font-medium"
-                        }
-                      >
-                        {free ? "Free" : formatPrice(value)}
-                      </span>
-                    </div>
-                  ))}
                   <div className="flex justify-between text-lg font-bold pt-3 border-t border-gray-200">
                     <span className="text-gray-900">Total:</span>
                     <span className="text-gray-900">

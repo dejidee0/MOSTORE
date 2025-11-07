@@ -97,7 +97,7 @@ export default function CartPage() {
 
     const tax = subtotal * 0.08; // 8% tax
     const shipping = subtotal > 50000 ? 0 : 5990; // Free shipping over €50,000
-    const total = subtotal + tax;
+    const total = subtotal;
 
     return {
       subtotal: subtotal.toFixed(2),
@@ -362,17 +362,14 @@ export default function CartPage() {
               <span>Subtotal</span>
               <span>€{parseFloat(totals.subtotal).toLocaleString()}</span>
             </div>
-            <div className="flex justify-between text-gray-600 mb-2">
-              <span>Tax (8%)</span>
-              <span>€{parseFloat(totals.tax).toLocaleString()}</span>
-            </div>
+
             <div className="flex justify-between text-gray-600 mb-4">
-              <span>Shipping</span>
+              <span>Delivery</span>
               <span>Free</span>
             </div>
 
             <div className="flex justify-between font-bold text-gray-900 text-lg mb-6">
-              <span>Total</span>
+              <span>Total incl. VAT</span>
               <span>€{parseFloat(totals.total).toLocaleString()}</span>
             </div>
 

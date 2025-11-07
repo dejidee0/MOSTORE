@@ -595,10 +595,14 @@ export default function CheckoutContent() {
 
                 <div className="border-t border-gray-200 pt-4 space-y-3">
                   <div className="flex justify-between text-lg font-bold pt-3 border-t border-gray-200">
-                    <span className="text-gray-900">Total:</span>
+                    <span className="text-gray-900">Total incl. VAT:</span>
                     <span className="text-gray-900">
                       {formatPrice(finalTotal)}
                     </span>
+                  </div>
+                  <div className="flex justify-between text-lg font-bold pt-3 border-t border-gray-200">
+                    <span className="text-gray-900">Delivery</span>
+                    <span className="text-gray-900">Free</span>
                   </div>
                 </div>
               </div>

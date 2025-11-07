@@ -312,7 +312,7 @@ export default function ProductDetails() {
               </div>
             )}
             <div className="text-gray-800 text-xl leading-relaxed">
-              {product.short_description}
+              {product.description}
             </div>
           </div>
 
@@ -372,7 +372,7 @@ export default function ProductDetails() {
             </div>
 
             <div className="text-gray-600 leading-relaxed">
-              {product.description || product.short_description}
+              {product.short_description}
             </div>
 
             {hasColors && (

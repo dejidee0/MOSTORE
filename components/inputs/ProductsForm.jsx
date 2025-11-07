@@ -883,14 +883,6 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
                     </option>
                   ))}
                 </select>
-                <button
-                  type="button"
-                  onClick={() => setShowNewCategoryInput(!showNewCategoryInput)}
-                  className="px-4 py-2 bg-orange-500 text-white rounded-md hover:bg-orange-600 transition-colors disabled:opacity-50"
-                  disabled={isLoading}
-                >
-                  <Plus size={20} />
-                </button>
               </div>
 
               {showNewCategoryInput && (
@@ -907,14 +899,6 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
                       (e.preventDefault(), createNewCategory())
                     }
                   />
-                  <button
-                    type="button"
-                    onClick={createNewCategory}
-                    className="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                    disabled={isLoading}
-                  >
-                    {isLoading ? "Adding..." : "Add"}
-                  </button>
                 </div>
               )}
             </div>

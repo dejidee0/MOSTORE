@@ -915,12 +915,12 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
                   onChange={handleInputChange}
                   placeholder="Brief product summary for listings (max 150 characters)"
                   rows={3}
-                  maxLength={150}
+                  maxLength={300}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent resize-none"
                   disabled={isLoading}
                 />
                 <p className="text-xs text-gray-500 mt-1">
-                  {formData.short_description.length}/150 characters
+                  {formData.short_description.length}/300 characters
                 </p>
               </div>
 

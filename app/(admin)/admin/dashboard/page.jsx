@@ -16,31 +16,43 @@ import {
   ChevronsRight,
   Check,
   X as XIcon,
+  Tag,
+  Calendar,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase-client";
 import ProductForm from "@/components/inputs/ProductsForm";
-import { Tag } from "lucide-react";
-import { Calendar } from "lucide-react";
+import useUserStore from "@/lib/stores/useUserStore";
+import { User } from "lucide-react";
 
 const ProductDashboard = () => {
+  const { user } = useUserStore();
   const [prodUpload, setProdUpload] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [editingProduct, setEditingProduct] = useState(null);
   const [showProductModal, setShowProductModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterCategory, setFilterCategory] = useState("");
+  const [filterCondition, setFilterCondition] = useState("");
   const [showFilters, setShowFilters] = useState(false);
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
+  useEffect(() => {
+    if (user?.id) {
+      fetchProducts();
+    }
+  }, [user?.id]); // Add user.id as dependency
 
-  // Fetch products from Supabase
   const fetchProducts = async () => {
+    if (!user?.id) {
+      setLoading(false);
+      return;
+    }
+
     try {
       setLoading(true);
       setError(null);
@@ -49,13 +61,17 @@ const ProductDashboard = () => {
         .from("products")
         .select(
           `
-          *,
-          categories (
-            id,
-            name
-          )
-        `
+        *,
+        categories (
+          id,
+          name
+        ), profiles (
+        id,
+        username
         )
+      `
+        )
+        .eq("is_active", true)
         .order("created_at", { ascending: false });
 
       if (error) {
@@ -86,47 +102,15 @@ const ProductDashboard = () => {
   useEffect(() => {
     fetchProducts();
   }, []);
-  // At the top of ProductDashboard
-  useEffect(() => {
-    // Restore state from localStorage
-    const savedSearchTerm = localStorage.getItem("dashboardSearchTerm") || "";
-    const savedFilterCategory =
-      localStorage.getItem("dashboardFilterCategory") || "";
-    const savedPage =
-      parseInt(localStorage.getItem("dashboardCurrentPage")) || 1;
 
-    setSearchTerm(savedSearchTerm);
-    setFilterCategory(savedFilterCategory);
-    setCurrentPage(savedPage);
-  }, []);
-
-  // Update state in localStorage when it changes
-  useEffect(() => {
-    localStorage.setItem("dashboardSearchTerm", searchTerm);
-    localStorage.setItem("dashboardFilterCategory", filterCategory);
-    localStorage.setItem("dashboardCurrentPage", currentPage.toString());
-  }, [searchTerm, filterCategory, currentPage]);
-
-  // Real-time subscription
   useEffect(() => {
     const subscription = supabase
       .channel("products-changes")
       .on(
         "postgres_changes",
-        {
-          event: "*", // Consider specifying 'INSERT', 'UPDATE', or 'DELETE'
-          schema: "public",
-          table: "products",
-        },
+        { event: "*", schema: "public", table: "products" },
         (payload) => {
-          // Only fetch products if the change is relevant
-          if (
-            payload.eventType === "INSERT" ||
-            payload.eventType === "UPDATE" ||
-            payload.eventType === "DELETE"
-          ) {
-            fetchProducts();
-          }
+          fetchProducts();
         }
       )
       .subscribe();
@@ -135,10 +119,38 @@ const ProductDashboard = () => {
       subscription.unsubscribe();
     };
   }, []);
+
   const deleteProduct = async (productId) => {
     if (!confirm("Are you sure you want to delete this product?")) return;
 
     try {
+      // Fetch the product to get images
+      const { data: product, error: fetchError } = await supabase
+        .from("products")
+        .select("images")
+        .eq("id", productId)
+        .single();
+
+      if (fetchError) throw fetchError;
+
+      // Delete images from storage
+      if (product.images && product.images.length > 0) {
+        const paths = product.images.map((url) => {
+          const parts = url.split("/");
+          return parts[parts.length - 1];
+        });
+
+        const { error: storageError } = await supabase.storage
+          .from("product-images")
+          .remove(paths);
+
+        if (storageError) {
+          console.error("Error deleting images:", storageError);
+          // Continue with deletion even if images fail to delete
+        }
+      }
+
+      // Delete the product
       const { error } = await supabase
         .from("products")
         .delete()
@@ -153,27 +165,6 @@ const ProductDashboard = () => {
     }
   };
 
-  const toggleProductStatus = async (productId, currentStatus) => {
-    try {
-      const { error } = await supabase
-        .from("products")
-        .update({ is_active: !currentStatus })
-        .eq("id", productId);
-
-      if (error) throw error;
-
-      setProducts(
-        products.map((p) =>
-          p.id === productId ? { ...p, is_active: !currentStatus } : p
-        )
-      );
-    } catch (error) {
-      console.error("Error updating product status:", error);
-      alert("Failed to update product: " + error.message);
-    }
-  };
-
-  // Filter products
   const filteredProducts = products.filter((product) => {
     const matchesSearch =
       product?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -183,10 +174,11 @@ const ProductDashboard = () => {
       filterCategory === "" ||
       filterCategory === "All" ||
       product?.category_name === filterCategory;
-    return matchesSearch && matchesCategory;
+    const matchesCondition =
+      filterCondition === "" || product?.condition === filterCondition;
+    return matchesSearch && matchesCategory && matchesCondition;
   });
 
-  // Pagination logic
   const totalItems = filteredProducts.length;
   const totalPages = Math.ceil(totalItems / itemsPerPage);
   const indexOfLastItem = currentPage * itemsPerPage;
@@ -197,9 +189,11 @@ const ProductDashboard = () => {
   );
 
   const formatPrice = (price) => {
-    return new Intl.NumberFormat("en-US", {
+    return new Intl.NumberFormat("fr-FR", {
       style: "currency",
-      currency: "GBP",
+      currency: "EUR",
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
     }).format(price);
   };
 
@@ -257,9 +251,7 @@ const ProductDashboard = () => {
               </div>
             </div>
             <div className="p-6 space-y-8">
-              {/* Product Images and Basic Info */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                {/* Images */}
                 <div className="space-y-4">
                   <div className="aspect-square rounded-2xl overflow-hidden bg-gray-100">
                     {product.images && product.images.length > 0 ? (
@@ -283,7 +275,7 @@ const ProductDashboard = () => {
                         >
                           <img
                             src={image}
-                            alt={` €{product.name}  €{index + 2}`}
+                            alt={`${product.name} ${index + 2}`}
                             className="w-full h-full object-cover"
                           />
                         </div>
@@ -292,7 +284,6 @@ const ProductDashboard = () => {
                   )}
                 </div>
 
-                {/* Basic Info */}
                 <div className="space-y-6">
                   <div>
                     <h1 className="text-3xl font-bold text-gray-900 mb-2">
@@ -303,15 +294,14 @@ const ProductDashboard = () => {
                     )}
                   </div>
 
-                  {/* Price */}
                   <div className="flex items-center gap-4">
                     <span className="text-4xl font-bold text-gray-900">
-                      {formatPrice(product.price)}
+                      €{product.price.toFixed(2)}
                     </span>
                     {product.originalprice &&
                       product.originalprice > product.price && (
                         <span className="text-xl text-gray-500 line-through">
-                          {formatPrice(product.originalprice)}
+                          € {product.originalprice.toFixed(2)}
                         </span>
                       )}
                     {product.discount && (
@@ -321,7 +311,6 @@ const ProductDashboard = () => {
                     )}
                   </div>
 
-                  {/* Rating */}
                   {product.rating && (
                     <div className="flex items-center gap-4">
                       <div className="flex items-center gap-1">
@@ -344,7 +333,6 @@ const ProductDashboard = () => {
                     </div>
                   )}
 
-                  {/* Stock Status */}
                   <div className="flex items-center gap-4">
                     <span className={stockStatus.class}>
                       {stockStatus.text}
@@ -354,113 +342,133 @@ const ProductDashboard = () => {
                     </span>
                   </div>
 
-                  {/* SKU and Category */}
                   <div className="space-y-2">
                     <div className="flex items-center gap-2">
                       <Tag className="text-gray-400" size={16} />
                       <span className="text-gray-600">SKU: {product.sku}</span>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <Package className="text-gray-400" size={16} />
-                      <span className="text-gray-600">
-                        Category: {product.category_name || "Uncategorized"}
-                      </span>
-                    </div>
-                    {product.created_at && (
+
+                    <div className="space-y-2">
                       <div className="flex items-center gap-2">
-                        <Calendar className="text-gray-400" size={16} />
+                        <User className="text-gray-400" size={16} />
                         <span className="text-gray-600">
-                          Added:{" "}
-                          {new Date(product.created_at).toLocaleDateString()}
+                          Vendor: {product.profiles.username}
                         </span>
                       </div>
-                    )}
-                    {product.updated_at && (
                       <div className="flex items-center gap-2">
-                        <Calendar className="text-gray-400" size={16} />
+                        <Package className="text-gray-400" size={16} />
                         <span className="text-gray-600">
-                          Updated:{" "}
-                          {new Date(product.updated_at).toLocaleDateString()}
+                          Category: {product.category_name || "Uncategorized"}
                         </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Package className="text-gray-400" size={16} />
+                        <span className="text-gray-600">
+                          Condition:{" "}
+                          <span
+                            className={`font-medium ${
+                              product.condition === "new"
+                                ? "text-green-600"
+                                : "text-blue-600"
+                            }`}
+                          >
+                            {product.condition === "new" ? "New" : "Used"}
+                          </span>
+                        </span>
+                      </div>
+                      {product.created_at && (
+                        <div className="flex items-center gap-2">
+                          <Calendar className="text-gray-400" size={16} />
+                          <span className="text-gray-600">
+                            Added:{" "}
+                            {new Date(product.created_at).toLocaleDateString()}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <h3 className="text-xl font-semibold text-gray-900">
+                    Description
+                  </h3>
+                  <div className="space-y-3">
+                    {product.short_description && (
+                      <p className="text-lg text-gray-700 bg-gray-50 p-4 rounded-lg">
+                        {product.short_description}
+                      </p>
+                    )}
+                    <p className="text-gray-600 leading-relaxed">
+                      {product.description}
+                    </p>
+                  </div>
+                </div>
+
+                {(product.colors?.length > 0 || product.sizes?.length > 0) && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {product.colors?.length > 0 && (
+                      <div>
+                        <h4 className="font-semibold text-gray-900 mb-3">
+                          Available Colors
+                        </h4>
+                        <div className="flex flex-wrap gap-2">
+                          {product.colors.map((color, index) => (
+                            <span
+                              key={index}
+                              className="px-3 py-2 bg-gray-100 text-gray-700 rounded-lg"
+                            >
+                              {color}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    {product.sizes?.length > 0 && (
+                      <div>
+                        <h4 className="font-semibold text-gray-900 mb-3">
+                          Available Sizes
+                        </h4>
+                        <div className="flex flex-wrap gap-2">
+                          {product.sizes.map((size, index) => (
+                            <span
+                              key={index}
+                              className="px-3 py-2 bg-gray-100 text-gray-700 rounded-lg"
+                            >
+                              {size}
+                            </span>
+                          ))}
+                        </div>
                       </div>
                     )}
                   </div>
-                </div>
-              </div>
-
-              {/* Description */}
-              <div className="space-y-4">
-                <h3 className="text-xl font-semibold text-gray-900">
-                  Description
-                </h3>
-                <div className="space-y-3">
-                  {product.short_description && (
-                    <p className="text-lg text-gray-700 bg-gray-50 p-4 rounded-lg">
-                      {product.short_description}
-                    </p>
-                  )}
-                  <p className="text-gray-600 leading-relaxed">
-                    {product.description}
-                  </p>
-                </div>
-              </div>
-
-              {/* Colors and Sizes */}
-              {(product.colors?.length > 0 || product.sizes?.length > 0) && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {product.colors?.length > 0 && (
-                    <div>
-                      <h4 className="font-semibold text-gray-900 mb-3">
-                        Available Colors
-                      </h4>
-                      <div className="flex flex-wrap gap-2">
-                        {product.colors.map((color, index) => (
-                          <span
-                            key={index}
-                            className="px-3 py-2 bg-gray-100 text-gray-700 rounded-lg"
-                          >
-                            {color}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                  {product.sizes?.length > 0 && (
-                    <div>
-                      <h4 className="font-semibold text-gray-900 mb-3">
-                        Available Sizes
-                      </h4>
-                      <div className="flex flex-wrap gap-2">
-                        {product.sizes.map((size, index) => (
-                          <span
-                            key={index}
-                            className="px-3 py-2 bg-gray-100 text-gray-700 rounded-lg"
-                          >
-                            {size}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Status Badges */}
-              <div className="flex flex-wrap gap-3">
-                <span
-                  className={`px-3 py-1 rounded-lg text-sm font-medium ${
-                    product.is_active
-                      ? "bg-green-100 text-green-700"
-                      : "bg-red-100 text-red-700"
-                  }`}
-                >
-                  {product.is_active ? "Active" : "Inactive"}
-                </span>
-                {product.is_featured && (
-                  <span className="px-3 py-1 bg-orange-100 text-orange-700 rounded-lg text-sm font-medium">
-                    Featured Product
-                  </span>
                 )}
+
+                <div className="flex flex-wrap gap-3">
+                  <span
+                    className={`px-3 py-1 rounded-lg text-sm font-medium ${
+                      product.is_active
+                        ? "bg-green-100 text-green-700"
+                        : "bg-red-100 text-red-700"
+                    }`}
+                  >
+                    {product.is_active ? "Active" : "Inactive"}
+                  </span>
+                  {product.is_featured && (
+                    <span className="px-3 py-1 bg-orange-100 text-orange-700 rounded-lg text-sm font-medium">
+                      Featured Product
+                    </span>
+                  )}
+                  <span
+                    className={`px-3 py-1 rounded-lg text-sm font-medium ${
+                      product.condition === "new"
+                        ? "bg-green-100 text-green-700"
+                        : "bg-blue-100 text-blue-700"
+                    }`}
+                  >
+                    {product.condition === "new" ? "Brand New" : "Pre-Owned"}
+                  </span>
+                </div>
               </div>
             </div>
           </div>
@@ -469,7 +477,6 @@ const ProductDashboard = () => {
     );
   };
 
-  // Mobile Product Card for responsive view
   const MobileProductCard = ({ product }) => {
     const stockStatus = getStockStatus(product.stock_quantity);
 
@@ -489,7 +496,21 @@ const ProductDashboard = () => {
           </div>
           <div className="flex-1">
             <h3 className="font-medium text-gray-900">{product.name}</h3>
+            <h3 className="font-medium text-gray-900">
+              {product.profiles.username}
+            </h3>
             <p className="text-sm text-gray-500">{product.sku}</p>
+            <div className="mt-1 flex items-center gap-2">
+              <span
+                className={`text-xs px-2 py-0.5 rounded ${
+                  product.condition === "new"
+                    ? "bg-green-100 text-green-700"
+                    : "bg-blue-100 text-blue-700"
+                }`}
+              >
+                {product.condition === "new" ? "New" : "Used"}
+              </span>
+            </div>
             <div className="mt-2 flex items-center justify-between">
               <span className="font-medium">{formatPrice(product.price)}</span>
               <span className={stockStatus.class}>{stockStatus.text}</span>
@@ -516,11 +537,7 @@ const ProductDashboard = () => {
             </button>
             <button
               onClick={() => editProduct(product)}
-              className={`p-1 ${
-                product.is_active
-                  ? "text-yellow-600 hover:text-yellow-900"
-                  : "text-green-600 hover:text-green-900"
-              }`}
+              className="p-1 text-blue-600 hover:text-blue-900"
               title="Edit"
             >
               <Edit size={18} />
@@ -541,7 +558,6 @@ const ProductDashboard = () => {
   return (
     <>
       <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-4 md:p-8">
-        {/* Header */}
         <div className="">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
@@ -574,17 +590,14 @@ const ProductDashboard = () => {
           </div>
         </div>
 
-        {/* Error Display */}
         {error && (
           <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
             <p className="text-red-700">Error: {error}</p>
           </div>
         )}
 
-        {/* Search and Filters */}
         <div className="mb-8 space-y-4">
-          {/* Search Bar */}
-          <div className="relative mt-2">
+          <div className="relative">
             <Search
               className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"
               size={20}
@@ -598,7 +611,6 @@ const ProductDashboard = () => {
             />
           </div>
 
-          {/* Filters */}
           <div className={`${showFilters ? "block" : "hidden"} sm:block`}>
             <div className="flex flex-col sm:flex-row gap-4">
               <select
@@ -612,6 +624,16 @@ const ProductDashboard = () => {
                     {category}
                   </option>
                 ))}
+              </select>
+
+              <select
+                value={filterCondition}
+                onChange={(e) => setFilterCondition(e.target.value)}
+                className="px-4 py-2 bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+              >
+                <option value="">All Conditions</option>
+                <option value="new">New</option>
+                <option value="used">Used</option>
               </select>
 
               <select
@@ -639,7 +661,6 @@ const ProductDashboard = () => {
           </div>
         </div>
 
-        {/* Products Table */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
           {loading ? (
             <div className="p-8 flex justify-center">
@@ -661,7 +682,6 @@ const ProductDashboard = () => {
             </div>
           ) : (
             <>
-              {/* Desktop Table */}
               <div className="hidden md:block overflow-x-auto">
                 <table className="min-w-full divide-y divide-gray-200">
                   <thead className="bg-gray-50">
@@ -677,6 +697,18 @@ const ProductDashboard = () => {
                         className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                       >
                         Category
+                      </th>
+                      <th
+                        scope="col"
+                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                      >
+                        Vendor
+                      </th>
+                      <th
+                        scope="col"
+                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                      >
+                        Condition
                       </th>
                       <th
                         scope="col"
@@ -730,18 +762,35 @@ const ProductDashboard = () => {
                             </div>
                           </div>
                         </td>
+
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="text-sm text-gray-900">
                             {product.category_name || "Uncategorized"}
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm text-gray-900">
+                            {product.profiles.username || "No vendor"}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span
+                            className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                              product.condition === "new"
+                                ? "bg-green-100 text-green-800"
+                                : "bg-blue-100 text-blue-800"
+                            }`}
+                          >
+                            {product.condition === "new" ? "New" : "Used"}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
                           <div className="text-sm font-medium text-gray-900">
-                            {formatPrice(product.price)}
+                            €{product.price.toFixed(2)}
                           </div>
                           {product.originalprice && (
                             <div className="text-xs text-gray-500 line-through">
-                              {formatPrice(product.originalprice)}
+                              €{product.originalprice.toFixed(2)}
                             </div>
                           )}
                         </td>
@@ -805,14 +854,12 @@ const ProductDashboard = () => {
                 </table>
               </div>
 
-              {/* Mobile List */}
               <div className="md:hidden p-4">
                 {currentItems.map((product) => (
                   <MobileProductCard key={product.id} product={product} />
                 ))}
               </div>
 
-              {/* Pagination */}
               <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
                 <div className="flex-1 flex justify-between sm:hidden">
                   <button
@@ -929,14 +976,12 @@ const ProductDashboard = () => {
         </div>
       </div>
 
-      {/* Product Detail Modal */}
       <ProductDetailModal
         product={selectedProduct}
         isOpen={showProductModal}
         onClose={() => setShowProductModal(false)}
       />
 
-      {/* Product Form Modal */}
       {prodUpload && (
         <ProductForm
           isOpen={prodUpload}
@@ -945,6 +990,7 @@ const ProductDashboard = () => {
             setEditingProduct(null);
           }}
           productToEdit={editingProduct}
+          user={user}
         />
       )}
     </>

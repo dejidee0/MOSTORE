@@ -22,7 +22,7 @@ import { loadStripe } from "@stripe/stripe-js";
 import { Elements } from "@stripe/react-stripe-js";
 
 // Validate environment variables
-if (!NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY) {
+if (!process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY) {
   console.error(
     "Missing NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY environment variable"
   );

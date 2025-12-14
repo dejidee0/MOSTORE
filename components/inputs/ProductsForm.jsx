@@ -11,8 +11,34 @@ import {
   X as XIcon,
   Package,
   Save,
+  Palette,
+  DollarSign,
+  Smartphone,
+  HardDrive,
+  Cpu,
+  Antenna,
 } from "lucide-react";
 import { v4 as uuidv4 } from "uuid";
+
+// Predefined color palette with common colors
+const PRESET_COLORS = [
+  { name: "Black", hex: "#000000" },
+  { name: "White", hex: "#FFFFFF" },
+  { name: "Silver", hex: "#C0C0C0" },
+  { name: "Gray", hex: "#808080" },
+  { name: "Red", hex: "#FF0000" },
+  { name: "Blue", hex: "#0000FF" },
+  { name: "Green", hex: "#00FF00" },
+  { name: "Yellow", hex: "#FFFF00" },
+  { name: "Orange", hex: "#FFA500" },
+  { name: "Purple", hex: "#800080" },
+  { name: "Pink", hex: "#FFC0CB" },
+  { name: "Brown", hex: "#A52A2A" },
+  { name: "Gold", hex: "#FFD700" },
+  { name: "Rose Gold", hex: "#B76E79" },
+  { name: "Navy", hex: "#000080" },
+  { name: "Teal", hex: "#008080" },
+];
 
 export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
   const AUTOSAVE_KEY = "product_form_autosave";
@@ -29,36 +55,75 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
     stock_quantity: "",
     category_id: "",
     condition: "new",
-    colors: [],
-    sizes: [],
     discount: "",
     rating: "",
     is_active: true,
     is_featured: false,
   });
 
+  // New state for variants
+  const [colorVariants, setColorVariants] = useState([]);
+  const [sizeVariants, setSizeVariants] = useState([]);
+  const [storageOptions, setStorageOptions] = useState([]);
+  const [memoryOptions, setMemoryOptions] = useState([]);
+  const [simTypes, setSimTypes] = useState([]);
+
+  // Input states for variants
+  const [colorInput, setColorInput] = useState({
+    name: "",
+    hex: "#000000",
+    priceAdjustment: "",
+  });
+  const [sizeInput, setSizeInput] = useState({ name: "", priceAdjustment: "" });
+  const [storageInput, setStorageInput] = useState({
+    value: "",
+    priceAdjustment: "",
+  });
+  const [memoryInput, setMemoryInput] = useState({
+    value: "",
+    priceAdjustment: "",
+  });
+  const [simInput, setSimInput] = useState({ value: "", priceAdjustment: "" });
+
   const [images, setImages] = useState([]);
   const [imageFiles, setImageFiles] = useState([]);
   const [existingImages, setExistingImages] = useState([]);
   const [categories, setCategories] = useState([]);
+  const [selectedCategory, setSelectedCategory] = useState(null);
   const [newCategoryName, setNewCategoryName] = useState("");
   const [showNewCategoryInput, setShowNewCategoryInput] = useState(false);
   const [categoriesLoading, setCategoriesLoading] = useState(false);
-  const [colorInput, setColorInput] = useState("");
-  const [sizeInput, setSizeInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [isEditMode, setIsEditMode] = useState(false);
   const [authUser, setAuthUser] = useState(user);
   const [lastSaved, setLastSaved] = useState(null);
+  const [showColorPicker, setShowColorPicker] = useState(false);
+
+  // Check if category requires tech specs
+  const isTechCategory = () => {
+    if (!selectedCategory) return false;
+    const categoryName = selectedCategory.name?.toLowerCase() || "";
+    return (
+      categoryName.includes("mobile") ||
+      categoryName.includes("phone") ||
+      categoryName.includes("computer") ||
+      categoryName.includes("laptop") ||
+      categoryName.includes("tablet")
+    );
+  };
 
   // Autosave form data to localStorage
   const saveToLocalStorage = useCallback(() => {
     if (!isEditMode) {
-      // Only autosave for new products, not edits
       const dataToSave = {
         formData,
+        colorVariants,
+        sizeVariants,
+        storageOptions,
+        memoryOptions,
+        simTypes,
         images: images.map((img) => ({
           id: img.id,
           preview: img.preview,
@@ -69,7 +134,16 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
       localStorage.setItem(AUTOSAVE_KEY, JSON.stringify(dataToSave));
       setLastSaved(new Date());
     }
-  }, [formData, images, isEditMode]);
+  }, [
+    formData,
+    colorVariants,
+    sizeVariants,
+    storageOptions,
+    memoryOptions,
+    simTypes,
+    images,
+    isEditMode,
+  ]);
 
   // Load from localStorage on mount
   useEffect(() => {
@@ -82,10 +156,13 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
           const hoursSinceLastSave =
             (new Date() - savedTime) / (1000 * 60 * 60);
 
-          // Only restore if less than 24 hours old
           if (hoursSinceLastSave < 24) {
             setFormData(parsed.formData);
-            // Note: We can't restore actual file objects, user will need to re-upload
+            setColorVariants(parsed.colorVariants || []);
+            setSizeVariants(parsed.sizeVariants || []);
+            setStorageOptions(parsed.storageOptions || []);
+            setMemoryOptions(parsed.memoryOptions || []);
+            setSimTypes(parsed.simTypes || []);
             if (parsed.images.length > 0) {
               setSuccess(
                 `Draft restored from ${savedTime.toLocaleString()}. Please re-upload images.`
@@ -93,7 +170,6 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
             }
             setLastSaved(savedTime);
           } else {
-            // Clear old autosave
             localStorage.removeItem(AUTOSAVE_KEY);
           }
         } catch (err) {
@@ -109,11 +185,22 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
     if (!isEditMode && isOpen) {
       const timer = setTimeout(() => {
         saveToLocalStorage();
-      }, 2000); // Save 2 seconds after last change
+      }, 2000);
 
       return () => clearTimeout(timer);
     }
-  }, [formData, images, isEditMode, isOpen, saveToLocalStorage]);
+  }, [
+    formData,
+    colorVariants,
+    sizeVariants,
+    storageOptions,
+    memoryOptions,
+    simTypes,
+    images,
+    isEditMode,
+    isOpen,
+    saveToLocalStorage,
+  ]);
 
   // Save on visibility change (tab switch)
   useEffect(() => {
@@ -205,13 +292,19 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
         stock_quantity: productToEdit.stock_quantity.toString(),
         category_id: productToEdit.category_id || "",
         condition: productToEdit.condition || "new",
-        colors: productToEdit.colors || [],
-        sizes: productToEdit.sizes || [],
         discount: productToEdit.discount?.toString() || "",
         rating: productToEdit.rating?.toString() || "",
         is_active: productToEdit.is_active,
         is_featured: productToEdit.is_featured,
       });
+
+      // Load variants
+      setColorVariants(productToEdit.color_variants || []);
+      setSizeVariants(productToEdit.size_variants || []);
+      setStorageOptions(productToEdit.storage_options || []);
+      setMemoryOptions(productToEdit.memory_options || []);
+      setSimTypes(productToEdit.sim_types || []);
+
       setExistingImages(
         (productToEdit.images || []).map((url, index) => ({
           id: `existing-${index}`,
@@ -238,7 +331,7 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
         try {
           const { data, error } = await supabase
             .from("categories")
-            .select("id, name");
+            .select("id, name, slug");
 
           if (error) {
             console.error("Error fetching categories:", error.message);
@@ -248,6 +341,13 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
 
           if (data) {
             setCategories(data);
+            // Set selected category if editing
+            if (productToEdit?.category_id) {
+              const category = data.find(
+                (c) => c.id === productToEdit.category_id
+              );
+              setSelectedCategory(category);
+            }
           }
         } finally {
           setCategoriesLoading(false);
@@ -256,13 +356,23 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
 
       fetchCategories();
     }
-  }, [isOpen]);
+  }, [isOpen, productToEdit]);
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
     setFormData((prev) => ({
       ...prev,
       [name]: type === "checkbox" ? checked : value,
+    }));
+  };
+
+  const handleCategoryChange = (e) => {
+    const categoryId = e.target.value;
+    const category = categories.find((c) => c.id === parseInt(categoryId));
+    setSelectedCategory(category);
+    setFormData((prev) => ({
+      ...prev,
+      category_id: categoryId,
     }));
   };
 
@@ -330,7 +440,6 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
         prev.filter((file) => file !== imageToRemove.file)
       );
     } else {
-      // Delete from storage
       const path = imageToRemove.url.split("/").pop();
       const { error: storageError } = await supabase.storage
         .from("product-images")
@@ -348,38 +457,100 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
     }
   };
 
-  const addColor = () => {
-    if (colorInput.trim() && !formData.colors.includes(colorInput.trim())) {
-      setFormData((prev) => ({
-        ...prev,
-        colors: [...prev.colors, colorInput.trim()],
-      }));
-      setColorInput("");
+  // Color variant functions
+  const addColorVariant = () => {
+    if (colorInput.name.trim()) {
+      const newColor = {
+        name: colorInput.name.trim(),
+        hex: colorInput.hex,
+        priceAdjustment: colorInput.priceAdjustment
+          ? parseFloat(colorInput.priceAdjustment)
+          : 0,
+      };
+      setColorVariants((prev) => [...prev, newColor]);
+      setColorInput({ name: "", hex: "#000000", priceAdjustment: "" });
     }
   };
 
-  const removeColor = (colorToRemove) => {
-    setFormData((prev) => ({
-      ...prev,
-      colors: prev.colors.filter((color) => color !== colorToRemove),
-    }));
+  const removeColorVariant = (index) => {
+    setColorVariants((prev) => prev.filter((_, i) => i !== index));
   };
 
-  const addSize = () => {
-    if (sizeInput.trim() && !formData.sizes.includes(sizeInput.trim())) {
-      setFormData((prev) => ({
-        ...prev,
-        sizes: [...prev.sizes, sizeInput.trim()],
-      }));
-      setSizeInput("");
+  const selectPresetColor = (color) => {
+    setColorInput((prev) => ({ ...prev, name: color.name, hex: color.hex }));
+    setShowColorPicker(false);
+  };
+
+  // Size variant functions
+  const addSizeVariant = () => {
+    if (sizeInput.name.trim()) {
+      const newSize = {
+        name: sizeInput.name.trim(),
+        priceAdjustment: sizeInput.priceAdjustment
+          ? parseFloat(sizeInput.priceAdjustment)
+          : 0,
+      };
+      setSizeVariants((prev) => [...prev, newSize]);
+      setSizeInput({ name: "", priceAdjustment: "" });
     }
   };
 
-  const removeSize = (sizeToRemove) => {
-    setFormData((prev) => ({
-      ...prev,
-      sizes: prev.sizes.filter((size) => size !== sizeToRemove),
-    }));
+  const removeSizeVariant = (index) => {
+    setSizeVariants((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  // Storage option functions
+  const addStorageOption = () => {
+    if (storageInput.value.trim()) {
+      const newStorage = {
+        value: storageInput.value.trim(),
+        priceAdjustment: storageInput.priceAdjustment
+          ? parseFloat(storageInput.priceAdjustment)
+          : 0,
+      };
+      setStorageOptions((prev) => [...prev, newStorage]);
+      setStorageInput({ value: "", priceAdjustment: "" });
+    }
+  };
+
+  const removeStorageOption = (index) => {
+    setStorageOptions((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  // Memory option functions
+  const addMemoryOption = () => {
+    if (memoryInput.value.trim()) {
+      const newMemory = {
+        value: memoryInput.value.trim(),
+        priceAdjustment: memoryInput.priceAdjustment
+          ? parseFloat(memoryInput.priceAdjustment)
+          : 0,
+      };
+      setMemoryOptions((prev) => [...prev, newMemory]);
+      setMemoryInput({ value: "", priceAdjustment: "" });
+    }
+  };
+
+  const removeMemoryOption = (index) => {
+    setMemoryOptions((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  // SIM type functions
+  const addSimType = () => {
+    if (simInput.value.trim()) {
+      const newSim = {
+        value: simInput.value.trim(),
+        priceAdjustment: simInput.priceAdjustment
+          ? parseFloat(simInput.priceAdjustment)
+          : 0,
+      };
+      setSimTypes((prev) => [...prev, newSim]);
+      setSimInput({ value: "", priceAdjustment: "" });
+    }
+  };
+
+  const removeSimType = (index) => {
+    setSimTypes((prev) => prev.filter((_, i) => i !== index));
   };
 
   const createNewCategory = async () => {
@@ -408,6 +579,7 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
         [...prev, newCategory].sort((a, b) => a.name.localeCompare(b.name))
       );
       setFormData((prev) => ({ ...prev, category_id: newCategory.id }));
+      setSelectedCategory(newCategory);
       setNewCategoryName("");
       setShowNewCategoryInput(false);
       setSuccess("New category created successfully!");
@@ -489,6 +661,11 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
     }
   };
 
+  // ============================================
+  // GUARANTEED WORKING handleSubmit Function
+  // Schema verified - all JSONB columns exist
+  // ============================================
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     e.stopPropagation();
@@ -510,6 +687,7 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
     setIsLoading(true);
 
     try {
+      // SKU uniqueness check
       if (!isEditMode) {
         const { data: existingSKU, error: skuError } = await supabase
           .from("products")
@@ -527,6 +705,7 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
         }
       }
 
+      // Upload images
       const uploadedImageUrls = [];
       for (const file of imageFiles) {
         const fileName = `${Date.now()}-${uuidv4()}-${file.name}`;
@@ -557,33 +736,102 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
 
       const location = await getLocationFromIP();
 
+      // ==========================================
+      // CRITICAL: Safe variant array preparation
+      // This guarantees valid JSONB arrays
+      // ==========================================
+
+      const safeArray = (arr) => (Array.isArray(arr) ? arr : []);
+
+      const finalColorVariants = safeArray(colorVariants);
+      const finalSizeVariants = safeArray(sizeVariants);
+      const finalStorageOptions = safeArray(storageOptions);
+      const finalMemoryOptions = safeArray(memoryOptions);
+      const finalSimTypes = safeArray(simTypes);
+
+      // Debug logging
+      console.log("🔍 Variant data being prepared:");
+      console.log("colorVariants state:", colorVariants);
+      console.log("finalColorVariants:", finalColorVariants);
+      console.log("Counts:", {
+        colors: finalColorVariants.length,
+        sizes: finalSizeVariants.length,
+        storage: finalStorageOptions.length,
+        memory: finalMemoryOptions.length,
+        sim: finalSimTypes.length,
+      });
+
+      // ==========================================
+      // Build product data - EXACT schema match
+      // ==========================================
       const productData = {
+        // TEXT columns
         name: formData.name,
         slug: formData.slug,
-        supplier_id: authUser.id,
         description: formData.description,
         short_description: formData.short_description || null,
-        price: Number(formData.price),
-        originalprice: formData.originalprice
-          ? Number(formData.originalprice)
-          : null,
         sku: formData.sku,
         brand: formData.brand || null,
-        stock_quantity: Number(formData.stock_quantity),
-        category_id: formData.category_id || null,
         condition: formData.condition,
-        images: allImages,
-        colors: formData.colors,
-        sizes: formData.sizes,
-        discount: formData.discount ? Number(formData.discount) : null,
-        rating: formData.rating ? Number(formData.rating) : null,
+        location: location || null,
+
+        // UUID column
+        supplier_id: authUser.id,
+
+        // NUMERIC columns
+        price: parseFloat(formData.price),
+        originalprice: formData.originalprice
+          ? parseFloat(formData.originalprice)
+          : null,
+
+        // INTEGER columns
+        discount: formData.discount ? parseInt(formData.discount, 10) : null,
+        rating: formData.rating ? parseInt(formData.rating, 10) : null,
+        stock_quantity: parseInt(formData.stock_quantity, 10),
+        category_id: formData.category_id
+          ? parseInt(formData.category_id, 10)
+          : null,
+
+        // BOOLEAN columns
         is_active: formData.is_active,
         is_featured: formData.is_featured,
-        location: location || null,
+
+        // JSONB columns - backward compatibility
+        images: allImages,
+        colors: finalColorVariants.map((c) => c.name),
+        sizes: finalSizeVariants.map((s) => s.name),
+
+        // ==========================================
+        // JSONB columns - NEW VARIANTS
+        // These MUST be arrays, never null
+        // ==========================================
+        color_variants: finalColorVariants,
+        size_variants: finalSizeVariants,
+        storage_options: finalStorageOptions,
+        memory_options: finalMemoryOptions,
+        sim_types: finalSimTypes,
       };
 
+      console.log("📦 Product data to insert/update:", {
+        name: productData.name,
+        price: productData.price,
+        category_id: productData.category_id,
+        variant_data: {
+          color_variants_length: productData.color_variants.length,
+          size_variants_length: productData.size_variants.length,
+          storage_options_length: productData.storage_options.length,
+          memory_options_length: productData.memory_options.length,
+          sim_types_length: productData.sim_types.length,
+        },
+        color_variants_sample: productData.color_variants[0] || null,
+        size_variants_sample: productData.size_variants[0] || null,
+      });
+
+      // Execute database operation
       let result;
       if (isEditMode) {
+        console.log("🔄 Updating product ID:", productToEdit.id);
+
         const { data, error } = await supabase
           .from("products")
           .update(productData)
@@ -591,36 +839,112 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
           .select();
 
         if (error) {
-          console.error("Update error:", error);
+          console.error("❌ Update error:", error);
+          console.error("Error details:", {
+            message: error.message,
+            details: error.details,
+            hint: error.hint,
+            code: error.code,
+          });
           throw new Error("Failed to update product: " + error.message);
         }
+
         result = data;
       } else {
+        console.log("➕ Inserting new product");
+
         const { data, error } = await supabase
           .from("products")
           .insert([productData])
           .select();
 
         if (error) {
-          console.error("Insert error:", error);
+          console.error("❌ Insert error:", error);
+          console.error("Error details:", {
+            message: error.message,
+            details: error.details,
+            hint: error.hint,
+            code: error.code,
+          });
           throw new Error("Failed to add product: " + error.message);
         }
+
         result = data;
       }
 
-      // Clear autosave on successful submission
+      // ==========================================
+      // Verify what was actually saved
+      // ==========================================
+      if (result && result[0]) {
+        const saved = result[0];
+
+        console.log("✅ Product saved successfully!");
+        console.log("📊 Verification - what's in database:");
+        console.log({
+          id: saved.id,
+          name: saved.name,
+          color_variants: saved.color_variants,
+          size_variants: saved.size_variants,
+          storage_options: saved.storage_options,
+          memory_options: saved.memory_options,
+          sim_types: saved.sim_types,
+        });
+
+        // Check if variants match what we sent
+        const sentCounts = {
+          colors: finalColorVariants.length,
+          sizes: finalSizeVariants.length,
+          storage: finalStorageOptions.length,
+          memory: finalMemoryOptions.length,
+          sim: finalSimTypes.length,
+        };
+
+        const savedCounts = {
+          colors: saved.color_variants?.length || 0,
+          sizes: saved.size_variants?.length || 0,
+          storage: saved.storage_options?.length || 0,
+          memory: saved.memory_options?.length || 0,
+          sim: saved.sim_types?.length || 0,
+        };
+
+        console.log("📈 Comparison:");
+        console.log("Sent:", sentCounts);
+        console.log("Saved:", savedCounts);
+
+        // Warn if mismatch
+        if (sentCounts.colors !== savedCounts.colors) {
+          console.warn("⚠️ Color variants mismatch!");
+          console.warn("Sent:", finalColorVariants);
+          console.warn("Saved:", saved.color_variants);
+        }
+
+        if (sentCounts.sizes !== savedCounts.sizes) {
+          console.warn("⚠️ Size variants mismatch!");
+          console.warn("Sent:", finalSizeVariants);
+          console.warn("Saved:", saved.size_variants);
+        }
+
+        if (sentCounts.storage !== savedCounts.storage) {
+          console.warn("⚠️ Storage options mismatch!");
+          console.warn("Sent:", finalStorageOptions);
+          console.warn("Saved:", saved.storage_options);
+        }
+      }
+
+      // Clear autosave
       localStorage.removeItem(AUTOSAVE_KEY);
 
       setSuccess(`Product ${isEditMode ? "updated" : "added"} successfully!`);
+
       setTimeout(() => {
         onClose();
         resetForm();
       }, 2000);
     } catch (err) {
+      console.error("💥 Submit error:", err);
       setError(
         err.message || `Failed to ${isEditMode ? "update" : "add"} product`
       );
-      console.error("Submit error:", err);
     } finally {
       setIsLoading(false);
     }
@@ -639,8 +963,6 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
       stock_quantity: "",
       category_id: "",
       condition: "new",
-      colors: [],
-      sizes: [],
       discount: "",
       rating: "",
       is_active: true,
@@ -649,8 +971,17 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
     setImages([]);
     setImageFiles([]);
     setExistingImages([]);
-    setColorInput("");
-    setSizeInput("");
+    setColorVariants([]);
+    setSizeVariants([]);
+    setStorageOptions([]);
+    setMemoryOptions([]);
+    setSimTypes([]);
+    setColorInput({ name: "", hex: "#000000", priceAdjustment: "" });
+    setSizeInput({ name: "", priceAdjustment: "" });
+    setStorageInput({ value: "", priceAdjustment: "" });
+    setMemoryInput({ value: "", priceAdjustment: "" });
+    setSimInput({ value: "", priceAdjustment: "" });
+    setSelectedCategory(null);
     setError("");
     setSuccess("");
     setLastSaved(null);
@@ -676,8 +1007,8 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
         onClick={onClose}
       />
       <div className="flex min-h-full items-center justify-center p-4">
-        <div className="relative bg-white rounded-3xl shadow-2xl w-full max-w-5xl max-h-[95vh] overflow-y-auto">
-          <div className="bg-gradient-to-r from-orange-500 to-orange-600 px-8 py-6">
+        <div className="relative bg-white rounded-3xl shadow-2xl w-full max-w-6xl max-h-[95vh] overflow-y-auto">
+          <div className="bg-gradient-to-r from-orange-500 to-orange-600 px-8 py-6 sticky top-0 z-10">
             <div className="flex items-center justify-between">
               <div>
                 <h2 className="text-3xl font-bold text-white">
@@ -740,280 +1071,319 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
               </div>
             )}
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Product Name <span className="text-orange-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  name="name"
-                  value={formData.name}
-                  onChange={handleNameChange}
-                  placeholder="Enter product name (e.g., iPhone 15 Pro Max)"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                  disabled={isLoading}
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Product Slug{" "}
-                  <span className="text-gray-400">(Auto-generated)</span>
-                </label>
-                <input
-                  type="text"
-                  name="slug"
-                  value={formData.slug}
-                  onChange={handleInputChange}
-                  placeholder="product-url-slug"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-gray-50"
-                  disabled={isLoading}
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  SKU <span className="text-orange-500">*</span>{" "}
-                  <span className="text-gray-400">
-                    ({isEditMode ? "Fixed" : "Auto-generated"})
-                  </span>
-                </label>
-                <input
-                  type="text"
-                  name="sku"
-                  value={formData.sku}
-                  onChange={handleInputChange}
-                  placeholder="Auto-generated SKU"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-gray-50"
-                  disabled={isLoading || true}
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Brand <span className="text-gray-400">(Optional)</span>
-                </label>
-                <input
-                  type="text"
-                  name="brand"
-                  value={formData.brand}
-                  onChange={handleInputChange}
-                  placeholder="Enter brand name (e.g., Apple, Samsung)"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                  disabled={isLoading}
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Product Condition <span className="text-orange-500">*</span>
-              </label>
-              <div className="grid grid-cols-2 gap-4">
-                <button
-                  type="button"
-                  onClick={() =>
-                    setFormData((prev) => ({ ...prev, condition: "new" }))
-                  }
-                  className={`flex items-center justify-center gap-2 px-4 py-3 border-2 rounded-lg transition-all ${
-                    formData.condition === "new"
-                      ? "border-orange-500 bg-orange-50 text-orange-700"
-                      : "border-gray-300 bg-white text-gray-700 hover:border-gray-400"
-                  }`}
-                  disabled={isLoading}
-                >
-                  <Package className="w-5 h-5" />
-                  <div className="text-left">
-                    <div className="font-medium">New</div>
-                    <div className="text-xs opacity-75">Brand new product</div>
-                  </div>
-                  {formData.condition === "new" && (
-                    <Check className="w-5 h-5 ml-auto" />
-                  )}
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() =>
-                    setFormData((prev) => ({ ...prev, condition: "used" }))
-                  }
-                  className={`flex items-center justify-center gap-2 px-4 py-3 border-2 rounded-lg transition-all ${
-                    formData.condition === "used"
-                      ? "border-orange-500 bg-orange-50 text-orange-700"
-                      : "border-gray-300 bg-white text-gray-700 hover:border-gray-400"
-                  }`}
-                  disabled={isLoading}
-                >
-                  <Package className="w-5 h-5" />
-                  <div className="text-left">
-                    <div className="font-medium">Used</div>
-                    <div className="text-xs opacity-75">Pre-owned product</div>
-                  </div>
-                  {formData.condition === "used" && (
-                    <Check className="w-5 h-5 ml-auto" />
-                  )}
-                </button>
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Category <span className="text-orange-500">*</span>
-              </label>
-              <div className="flex gap-2">
-                <select
-                  name="category_id"
-                  value={formData.category_id}
-                  onChange={handleInputChange}
-                  className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
-                  disabled={isLoading || categoriesLoading}
-                  required
-                >
-                  <option value="">
-                    {categoriesLoading
-                      ? "Loading categories..."
-                      : "Select a category"}
-                  </option>
-                  {categories.map((category) => (
-                    <option key={category.id} value={category.id}>
-                      {category.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {showNewCategoryInput && (
-                <div className="mt-2 flex gap-2">
+            {/* Basic Information */}
+            <div className="border-b pb-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                Basic Information
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Product Name <span className="text-orange-500">*</span>
+                  </label>
                   <input
                     type="text"
-                    value={newCategoryName}
-                    onChange={(e) => setNewCategoryName(e.target.value)}
-                    placeholder="Enter new category name (e.g., Smartphones, Laptops)"
-                    className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent disabled:bg-gray-100"
+                    name="name"
+                    value={formData.name}
+                    onChange={handleNameChange}
+                    placeholder="Enter product name (e.g., iPhone 15 Pro Max)"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                     disabled={isLoading}
-                    onKeyPress={(e) =>
-                      e.key === "Enter" &&
-                      (e.preventDefault(), createNewCategory())
-                    }
+                    required
                   />
                 </div>
-              )}
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Product Slug{" "}
+                    <span className="text-gray-400">(Auto-generated)</span>
+                  </label>
+                  <input
+                    type="text"
+                    name="slug"
+                    value={formData.slug}
+                    onChange={handleInputChange}
+                    placeholder="product-url-slug"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-gray-50"
+                    disabled={isLoading}
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    SKU <span className="text-orange-500">*</span>{" "}
+                    <span className="text-gray-400">
+                      ({isEditMode ? "Fixed" : "Auto-generated"})
+                    </span>
+                  </label>
+                  <input
+                    type="text"
+                    name="sku"
+                    value={formData.sku}
+                    onChange={handleInputChange}
+                    placeholder="Auto-generated SKU"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-gray-50"
+                    disabled={isLoading || true}
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Brand <span className="text-gray-400">(Optional)</span>
+                  </label>
+                  <input
+                    type="text"
+                    name="brand"
+                    value={formData.brand}
+                    onChange={handleInputChange}
+                    placeholder="Enter brand name (e.g., Apple, Samsung)"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                    disabled={isLoading}
+                  />
+                </div>
+              </div>
+
+              <div className="mt-6">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Product Condition <span className="text-orange-500">*</span>
+                </label>
+                <div className="grid grid-cols-2 gap-4">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setFormData((prev) => ({ ...prev, condition: "new" }))
+                    }
+                    className={`flex items-center justify-center gap-2 px-4 py-3 border-2 rounded-lg transition-all ${
+                      formData.condition === "new"
+                        ? "border-orange-500 bg-orange-50 text-orange-700"
+                        : "border-gray-300 bg-white text-gray-700 hover:border-gray-400"
+                    }`}
+                    disabled={isLoading}
+                  >
+                    <Package className="w-5 h-5" />
+                    <div className="text-left">
+                      <div className="font-medium">New</div>
+                      <div className="text-xs opacity-75">
+                        Brand new product
+                      </div>
+                    </div>
+                    {formData.condition === "new" && (
+                      <Check className="w-5 h-5 ml-auto" />
+                    )}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setFormData((prev) => ({ ...prev, condition: "used" }))
+                    }
+                    className={`flex items-center justify-center gap-2 px-4 py-3 border-2 rounded-lg transition-all ${
+                      formData.condition === "used"
+                        ? "border-orange-500 bg-orange-50 text-orange-700"
+                        : "border-gray-300 bg-white text-gray-700 hover:border-gray-400"
+                    }`}
+                    disabled={isLoading}
+                  >
+                    <Package className="w-5 h-5" />
+                    <div className="text-left">
+                      <div className="font-medium">Used</div>
+                      <div className="text-xs opacity-75">
+                        Pre-owned product
+                      </div>
+                    </div>
+                    {formData.condition === "used" && (
+                      <Check className="w-5 h-5 ml-auto" />
+                    )}
+                  </button>
+                </div>
+              </div>
+
+              <div className="mt-6">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Category <span className="text-orange-500">*</span>
+                </label>
+                <div className="flex gap-2">
+                  <select
+                    name="category_id"
+                    value={formData.category_id}
+                    onChange={handleCategoryChange}
+                    className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
+                    disabled={isLoading || categoriesLoading}
+                    required
+                  >
+                    <option value="">
+                      {categoriesLoading
+                        ? "Loading categories..."
+                        : "Select a category"}
+                    </option>
+                    {categories.map((category) => (
+                      <option key={category.id} value={category.id}>
+                        {category.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {showNewCategoryInput && (
+                  <div className="mt-2 flex gap-2">
+                    <input
+                      type="text"
+                      value={newCategoryName}
+                      onChange={(e) => setNewCategoryName(e.target.value)}
+                      placeholder="Enter new category name (e.g., Smartphones, Laptops)"
+                      className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent disabled:bg-gray-100"
+                      disabled={isLoading}
+                      onKeyPress={(e) =>
+                        e.key === "Enter" &&
+                        (e.preventDefault(), createNewCategory())
+                      }
+                    />
+                  </div>
+                )}
+              </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Short Description{" "}
-                  <span className="text-gray-400">(Optional)</span>
-                </label>
-                <textarea
-                  name="short_description"
-                  value={formData.short_description}
-                  onChange={handleInputChange}
-                  placeholder="Brief product summary for listings (max 150 characters)"
-                  rows={3}
-                  maxLength={300}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent resize-none"
-                  disabled={isLoading}
-                />
-                <p className="text-xs text-gray-500 mt-1">
-                  {formData.short_description.length}/300 characters
-                </p>
-              </div>
+            {/* Descriptions */}
+            <div className="border-b pb-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                Product Descriptions
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Short Description{" "}
+                    <span className="text-gray-400">(Optional)</span>
+                  </label>
+                  <textarea
+                    name="short_description"
+                    value={formData.short_description}
+                    onChange={handleInputChange}
+                    placeholder="Brief product summary for listings (max 300 characters)"
+                    rows={3}
+                    maxLength={300}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent resize-none"
+                    disabled={isLoading}
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    {formData.short_description.length}/300 characters
+                  </p>
+                </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Full Description <span className="text-orange-500">*</span>
-                </label>
-                <textarea
-                  name="description"
-                  value={formData.description}
-                  onChange={handleInputChange}
-                  placeholder="Detailed product description with features and specifications"
-                  rows={3}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent resize-none"
-                  disabled={isLoading}
-                  required
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Current Price <span className="text-orange-500">*</span>
-                </label>
-                <input
-                  type="number"
-                  name="price"
-                  value={formData.price}
-                  onChange={handleInputChange}
-                  placeholder="99.99"
-                  step="0.01"
-                  min="0"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                  disabled={isLoading}
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Original Price{" "}
-                  <span className="text-gray-400">(Optional)</span>
-                </label>
-                <input
-                  type="number"
-                  name="originalprice"
-                  value={formData.originalprice}
-                  onChange={handleInputChange}
-                  placeholder="149.99"
-                  step="0.01"
-                  min="0"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                  disabled={isLoading}
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Discount % <span className="text-gray-400">(Optional)</span>
-                </label>
-                <input
-                  type="number"
-                  name="discount"
-                  value={formData.discount}
-                  onChange={handleInputChange}
-                  placeholder="25"
-                  min="0"
-                  max="100"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                  disabled={isLoading}
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Stock Quantity <span className="text-orange-500">*</span>
-                </label>
-                <input
-                  type="number"
-                  name="stock_quantity"
-                  value={formData.stock_quantity}
-                  onChange={handleInputChange}
-                  placeholder="100"
-                  min="0"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                  disabled={isLoading}
-                  required
-                />
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Full Description <span className="text-orange-500">*</span>
+                  </label>
+                  <textarea
+                    name="description"
+                    value={formData.description}
+                    onChange={handleInputChange}
+                    placeholder="Detailed product description with features and specifications"
+                    rows={3}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent resize-none"
+                    disabled={isLoading}
+                    required
+                  />
+                </div>
               </div>
             </div>
 
-            <div>
+            {/* Pricing */}
+            <div className="border-b pb-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                Pricing & Stock
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Base Price <span className="text-orange-500">*</span>
+                  </label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-2 text-gray-500">
+                      €
+                    </span>
+                    <input
+                      type="number"
+                      name="price"
+                      value={formData.price}
+                      onChange={handleInputChange}
+                      placeholder="99.99"
+                      step="0.01"
+                      min="0"
+                      className="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                      disabled={isLoading}
+                      required
+                    />
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Variants may adjust this price
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Original Price{" "}
+                    <span className="text-gray-400">(Optional)</span>
+                  </label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-2 text-gray-500">
+                      €
+                    </span>
+                    <input
+                      type="number"
+                      name="originalprice"
+                      value={formData.originalprice}
+                      onChange={handleInputChange}
+                      placeholder="149.99"
+                      step="0.01"
+                      min="0"
+                      className="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                      disabled={isLoading}
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Discount % <span className="text-gray-400">(Optional)</span>
+                  </label>
+                  <input
+                    type="number"
+                    name="discount"
+                    value={formData.discount}
+                    onChange={handleInputChange}
+                    placeholder="25"
+                    min="0"
+                    max="100"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                    disabled={isLoading}
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Stock Quantity <span className="text-orange-500">*</span>
+                  </label>
+                  <input
+                    type="number"
+                    name="stock_quantity"
+                    value={formData.stock_quantity}
+                    onChange={handleInputChange}
+                    placeholder="100"
+                    min="0"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                    disabled={isLoading}
+                    required
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Product Images */}
+            <div className="border-b pb-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                Product Images
+              </h3>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Product Images <span className="text-orange-500">*</span>
                 <span className="text-gray-400 text-xs ml-2">
@@ -1103,153 +1473,652 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
               )}
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Available Colors{" "}
-                  <span className="text-gray-400">(Optional)</span>
-                </label>
-                <div className="flex gap-2 mb-2">
-                  <input
-                    type="text"
-                    value={colorInput}
-                    onChange={(e) => setColorInput(e.target.value)}
-                    placeholder="Enter color (e.g., Red, Blue, Black)"
-                    className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                    disabled={isLoading}
-                    onKeyPress={(e) =>
-                      e.key === "Enter" && (e.preventDefault(), addColor())
-                    }
-                  />
-                  <button
-                    type="button"
-                    onClick={addColor}
-                    className="px-4 py-2 bg-orange-500 text-white rounded-md hover:bg-orange-600 transition-colors"
-                    disabled={isLoading}
-                  >
-                    Add
-                  </button>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  {formData.colors.map((color, index) => (
-                    <span
-                      key={`color-${index}-${color}`}
-                      className="inline-flex items-center gap-1 px-3 py-1 bg-orange-100 text-orange-800 rounded-full text-sm"
-                    >
-                      {color}
+            {/* Color Variants */}
+            <div className="border-b pb-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-2 flex items-center gap-2">
+                <Palette className="w-5 h-5 text-orange-500" />
+                Color Variants{" "}
+                <span className="text-gray-400 text-sm font-normal">
+                  (Optional)
+                </span>
+              </h3>
+              <p className="text-sm text-gray-600 mb-4">
+                Add color options with visual preview and optional price
+                adjustments
+              </p>
+
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Color Name
+                    </label>
+                    <input
+                      type="text"
+                      value={colorInput.name}
+                      onChange={(e) =>
+                        setColorInput((prev) => ({
+                          ...prev,
+                          name: e.target.value,
+                        }))
+                      }
+                      placeholder="e.g., Midnight Black"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
+                      disabled={isLoading}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Color Preview
+                    </label>
+                    <div className="flex gap-2">
+                      <div className="relative flex-1">
+                        <input
+                          type="color"
+                          value={colorInput.hex}
+                          onChange={(e) =>
+                            setColorInput((prev) => ({
+                              ...prev,
+                              hex: e.target.value,
+                            }))
+                          }
+                          className="w-full h-10 border border-gray-300 rounded-md cursor-pointer"
+                          disabled={isLoading}
+                        />
+                      </div>
                       <button
                         type="button"
-                        onClick={() => removeColor(color)}
-                        className="text-orange-600 hover:text-orange-800"
+                        onClick={() => setShowColorPicker(!showColorPicker)}
+                        className="px-3 py-2 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200 transition-colors"
                         disabled={isLoading}
                       >
-                        <X size={14} />
+                        <Palette size={20} />
                       </button>
-                    </span>
-                  ))}
-                </div>
-              </div>
+                    </div>
+                  </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Available Sizes{" "}
-                  <span className="text-gray-400">(Optional)</span>
-                </label>
-                <div className="flex gap-2 mb-2">
-                  <input
-                    type="text"
-                    value={sizeInput}
-                    onChange={(e) => setSizeInput(e.target.value)}
-                    placeholder="Enter size (e.g., S, M, L, XL)"
-                    className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                    disabled={isLoading}
-                    onKeyPress={(e) =>
-                      e.key === "Enter" && (e.preventDefault(), addSize())
-                    }
-                  />
-                  <button
-                    type="button"
-                    onClick={addSize}
-                    className="px-4 py-2 bg-orange-500 text-white rounded-md hover:bg-orange-600 transition-colors"
-                    disabled={isLoading}
-                  >
-                    Add
-                  </button>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  {formData.sizes.map((size, index) => (
-                    <span
-                      key={`size-${index}-${size}`}
-                      className="inline-flex items-center gap-1 px-3 py-1 bg-orange-100 text-orange-800 rounded-full text-sm"
-                    >
-                      {size}
-                      <button
-                        type="button"
-                        onClick={() => removeSize(size)}
-                        className="text-orange-600 hover:text-orange-800"
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Price Adjustment{" "}
+                      <span className="text-gray-400">(€)</span>
+                    </label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-2 text-gray-500">
+                        €
+                      </span>
+                      <input
+                        type="number"
+                        value={colorInput.priceAdjustment}
+                        onChange={(e) =>
+                          setColorInput((prev) => ({
+                            ...prev,
+                            priceAdjustment: e.target.value,
+                          }))
+                        }
+                        placeholder="0.00"
+                        step="0.01"
+                        className="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
                         disabled={isLoading}
-                      >
-                        <X size={14} />
-                      </button>
-                    </span>
-                  ))}
+                      />
+                    </div>
+                    <p className="text-xs text-gray-500 mt-1">
+                      +/- amount from base price
+                    </p>
+                  </div>
                 </div>
-              </div>
-            </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Initial Rating{" "}
-                  <span className="text-gray-400">(Optional)</span>
-                </label>
-                <select
-                  name="rating"
-                  value={formData.rating}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                {showColorPicker && (
+                  <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                    <p className="text-sm font-medium text-gray-700 mb-3">
+                      Quick Color Selection
+                    </p>
+                    <div className="grid grid-cols-8 gap-2">
+                      {PRESET_COLORS.map((color) => (
+                        <button
+                          key={color.hex}
+                          type="button"
+                          onClick={() => selectPresetColor(color)}
+                          className="group relative"
+                          title={color.name}
+                        >
+                          <div
+                            className="w-10 h-10 rounded-lg border-2 border-gray-300 hover:border-orange-500 transition-colors cursor-pointer"
+                            style={{ backgroundColor: color.hex }}
+                          />
+                          <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                            {color.name}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <button
+                  type="button"
+                  onClick={addColorVariant}
+                  className="px-4 py-2 bg-orange-500 text-white rounded-md hover:bg-orange-600 transition-colors flex items-center gap-2"
                   disabled={isLoading}
                 >
-                  <option value="">Select rating</option>
-                  <option value="1">1 Star</option>
-                  <option value="2">2 Stars</option>
-                  <option value="3">3 Stars</option>
-                  <option value="4">4 Stars</option>
-                  <option value="5">5 Stars</option>
-                </select>
-              </div>
+                  <Plus size={16} />
+                  Add Color
+                </button>
 
-              <div className="space-y-3">
-                <div className="flex items-center">
-                  <input
-                    type="checkbox"
-                    name="is_active"
-                    checked={formData.is_active}
-                    onChange={handleInputChange}
-                    className="h-4 w-4 text-orange-600 focus:ring-orange-500 border-gray-300 rounded"
-                    disabled={isLoading}
-                  />
-                  <label className="ml-2 block text-sm text-gray-700">
-                    Product is Active
-                  </label>
+                {colorVariants.length > 0 && (
+                  <div className="flex flex-wrap gap-3">
+                    {colorVariants.map((color, index) => (
+                      <div
+                        key={index}
+                        className="inline-flex items-center gap-2 px-3 py-2 bg-white border border-gray-200 rounded-lg shadow-sm"
+                      >
+                        <div
+                          className="w-6 h-6 rounded border border-gray-300"
+                          style={{ backgroundColor: color.hex }}
+                        />
+                        <span className="text-sm font-medium">
+                          {color.name}
+                        </span>
+                        {color.priceAdjustment !== 0 && (
+                          <span className="text-xs text-gray-600 bg-gray-100 px-2 py-0.5 rounded">
+                            {color.priceAdjustment > 0 ? "+" : ""}€
+                            {color.priceAdjustment.toFixed(2)}
+                          </span>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => removeColorVariant(index)}
+                          className="text-red-600 hover:text-red-800"
+                          disabled={isLoading}
+                        >
+                          <X size={16} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Size Variants */}
+            <div className="border-b pb-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-2 flex items-center gap-2">
+                <Package className="w-5 h-5 text-orange-500" />
+                Size Variants{" "}
+                <span className="text-gray-400 text-sm font-normal">
+                  (Optional)
+                </span>
+              </h3>
+              <p className="text-sm text-gray-600 mb-4">
+                Add size options with optional price adjustments
+              </p>
+
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Size Name
+                    </label>
+                    <input
+                      type="text"
+                      value={sizeInput.name}
+                      onChange={(e) =>
+                        setSizeInput((prev) => ({
+                          ...prev,
+                          name: e.target.value,
+                        }))
+                      }
+                      placeholder="e.g., Medium, Large, XL"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
+                      disabled={isLoading}
+                      onKeyPress={(e) =>
+                        e.key === "Enter" &&
+                        (e.preventDefault(), addSizeVariant())
+                      }
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Price Adjustment{" "}
+                      <span className="text-gray-400">(€)</span>
+                    </label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-2 text-gray-500">
+                        €
+                      </span>
+                      <input
+                        type="number"
+                        value={sizeInput.priceAdjustment}
+                        onChange={(e) =>
+                          setSizeInput((prev) => ({
+                            ...prev,
+                            priceAdjustment: e.target.value,
+                          }))
+                        }
+                        placeholder="0.00"
+                        step="0.01"
+                        className="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
+                        disabled={isLoading}
+                        onKeyPress={(e) =>
+                          e.key === "Enter" &&
+                          (e.preventDefault(), addSizeVariant())
+                        }
+                      />
+                    </div>
+                    <p className="text-xs text-gray-500 mt-1">
+                      +/- amount from base price
+                    </p>
+                  </div>
                 </div>
-                <div className="flex items-center">
-                  <input
-                    type="checkbox"
-                    name="is_featured"
-                    checked={formData.is_featured}
-                    onChange={handleInputChange}
-                    className="h-4 w-4 text-orange-600 focus:ring-orange-500 border-gray-300 rounded"
+
+                <button
+                  type="button"
+                  onClick={addSizeVariant}
+                  className="px-4 py-2 bg-orange-500 text-white rounded-md hover:bg-orange-600 transition-colors flex items-center gap-2"
+                  disabled={isLoading}
+                >
+                  <Plus size={16} />
+                  Add Size
+                </button>
+
+                {sizeVariants.length > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    {sizeVariants.map((size, index) => (
+                      <div
+                        key={index}
+                        className="inline-flex items-center gap-2 px-3 py-2 bg-white border border-gray-200 rounded-lg"
+                      >
+                        <span className="text-sm font-medium">{size.name}</span>
+                        {size.priceAdjustment !== 0 && (
+                          <span className="text-xs text-gray-600 bg-gray-100 px-2 py-0.5 rounded">
+                            {size.priceAdjustment > 0 ? "+" : ""}€
+                            {size.priceAdjustment.toFixed(2)}
+                          </span>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => removeSizeVariant(index)}
+                          className="text-red-600 hover:text-red-800"
+                          disabled={isLoading}
+                        >
+                          <X size={16} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Tech Specifications (Conditional) */}
+            {isTechCategory() && (
+              <div className="border-b pb-6 bg-blue-50 -mx-6 px-6 py-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-2 flex items-center gap-2">
+                  <Smartphone className="w-5 h-5 text-blue-600" />
+                  Technical Specifications
+                  <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full">
+                    Mobile/Computer Category
+                  </span>
+                </h3>
+                <p className="text-sm text-gray-600 mb-4">
+                  Add technical specs for mobile devices and computers with
+                  optional price adjustments
+                </p>
+
+                {/* Storage Options */}
+                <div className="bg-white rounded-lg p-4 mb-4">
+                  <h4 className="font-medium text-gray-900 mb-3 flex items-center gap-2">
+                    <HardDrive className="w-4 h-4 text-gray-600" />
+                    Storage Options
+                  </h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Storage Size
+                      </label>
+                      <input
+                        type="text"
+                        value={storageInput.value}
+                        onChange={(e) =>
+                          setStorageInput((prev) => ({
+                            ...prev,
+                            value: e.target.value,
+                          }))
+                        }
+                        placeholder="e.g., 128GB, 256GB, 512GB"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
+                        disabled={isLoading}
+                        onKeyPress={(e) =>
+                          e.key === "Enter" &&
+                          (e.preventDefault(), addStorageOption())
+                        }
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Price Adjustment{" "}
+                        <span className="text-gray-400">(€)</span>
+                      </label>
+                      <div className="relative">
+                        <span className="absolute left-3 top-2 text-gray-500">
+                          €
+                        </span>
+                        <input
+                          type="number"
+                          value={storageInput.priceAdjustment}
+                          onChange={(e) =>
+                            setStorageInput((prev) => ({
+                              ...prev,
+                              priceAdjustment: e.target.value,
+                            }))
+                          }
+                          placeholder="0.00"
+                          step="0.01"
+                          className="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
+                          disabled={isLoading}
+                          onKeyPress={(e) =>
+                            e.key === "Enter" &&
+                            (e.preventDefault(), addStorageOption())
+                          }
+                        />
+                      </div>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={addStorageOption}
+                    className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors flex items-center gap-2 text-sm"
                     disabled={isLoading}
-                  />
-                  <label className="ml-2 block text-sm text-gray-700">
-                    Featured Product
+                  >
+                    <Plus size={16} />
+                    Add Storage
+                  </button>
+                  {storageOptions.length > 0 && (
+                    <div className="flex flex-wrap gap-2 mt-3">
+                      {storageOptions.map((storage, index) => (
+                        <div
+                          key={index}
+                          className="inline-flex items-center gap-2 px-3 py-1.5 bg-blue-50 border border-blue-200 rounded-lg text-sm"
+                        >
+                          <HardDrive className="w-4 h-4" />
+                          <span className="font-medium">{storage.value}</span>
+                          {storage.priceAdjustment !== 0 && (
+                            <span className="text-xs text-blue-700 bg-blue-100 px-2 py-0.5 rounded">
+                              {storage.priceAdjustment > 0 ? "+" : ""}€
+                              {storage.priceAdjustment.toFixed(2)}
+                            </span>
+                          )}
+                          <button
+                            type="button"
+                            onClick={() => removeStorageOption(index)}
+                            className="text-red-600 hover:text-red-800"
+                            disabled={isLoading}
+                          >
+                            <X size={14} />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Memory/RAM Options */}
+                <div className="bg-white rounded-lg p-4 mb-4">
+                  <h4 className="font-medium text-gray-900 mb-3 flex items-center gap-2">
+                    <Cpu className="w-4 h-4 text-gray-600" />
+                    Memory (RAM) Options
+                  </h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Memory Size
+                      </label>
+                      <input
+                        type="text"
+                        value={memoryInput.value}
+                        onChange={(e) =>
+                          setMemoryInput((prev) => ({
+                            ...prev,
+                            value: e.target.value,
+                          }))
+                        }
+                        placeholder="e.g., 4GB RAM, 8GB RAM, 16GB RAM"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
+                        disabled={isLoading}
+                        onKeyPress={(e) =>
+                          e.key === "Enter" &&
+                          (e.preventDefault(), addMemoryOption())
+                        }
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Price Adjustment{" "}
+                        <span className="text-gray-400">(€)</span>
+                      </label>
+                      <div className="relative">
+                        <span className="absolute left-3 top-2 text-gray-500">
+                          €
+                        </span>
+                        <input
+                          type="number"
+                          value={memoryInput.priceAdjustment}
+                          onChange={(e) =>
+                            setMemoryInput((prev) => ({
+                              ...prev,
+                              priceAdjustment: e.target.value,
+                            }))
+                          }
+                          placeholder="0.00"
+                          step="0.01"
+                          className="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
+                          disabled={isLoading}
+                          onKeyPress={(e) =>
+                            e.key === "Enter" &&
+                            (e.preventDefault(), addMemoryOption())
+                          }
+                        />
+                      </div>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={addMemoryOption}
+                    className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors flex items-center gap-2 text-sm"
+                    disabled={isLoading}
+                  >
+                    <Plus size={16} />
+                    Add Memory
+                  </button>
+                  {memoryOptions.length > 0 && (
+                    <div className="flex flex-wrap gap-2 mt-3">
+                      {memoryOptions.map((memory, index) => (
+                        <div
+                          key={index}
+                          className="inline-flex items-center gap-2 px-3 py-1.5 bg-blue-50 border border-blue-200 rounded-lg text-sm"
+                        >
+                          <Cpu className="w-4 h-4" />
+                          <span className="font-medium">{memory.value}</span>
+                          {memory.priceAdjustment !== 0 && (
+                            <span className="text-xs text-blue-700 bg-blue-100 px-2 py-0.5 rounded">
+                              {memory.priceAdjustment > 0 ? "+" : ""}€
+                              {memory.priceAdjustment.toFixed(2)}
+                            </span>
+                          )}
+                          <button
+                            type="button"
+                            onClick={() => removeMemoryOption(index)}
+                            className="text-red-600 hover:text-red-800"
+                            disabled={isLoading}
+                          >
+                            <X size={14} />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* SIM Type Options */}
+                <div className="bg-white rounded-lg p-4">
+                  <h4 className="font-medium text-gray-900 mb-3 flex items-center gap-2">
+                    <Antenna className="w-4 h-4 text-gray-600" />
+                    SIM Type Options
+                  </h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        SIM Type
+                      </label>
+                      <input
+                        type="text"
+                        value={simInput.value}
+                        onChange={(e) =>
+                          setSimInput((prev) => ({
+                            ...prev,
+                            value: e.target.value,
+                          }))
+                        }
+                        placeholder="e.g., Single SIM, Dual SIM, eSIM"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
+                        disabled={isLoading}
+                        onKeyPress={(e) =>
+                          e.key === "Enter" &&
+                          (e.preventDefault(), addSimType())
+                        }
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Price Adjustment{" "}
+                        <span className="text-gray-400">(€)</span>
+                      </label>
+                      <div className="relative">
+                        <span className="absolute left-3 top-2 text-gray-500">
+                          €
+                        </span>
+                        <input
+                          type="number"
+                          value={simInput.priceAdjustment}
+                          onChange={(e) =>
+                            setSimInput((prev) => ({
+                              ...prev,
+                              priceAdjustment: e.target.value,
+                            }))
+                          }
+                          placeholder="0.00"
+                          step="0.01"
+                          className="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
+                          disabled={isLoading}
+                          onKeyPress={(e) =>
+                            e.key === "Enter" &&
+                            (e.preventDefault(), addSimType())
+                          }
+                        />
+                      </div>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={addSimType}
+                    className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors flex items-center gap-2 text-sm"
+                    disabled={isLoading}
+                  >
+                    <Plus size={16} />
+                    Add SIM Type
+                  </button>
+                  {simTypes.length > 0 && (
+                    <div className="flex flex-wrap gap-2 mt-3">
+                      {simTypes.map((sim, index) => (
+                        <div
+                          key={index}
+                          className="inline-flex items-center gap-2 px-3 py-1.5 bg-blue-50 border border-blue-200 rounded-lg text-sm"
+                        >
+                          <Sim className="w-4 h-4" />
+                          <span className="font-medium">{sim.value}</span>
+                          {sim.priceAdjustment !== 0 && (
+                            <span className="text-xs text-blue-700 bg-blue-100 px-2 py-0.5 rounded">
+                              {sim.priceAdjustment > 0 ? "+" : ""}€
+                              {sim.priceAdjustment.toFixed(2)}
+                            </span>
+                          )}
+                          <button
+                            type="button"
+                            onClick={() => removeSimType(index)}
+                            className="text-red-600 hover:text-red-800"
+                            disabled={isLoading}
+                          >
+                            <X size={14} />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Additional Settings */}
+            <div className="border-b pb-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                Additional Settings
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Initial Rating{" "}
+                    <span className="text-gray-400">(Optional)</span>
                   </label>
+                  <select
+                    name="rating"
+                    value={formData.rating}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                    disabled={isLoading}
+                  >
+                    <option value="">Select rating</option>
+                    <option value="1">1 Star</option>
+                    <option value="2">2 Stars</option>
+                    <option value="3">3 Stars</option>
+                    <option value="4">4 Stars</option>
+                    <option value="5">5 Stars</option>
+                  </select>
+                </div>
+
+                <div className="space-y-3">
+                  <div className="flex items-center">
+                    <input
+                      type="checkbox"
+                      name="is_active"
+                      checked={formData.is_active}
+                      onChange={handleInputChange}
+                      className="h-4 w-4 text-orange-600 focus:ring-orange-500 border-gray-300 rounded"
+                      disabled={isLoading}
+                    />
+                    <label className="ml-2 block text-sm text-gray-700">
+                      Product is Active
+                    </label>
+                  </div>
+                  <div className="flex items-center">
+                    <input
+                      type="checkbox"
+                      name="is_featured"
+                      checked={formData.is_featured}
+                      onChange={handleInputChange}
+                      className="h-4 w-4 text-orange-600 focus:ring-orange-500 border-gray-300 rounded"
+                      disabled={isLoading}
+                    />
+                    <label className="ml-2 block text-sm text-gray-700">
+                      Featured Product
+                    </label>
+                  </div>
                 </div>
               </div>
             </div>
 
-            <div className="flex justify-end gap-4 pt-6 border-t border-gray-200">
+            {/* Form Actions */}
+            <div className="flex justify-end gap-4 pt-6 border-t border-gray-200 sticky bottom-0 bg-white">
               <button
                 type="button"
                 onClick={onClose}

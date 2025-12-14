@@ -5,19 +5,27 @@ import { useToast } from "@/lib/toast";
 import { useCart } from "@/lib/cart";
 import { useWishlist } from "@/hooks/useWishlist";
 import { supabase } from "@/lib/supabase-client";
-import { Heart } from "lucide-react";
+import { Heart, ShoppingCart, Zap, HardDrive, Cpu, Sim } from "lucide-react";
 import { motion } from "framer-motion";
 import ProductReviews, { StarRating } from "./reviews";
 import { getProductAverageRating, getProductReviewCount } from "@/lib/reviews";
+import { useRouter } from "next/navigation";
 
 export default function ProductDetailsClient({ productId }) {
+  const router = useRouter();
   const [product, setProduct] = useState(null);
   const [relatedProducts, setRelatedProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedImage, setSelectedImage] = useState(0);
-  const [selectedColor, setSelectedColor] = useState(0);
-  const [selectedSize, setSelectedSize] = useState(0);
+
+  // Variant selections
+  const [selectedColorVariant, setSelectedColorVariant] = useState(null);
+  const [selectedSizeVariant, setSelectedSizeVariant] = useState(null);
+  const [selectedStorage, setSelectedStorage] = useState(null);
+  const [selectedMemory, setSelectedMemory] = useState(null);
+  const [selectedSimType, setSelectedSimType] = useState(null);
+
   const [quantity, setQuantity] = useState(1);
   const [averageRating, setAverageRating] = useState({ average: 0, count: 0 });
   const [reviewCount, setReviewCount] = useState(0);
@@ -32,6 +40,81 @@ export default function ProductDetailsClient({ productId }) {
 
   // Check if product is in wishlist
   const isWishlisted = product ? isInWishlist(product.id) : false;
+
+  // Calculate final price based on all selected variants
+  const calculateFinalPrice = () => {
+    if (!product) return 0;
+
+    let finalPrice = parseFloat(product.price) || 0;
+
+    // Add color variant price adjustment
+    if (
+      selectedColorVariant &&
+      selectedColorVariant.priceAdjustment !== undefined
+    ) {
+      const adjustment = parseFloat(selectedColorVariant.priceAdjustment) || 0;
+      finalPrice += adjustment;
+    }
+
+    // Add size variant price adjustment
+    if (
+      selectedSizeVariant &&
+      selectedSizeVariant.priceAdjustment !== undefined
+    ) {
+      const adjustment = parseFloat(selectedSizeVariant.priceAdjustment) || 0;
+      finalPrice += adjustment;
+    }
+
+    // Add storage price adjustment
+    if (selectedStorage && selectedStorage.priceAdjustment !== undefined) {
+      const adjustment = parseFloat(selectedStorage.priceAdjustment) || 0;
+      finalPrice += adjustment;
+    }
+
+    // Add memory price adjustment
+    if (selectedMemory && selectedMemory.priceAdjustment !== undefined) {
+      const adjustment = parseFloat(selectedMemory.priceAdjustment) || 0;
+      finalPrice += adjustment;
+    }
+
+    // Add SIM type price adjustment
+    if (selectedSimType && selectedSimType.priceAdjustment !== undefined) {
+      const adjustment = parseFloat(selectedSimType.priceAdjustment) || 0;
+      finalPrice += adjustment;
+    }
+
+    return finalPrice;
+  };
+
+  const finalPrice = calculateFinalPrice();
+
+  // Debug: Log price calculations in real-time
+  useEffect(() => {
+    if (product) {
+      console.log("💰 Price Calculation Update:");
+      console.log("Base Price:", parseFloat(product.price));
+      console.log("Quantity:", quantity);
+      console.log("Selected Variants:", {
+        color: selectedColorVariant,
+        size: selectedSizeVariant,
+        storage: selectedStorage,
+        memory: selectedMemory,
+        sim: selectedSimType,
+      });
+      console.log("Price per unit:", finalPrice);
+      console.log("Total Price (with quantity):", finalPrice * quantity);
+      console.log("---");
+    }
+  }, [
+    selectedColorVariant,
+    selectedSizeVariant,
+    selectedStorage,
+    selectedMemory,
+    selectedSimType,
+    quantity,
+    finalPrice,
+    product,
+  ]);
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -49,7 +132,7 @@ export default function ProductDetailsClient({ productId }) {
               description
             ),
             profiles(
-            full_name
+              full_name
             )
           `
           )
@@ -68,9 +151,9 @@ export default function ProductDetailsClient({ productId }) {
                 name,
                 description
               ),
-                   profiles(
-            full_name
-            )
+              profiles(
+                full_name
+              )
             `
             )
             .eq("slug", productId)
@@ -82,6 +165,7 @@ export default function ProductDetailsClient({ productId }) {
           }
 
           setProduct(productBySlug);
+          initializeDefaultSelections(productBySlug);
 
           if (
             productBySlug.related_products &&
@@ -91,6 +175,7 @@ export default function ProductDetailsClient({ productId }) {
           }
         } else {
           setProduct(productData);
+          initializeDefaultSelections(productData);
 
           if (
             productData.related_products &&
@@ -104,6 +189,11 @@ export default function ProductDetailsClient({ productId }) {
       } finally {
         setLoading(false);
       }
+    };
+
+    const initializeDefaultSelections = (productData) => {
+      // Don't auto-select anything - let user choose
+      // This ensures intentional selection and prevents confusion
     };
 
     const fetchRelatedProducts = async (relatedProductIds) => {
@@ -150,19 +240,49 @@ export default function ProductDetailsClient({ productId }) {
     }
   };
 
-  const handleAddToCart = (product) => {
-    const cartItem = {
-      id: product.id,
-      name: product.name,
-      price: product.price,
-      image: product.images?.[0] || "/placeholder-image.jpg",
-      selectedColor: product.colors?.[selectedColor] || null,
-      selectedSize: product.sizes?.[selectedSize] || null,
-      quantity: quantity,
+  const buildCartItem = (product) => {
+    const variantSelections = {
+      colorVariant: selectedColorVariant,
+      sizeVariant: selectedSizeVariant,
+      storage: selectedStorage,
+      memory: selectedMemory,
+      simType: selectedSimType,
     };
 
+    // Build variant description for display
+    const variantParts = [];
+    if (selectedColorVariant) variantParts.push(selectedColorVariant.name);
+    if (selectedSizeVariant) variantParts.push(selectedSizeVariant.name);
+    if (selectedStorage) variantParts.push(selectedStorage.value);
+    if (selectedMemory) variantParts.push(selectedMemory.value);
+    if (selectedSimType) variantParts.push(selectedSimType.value);
+
+    return {
+      id: product.id,
+      name: product.name,
+      price: finalPrice,
+      basePrice: parseFloat(product.price),
+      image: product.images?.[0] || "/placeholder-image.jpg",
+      selectedColor: selectedColorVariant?.name || null,
+      selectedSize: selectedSizeVariant?.name || null,
+      quantity: quantity,
+      variantSelections,
+      variantDescription: variantParts.join(" • "),
+      supplier_id: product.supplier_id,
+    };
+  };
+
+  const handleAddToCart = () => {
+    const cartItem = buildCartItem(product);
     addItem(cartItem, quantity);
     addToast(`${product.name} added to cart!`, "success");
+  };
+
+  const handleBuyNow = () => {
+    const cartItem = buildCartItem(product);
+    addItem(cartItem, quantity);
+    addToast("Proceeding to checkout...", "success");
+    router.push("/checkout");
   };
 
   const handleWishlist = async () => {
@@ -200,6 +320,13 @@ export default function ProductDetailsClient({ productId }) {
     } else {
       addToast(`${product.name} added to wishlist!`, "success");
     }
+  };
+
+  const formatPrice = (price) => {
+    return new Intl.NumberFormat("en-EU", {
+      style: "currency",
+      currency: "EUR",
+    }).format(price);
   };
 
   if (loading) {
@@ -240,8 +367,16 @@ export default function ProductDetailsClient({ productId }) {
 
   const isInStock = product.stock_quantity > 0;
   const hasImages = product.images && product.images.length > 0;
-  const hasColors = product.colors && product.colors.length > 0;
-  const hasSizes = product.sizes && product.sizes.length > 0;
+  const hasColorVariants =
+    product.color_variants && product.color_variants.length > 0;
+  const hasSizeVariants =
+    product.size_variants && product.size_variants.length > 0;
+  const hasStorageOptions =
+    product.storage_options && product.storage_options.length > 0;
+  const hasMemoryOptions =
+    product.memory_options && product.memory_options.length > 0;
+  const hasSimTypes = product.sim_types && product.sim_types.length > 0;
+  const hasTechSpecs = hasStorageOptions || hasMemoryOptions || hasSimTypes;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -270,6 +405,7 @@ export default function ProductDetailsClient({ productId }) {
 
       <div className="container mx-auto px-4 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* Left Column - Images */}
           <div className="space-y-4">
             <div className="border border-gray-200 rounded-lg p-4 bg-white">
               <img
@@ -308,7 +444,8 @@ export default function ProductDetailsClient({ productId }) {
             </div>
           </div>
 
-          <div className="space-y-6">
+          {/* Right Column - Product Info */}
+          <div className="space-y-4">
             <div>
               <div className="flex items-center gap-3 mb-2">
                 <h1 className="text-2xl font-bold text-gray-800">
@@ -331,7 +468,7 @@ export default function ProductDetailsClient({ productId }) {
                 totalReviews={reviewCount}
               />
               <span
-                className={`text-sm ml-4 ${
+                className={`text-sm ${
                   isInStock ? "text-green-600" : "text-red-600"
                 }`}
               >
@@ -346,119 +483,398 @@ export default function ProductDetailsClient({ productId }) {
               )}
             </div>
 
-            <div className="flex items-center gap-4">
-              <div className="text-3xl font-bold text-gray-800">
-                €{product.price}
-              </div>
-              {product.originalprice &&
-                product.originalprice > product.price && (
-                  <div className="text-lg text-gray-400 line-through">
-                    €{product.originalprice}
+            {/* Price Display */}
+            <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+              <div className="flex items-baseline gap-3 mb-2">
+                <div className="text-3xl font-bold text-gray-800">
+                  {formatPrice(finalPrice * quantity)}
+                </div>
+                {quantity > 1 && (
+                  <div className="text-sm text-gray-600">
+                    ({formatPrice(finalPrice)} × {quantity})
                   </div>
                 )}
-              {product.discount && (
-                <span className="bg-red-100 text-red-800 text-sm px-2 py-1 rounded">
-                  {product.discount}% OFF
-                </span>
+                {finalPrice !== parseFloat(product.price) && quantity === 1 && (
+                  <div className="text-lg text-gray-400 line-through">
+                    {formatPrice(product.price)}
+                  </div>
+                )}
+                {product.discount && (
+                  <span className="bg-red-100 text-red-800 text-sm px-2 py-1 rounded">
+                    {product.discount}% OFF
+                  </span>
+                )}
+              </div>
+
+              {/* Price per unit if quantity > 1 */}
+              {quantity > 1 && (
+                <div className="text-sm text-gray-600 mb-2">
+                  Price per unit: {formatPrice(finalPrice)}
+                </div>
+              )}
+
+              {/* Show price breakdown if variants are selected */}
+              {finalPrice !== parseFloat(product.price) && (
+                <div className="mt-3 pt-3 border-t border-gray-200 text-sm text-gray-600">
+                  <div className="flex justify-between mb-1">
+                    <span>Base Price:</span>
+                    <span>{formatPrice(product.price)}</span>
+                  </div>
+                  {selectedColorVariant &&
+                    selectedColorVariant.priceAdjustment !== 0 && (
+                      <div className="flex justify-between mb-1">
+                        <span>Color ({selectedColorVariant.name}):</span>
+                        <span
+                          className={
+                            selectedColorVariant.priceAdjustment > 0
+                              ? "text-orange-600"
+                              : "text-green-600"
+                          }
+                        >
+                          {selectedColorVariant.priceAdjustment > 0 ? "+" : ""}
+                          {formatPrice(selectedColorVariant.priceAdjustment)}
+                        </span>
+                      </div>
+                    )}
+                  {selectedSizeVariant &&
+                    selectedSizeVariant.priceAdjustment !== 0 && (
+                      <div className="flex justify-between mb-1">
+                        <span>Size ({selectedSizeVariant.name}):</span>
+                        <span
+                          className={
+                            selectedSizeVariant.priceAdjustment > 0
+                              ? "text-orange-600"
+                              : "text-green-600"
+                          }
+                        >
+                          {selectedSizeVariant.priceAdjustment > 0 ? "+" : ""}
+                          {formatPrice(selectedSizeVariant.priceAdjustment)}
+                        </span>
+                      </div>
+                    )}
+                  {selectedStorage && selectedStorage.priceAdjustment !== 0 && (
+                    <div className="flex justify-between mb-1">
+                      <span>Storage ({selectedStorage.value}):</span>
+                      <span
+                        className={
+                          selectedStorage.priceAdjustment > 0
+                            ? "text-orange-600"
+                            : "text-green-600"
+                        }
+                      >
+                        {selectedStorage.priceAdjustment > 0 ? "+" : ""}
+                        {formatPrice(selectedStorage.priceAdjustment)}
+                      </span>
+                    </div>
+                  )}
+                  {selectedMemory && selectedMemory.priceAdjustment !== 0 && (
+                    <div className="flex justify-between mb-1">
+                      <span>Memory ({selectedMemory.value}):</span>
+                      <span
+                        className={
+                          selectedMemory.priceAdjustment > 0
+                            ? "text-orange-600"
+                            : "text-green-600"
+                        }
+                      >
+                        {selectedMemory.priceAdjustment > 0 ? "+" : ""}
+                        {formatPrice(selectedMemory.priceAdjustment)}
+                      </span>
+                    </div>
+                  )}
+                  {selectedSimType && selectedSimType.priceAdjustment !== 0 && (
+                    <div className="flex justify-between mb-1">
+                      <span>SIM Type ({selectedSimType.value}):</span>
+                      <span
+                        className={
+                          selectedSimType.priceAdjustment > 0
+                            ? "text-orange-600"
+                            : "text-green-600"
+                        }
+                      >
+                        {selectedSimType.priceAdjustment > 0 ? "+" : ""}
+                        {formatPrice(selectedSimType.priceAdjustment)}
+                      </span>
+                    </div>
+                  )}
+                  {quantity > 1 && (
+                    <div className="flex justify-between mt-2 pt-2 border-t border-gray-200 font-semibold">
+                      <span>Subtotal ({quantity} items):</span>
+                      <span>{formatPrice(finalPrice * quantity)}</span>
+                    </div>
+                  )}
+                </div>
               )}
             </div>
 
-            <div className="text-gray-600 leading-relaxed">
-              {product.short_description}
-            </div>
-
-            {hasColors && (
+            {/* Color Variants */}
+            {hasColorVariants && (
               <div>
-                <h3 className="font-semibold text-gray-800 mb-3">Colors:</h3>
-                <div className="flex gap-2">
-                  {product.colors.map((color, index) => (
+                <h3 className="font-semibold text-gray-800 mb-3">
+                  Color:{" "}
+                  {selectedColorVariant?.name || (
+                    <span className="text-gray-400 font-normal">
+                      Please select a color
+                    </span>
+                  )}
+                </h3>
+                <div className="flex flex-wrap gap-2">
+                  {product.color_variants.map((colorVariant, index) => (
                     <button
                       key={index}
-                      onClick={() => setSelectedColor(index)}
-                      className={`px-3 py-2 border rounded capitalize ${
-                        selectedColor === index
-                          ? "bg-orange-500 text-white border-orange-500"
-                          : "border-gray-300 text-gray-700 hover:border-gray-400"
+                      onClick={() => setSelectedColorVariant(colorVariant)}
+                      className={`relative flex items-center gap-2 px-4 py-2 border-2 rounded-lg transition-all ${
+                        selectedColorVariant?.name === colorVariant.name
+                          ? "border-orange-500 bg-orange-50"
+                          : "border-gray-300 hover:border-gray-400"
                       }`}
+                      title={colorVariant.name}
                     >
-                      {color}
+                      <div
+                        className="w-6 h-6 rounded-full border-2 border-gray-300"
+                        style={{ backgroundColor: colorVariant.hex }}
+                      />
+                      <span className="text-sm font-medium">
+                        {colorVariant.name}
+                      </span>
+                      {colorVariant.priceAdjustment !== 0 && (
+                        <span className="text-xs text-gray-600 bg-gray-100 px-1.5 py-0.5 rounded">
+                          {colorVariant.priceAdjustment > 0 ? "+" : ""}
+                          {formatPrice(colorVariant.priceAdjustment)}
+                        </span>
+                      )}
                     </button>
                   ))}
                 </div>
               </div>
             )}
 
-            {hasSizes && (
+            {/* Size Variants */}
+            {hasSizeVariants && (
               <div>
-                <h3 className="font-semibold text-gray-800 mb-3">Size:</h3>
-                <div className="flex gap-2">
-                  {product.sizes.map((size, index) => (
+                <h3 className="font-semibold text-gray-800 mb-3">
+                  Size:{" "}
+                  {selectedSizeVariant?.name || (
+                    <span className="text-gray-400 font-normal">
+                      Please select a size
+                    </span>
+                  )}
+                </h3>
+                <div className="flex flex-wrap gap-2">
+                  {product.size_variants.map((sizeVariant, index) => (
                     <button
                       key={index}
-                      onClick={() => setSelectedSize(index)}
-                      className={`px-3 py-2 border rounded ${
-                        selectedSize === index
+                      onClick={() => setSelectedSizeVariant(sizeVariant)}
+                      className={`px-4 py-2 border-2 rounded ${
+                        selectedSizeVariant?.name === sizeVariant.name
                           ? "bg-orange-500 text-white border-orange-500"
                           : "border-gray-300 text-gray-700 hover:border-gray-400"
                       }`}
                     >
-                      {size}
+                      <span className="font-medium">{sizeVariant.name}</span>
+                      {sizeVariant.priceAdjustment !== 0 && (
+                        <span className="text-xs ml-1">
+                          ({sizeVariant.priceAdjustment > 0 ? "+" : ""}
+                          {formatPrice(sizeVariant.priceAdjustment)})
+                        </span>
+                      )}
                     </button>
                   ))}
                 </div>
               </div>
             )}
 
-            <div className="flex items-center gap-4">
-              <div className="flex items-center border border-gray-300 rounded">
-                <button
-                  onClick={() => handleQuantityChange("decrement")}
-                  className="px-3 py-2 text-gray-600 hover:bg-gray-100"
-                  disabled={quantity <= 1}
-                >
-                  −
-                </button>
-                <span className="px-4 py-2 border-l border-r border-gray-300">
-                  {quantity}
-                </span>
-                <button
-                  onClick={() => handleQuantityChange("increment")}
-                  className="px-3 py-2 text-gray-600 hover:bg-gray-100"
-                  disabled={quantity >= product.stock_quantity}
-                >
-                  +
-                </button>
+            {/* Technical Specifications */}
+            {hasTechSpecs && (
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 space-y-4">
+                <h3 className="font-semibold text-gray-800 flex items-center gap-2">
+                  <Cpu className="text-blue-600" size={18} />
+                  Technical Specifications
+                </h3>
+
+                {/* Storage Options */}
+                {hasStorageOptions && (
+                  <div>
+                    <label className="text-sm font-medium text-gray-700 mb-2 block flex items-center gap-2">
+                      <HardDrive size={14} />
+                      Storage:{" "}
+                      {selectedStorage?.value || (
+                        <span className="text-gray-400 font-normal">
+                          Please select
+                        </span>
+                      )}
+                    </label>
+                    <div className="flex flex-wrap gap-2">
+                      {product.storage_options.map((storage, index) => (
+                        <button
+                          key={index}
+                          onClick={() => setSelectedStorage(storage)}
+                          className={`px-3 py-2 text-sm border-2 rounded ${
+                            selectedStorage?.value === storage.value
+                              ? "bg-blue-500 text-white border-blue-500"
+                              : "border-blue-200 text-gray-700 hover:border-blue-400"
+                          }`}
+                        >
+                          {storage.value}
+                          {storage.priceAdjustment !== 0 && (
+                            <span className="text-xs ml-1">
+                              ({storage.priceAdjustment > 0 ? "+" : ""}
+                              {formatPrice(storage.priceAdjustment)})
+                            </span>
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Memory Options */}
+                {hasMemoryOptions && (
+                  <div>
+                    <label className="text-sm font-medium text-gray-700 mb-2 block flex items-center gap-2">
+                      <Cpu size={14} />
+                      Memory:{" "}
+                      {selectedMemory?.value || (
+                        <span className="text-gray-400 font-normal">
+                          Please select
+                        </span>
+                      )}
+                    </label>
+                    <div className="flex flex-wrap gap-2">
+                      {product.memory_options.map((memory, index) => (
+                        <button
+                          key={index}
+                          onClick={() => setSelectedMemory(memory)}
+                          className={`px-3 py-2 text-sm border-2 rounded ${
+                            selectedMemory?.value === memory.value
+                              ? "bg-blue-500 text-white border-blue-500"
+                              : "border-blue-200 text-gray-700 hover:border-blue-400"
+                          }`}
+                        >
+                          {memory.value}
+                          {memory.priceAdjustment !== 0 && (
+                            <span className="text-xs ml-1">
+                              ({memory.priceAdjustment > 0 ? "+" : ""}
+                              {formatPrice(memory.priceAdjustment)})
+                            </span>
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* SIM Type Options */}
+                {hasSimTypes && (
+                  <div>
+                    <label className="text-sm font-medium text-gray-700 mb-2 block flex items-center gap-2">
+                      <Sim size={14} />
+                      SIM Type:{" "}
+                      {selectedSimType?.value || (
+                        <span className="text-gray-400 font-normal">
+                          Please select
+                        </span>
+                      )}
+                    </label>
+                    <div className="flex flex-wrap gap-2">
+                      {product.sim_types.map((simType, index) => (
+                        <button
+                          key={index}
+                          onClick={() => setSelectedSimType(simType)}
+                          className={`px-3 py-2 text-sm border-2 rounded ${
+                            selectedSimType?.value === simType.value
+                              ? "bg-blue-500 text-white border-blue-500"
+                              : "border-blue-200 text-gray-700 hover:border-blue-400"
+                          }`}
+                        >
+                          {simType.value}
+                          {simType.priceAdjustment !== 0 && (
+                            <span className="text-xs ml-1">
+                              ({simType.priceAdjustment > 0 ? "+" : ""}
+                              {formatPrice(simType.priceAdjustment)})
+                            </span>
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
-              <button
-                className={`px-8 py-3 rounded font-semibold flex-1 ${
-                  isInStock
-                    ? "bg-orange-500 text-white hover:bg-orange-600"
-                    : "bg-gray-400 text-white cursor-not-allowed"
-                }`}
-                onClick={() => isInStock && handleAddToCart(product)}
-                disabled={!isInStock}
-              >
-                {isInStock ? "Add to Cart" : "Out of Stock"}
-              </button>
-              <button
-                onClick={handleWishlist}
-                className={`border p-3 rounded transition-all duration-300 ${
-                  isWishlisted
-                    ? "bg-red-500 border-red-500 text-white hover:bg-red-600"
-                    : "border-gray-300 text-gray-600 hover:bg-gray-100 hover:border-gray-400"
-                }`}
-                title={
-                  isWishlisted ? "Remove from wishlist" : "Add to wishlist"
-                }
-              >
-                <Heart
-                  className={`w-5 h-5 transition-all duration-200 ${
-                    isWishlisted ? "fill-current" : ""
+            )}
+
+            {/* Quantity and Actions */}
+            <div className="space-y-3">
+              <div className="flex items-center gap-4">
+                <div className="flex items-center border border-gray-300 rounded">
+                  <button
+                    onClick={() => handleQuantityChange("decrement")}
+                    className="px-3 py-2 text-gray-600 hover:bg-gray-100"
+                    disabled={quantity <= 1}
+                  >
+                    −
+                  </button>
+                  <span className="px-4 py-2 border-l border-r border-gray-300">
+                    {quantity}
+                  </span>
+                  <button
+                    onClick={() => handleQuantityChange("increment")}
+                    className="px-3 py-2 text-gray-600 hover:bg-gray-100"
+                    disabled={quantity >= product.stock_quantity}
+                  >
+                    +
+                  </button>
+                </div>
+
+                <button
+                  onClick={handleWishlist}
+                  className={`border p-3 rounded transition-all duration-300 ${
+                    isWishlisted
+                      ? "bg-red-500 border-red-500 text-white hover:bg-red-600"
+                      : "border-gray-300 text-gray-600 hover:bg-gray-100 hover:border-gray-400"
                   }`}
-                />
-              </button>
+                  title={
+                    isWishlisted ? "Remove from wishlist" : "Add to wishlist"
+                  }
+                >
+                  <Heart
+                    className={`w-5 h-5 transition-all duration-200 ${
+                      isWishlisted ? "fill-current" : ""
+                    }`}
+                  />
+                </button>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  className={`px-6 py-3 rounded font-semibold flex items-center justify-center gap-2 ${
+                    isInStock
+                      ? "bg-white border-2 border-orange-500 text-orange-500 hover:bg-orange-50"
+                      : "bg-gray-400 text-white cursor-not-allowed"
+                  }`}
+                  onClick={() => isInStock && handleAddToCart()}
+                  disabled={!isInStock}
+                >
+                  <ShoppingCart size={20} />
+                  Add to Cart
+                </button>
+
+                <button
+                  className={`px-6 py-3 rounded font-semibold flex items-center justify-center gap-2 ${
+                    isInStock
+                      ? "bg-orange-500 text-white hover:bg-orange-600"
+                      : "bg-gray-400 text-white cursor-not-allowed"
+                  }`}
+                  onClick={() => isInStock && handleBuyNow()}
+                  disabled={!isInStock}
+                >
+                  <Zap size={20} />
+                  Buy Now
+                </button>
+              </div>
             </div>
 
+            {/* Product Details */}
             <div className="border border-gray-200 rounded-lg p-4">
               <h4 className="font-semibold text-gray-800 mb-3">
                 Product Details
@@ -525,7 +941,7 @@ export default function ProductDetailsClient({ productId }) {
                     </span>
                   </motion.div>
                 )}
-                {product?.profiles.full_name && (
+                {product?.profiles?.full_name && (
                   <motion.div
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -543,6 +959,7 @@ export default function ProductDetailsClient({ productId }) {
               </div>
             </div>
 
+            {/* Delivery Information */}
             <div className="border border-gray-200 rounded-lg p-4 space-y-3">
               <div className="flex items-start gap-3">
                 <svg

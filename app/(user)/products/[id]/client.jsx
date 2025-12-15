@@ -10,6 +10,7 @@ import { motion } from "framer-motion";
 import ProductReviews, { StarRating } from "./reviews";
 import { getProductAverageRating, getProductReviewCount } from "@/lib/reviews";
 import { useRouter } from "next/navigation";
+import { ShoppingBag } from "lucide-react";
 
 export default function ProductDetailsClient({ productId }) {
   const router = useRouter();
@@ -41,19 +42,16 @@ export default function ProductDetailsClient({ productId }) {
   // Check if product is in wishlist
   const isWishlisted = product ? isInWishlist(product.id) : false;
 
-  // Calculate final price based on all selected variants
-  const calculateFinalPrice = () => {
-    if (!product) return 0;
-
-    let finalPrice = parseFloat(product.price) || 0;
+  // Calculate variant adjustments sum
+  const calculateVariantAdjustments = () => {
+    let adjustments = 0;
 
     // Add color variant price adjustment
     if (
       selectedColorVariant &&
       selectedColorVariant.priceAdjustment !== undefined
     ) {
-      const adjustment = parseFloat(selectedColorVariant.priceAdjustment) || 0;
-      finalPrice += adjustment;
+      adjustments += parseFloat(selectedColorVariant.priceAdjustment) || 0;
     }
 
     // Add size variant price adjustment
@@ -61,38 +59,48 @@ export default function ProductDetailsClient({ productId }) {
       selectedSizeVariant &&
       selectedSizeVariant.priceAdjustment !== undefined
     ) {
-      const adjustment = parseFloat(selectedSizeVariant.priceAdjustment) || 0;
-      finalPrice += adjustment;
+      adjustments += parseFloat(selectedSizeVariant.priceAdjustment) || 0;
     }
 
     // Add storage price adjustment
     if (selectedStorage && selectedStorage.priceAdjustment !== undefined) {
-      const adjustment = parseFloat(selectedStorage.priceAdjustment) || 0;
-      finalPrice += adjustment;
+      adjustments += parseFloat(selectedStorage.priceAdjustment) || 0;
     }
 
     // Add memory price adjustment
     if (selectedMemory && selectedMemory.priceAdjustment !== undefined) {
-      const adjustment = parseFloat(selectedMemory.priceAdjustment) || 0;
-      finalPrice += adjustment;
+      adjustments += parseFloat(selectedMemory.priceAdjustment) || 0;
     }
 
     // Add SIM type price adjustment
     if (selectedSimType && selectedSimType.priceAdjustment !== undefined) {
-      const adjustment = parseFloat(selectedSimType.priceAdjustment) || 0;
-      finalPrice += adjustment;
+      adjustments += parseFloat(selectedSimType.priceAdjustment) || 0;
     }
 
-    return finalPrice;
+    return adjustments;
+  };
+
+  // Calculate final price based on all selected variants
+  const calculateFinalPrice = () => {
+    if (!product) return 0;
+    return parseFloat(product.price) + calculateVariantAdjustments();
+  };
+
+  // Calculate original price with variant adjustments (for strikethrough)
+  const calculateOriginalPriceWithVariants = () => {
+    if (!product || !product.originalprice) return null;
+    return parseFloat(product.originalprice) + calculateVariantAdjustments();
   };
 
   const finalPrice = calculateFinalPrice();
+  const originalPriceWithVariants = calculateOriginalPriceWithVariants();
 
   // Debug: Log price calculations in real-time
   useEffect(() => {
     if (product) {
       console.log("💰 Price Calculation Update:");
       console.log("Base Price:", parseFloat(product.price));
+      console.log("Original Price:", product.originalprice);
       console.log("Quantity:", quantity);
       console.log("Selected Variants:", {
         color: selectedColorVariant,
@@ -101,7 +109,9 @@ export default function ProductDetailsClient({ productId }) {
         memory: selectedMemory,
         sim: selectedSimType,
       });
+      console.log("Variant Adjustments:", calculateVariantAdjustments());
       console.log("Price per unit:", finalPrice);
+      console.log("Original price with variants:", originalPriceWithVariants);
       console.log("Total Price (with quantity):", finalPrice * quantity);
       console.log("---");
     }
@@ -113,6 +123,7 @@ export default function ProductDetailsClient({ productId }) {
     selectedSimType,
     quantity,
     finalPrice,
+    originalPriceWithVariants,
     product,
   ]);
 
@@ -439,8 +450,11 @@ export default function ProductDetailsClient({ productId }) {
                 ))}
               </div>
             )}
-            <div className="text-gray-800 text-xl leading-relaxed">
-              {product.description}
+            <div className="text-gray-800 text-xl leading-relaxed hidden md:block">
+              <div
+                className="prose prose-lg max-w-none"
+                dangerouslySetInnerHTML={{ __html: product.description }}
+              />
             </div>
           </div>
 
@@ -494,9 +508,9 @@ export default function ProductDetailsClient({ productId }) {
                     ({formatPrice(finalPrice)} × {quantity})
                   </div>
                 )}
-                {finalPrice !== parseFloat(product.price) && quantity === 1 && (
+                {originalPriceWithVariants && quantity === 1 && (
                   <div className="text-lg text-gray-400 line-through">
-                    {formatPrice(product.price)}
+                    {formatPrice(originalPriceWithVariants)}
                   </div>
                 )}
                 {product.discount && (
@@ -510,98 +524,10 @@ export default function ProductDetailsClient({ productId }) {
               {quantity > 1 && (
                 <div className="text-sm text-gray-600 mb-2">
                   Price per unit: {formatPrice(finalPrice)}
-                </div>
-              )}
-
-              {/* Show price breakdown if variants are selected */}
-              {finalPrice !== parseFloat(product.price) && (
-                <div className="mt-3 pt-3 border-t border-gray-200 text-sm text-gray-600">
-                  <div className="flex justify-between mb-1">
-                    <span>Base Price:</span>
-                    <span>{formatPrice(product.price)}</span>
-                  </div>
-                  {selectedColorVariant &&
-                    selectedColorVariant.priceAdjustment !== 0 && (
-                      <div className="flex justify-between mb-1">
-                        <span>Color ({selectedColorVariant.name}):</span>
-                        <span
-                          className={
-                            selectedColorVariant.priceAdjustment > 0
-                              ? "text-orange-600"
-                              : "text-green-600"
-                          }
-                        >
-                          {selectedColorVariant.priceAdjustment > 0 ? "+" : ""}
-                          {formatPrice(selectedColorVariant.priceAdjustment)}
-                        </span>
-                      </div>
-                    )}
-                  {selectedSizeVariant &&
-                    selectedSizeVariant.priceAdjustment !== 0 && (
-                      <div className="flex justify-between mb-1">
-                        <span>Size ({selectedSizeVariant.name}):</span>
-                        <span
-                          className={
-                            selectedSizeVariant.priceAdjustment > 0
-                              ? "text-orange-600"
-                              : "text-green-600"
-                          }
-                        >
-                          {selectedSizeVariant.priceAdjustment > 0 ? "+" : ""}
-                          {formatPrice(selectedSizeVariant.priceAdjustment)}
-                        </span>
-                      </div>
-                    )}
-                  {selectedStorage && selectedStorage.priceAdjustment !== 0 && (
-                    <div className="flex justify-between mb-1">
-                      <span>Storage ({selectedStorage.value}):</span>
-                      <span
-                        className={
-                          selectedStorage.priceAdjustment > 0
-                            ? "text-orange-600"
-                            : "text-green-600"
-                        }
-                      >
-                        {selectedStorage.priceAdjustment > 0 ? "+" : ""}
-                        {formatPrice(selectedStorage.priceAdjustment)}
-                      </span>
-                    </div>
-                  )}
-                  {selectedMemory && selectedMemory.priceAdjustment !== 0 && (
-                    <div className="flex justify-between mb-1">
-                      <span>Memory ({selectedMemory.value}):</span>
-                      <span
-                        className={
-                          selectedMemory.priceAdjustment > 0
-                            ? "text-orange-600"
-                            : "text-green-600"
-                        }
-                      >
-                        {selectedMemory.priceAdjustment > 0 ? "+" : ""}
-                        {formatPrice(selectedMemory.priceAdjustment)}
-                      </span>
-                    </div>
-                  )}
-                  {selectedSimType && selectedSimType.priceAdjustment !== 0 && (
-                    <div className="flex justify-between mb-1">
-                      <span>SIM Type ({selectedSimType.value}):</span>
-                      <span
-                        className={
-                          selectedSimType.priceAdjustment > 0
-                            ? "text-orange-600"
-                            : "text-green-600"
-                        }
-                      >
-                        {selectedSimType.priceAdjustment > 0 ? "+" : ""}
-                        {formatPrice(selectedSimType.priceAdjustment)}
-                      </span>
-                    </div>
-                  )}
-                  {quantity > 1 && (
-                    <div className="flex justify-between mt-2 pt-2 border-t border-gray-200 font-semibold">
-                      <span>Subtotal ({quantity} items):</span>
-                      <span>{formatPrice(finalPrice * quantity)}</span>
-                    </div>
+                  {originalPriceWithVariants && (
+                    <span className="text-gray-400 line-through ml-2">
+                      {formatPrice(originalPriceWithVariants)}
+                    </span>
                   )}
                 </div>
               )}
@@ -637,12 +563,6 @@ export default function ProductDetailsClient({ productId }) {
                       <span className="text-sm font-medium">
                         {colorVariant.name}
                       </span>
-                      {colorVariant.priceAdjustment !== 0 && (
-                        <span className="text-xs text-gray-600 bg-gray-100 px-1.5 py-0.5 rounded">
-                          {colorVariant.priceAdjustment > 0 ? "+" : ""}
-                          {formatPrice(colorVariant.priceAdjustment)}
-                        </span>
-                      )}
                     </button>
                   ))}
                 </div>
@@ -672,12 +592,6 @@ export default function ProductDetailsClient({ productId }) {
                       }`}
                     >
                       <span className="font-medium">{sizeVariant.name}</span>
-                      {sizeVariant.priceAdjustment !== 0 && (
-                        <span className="text-xs ml-1">
-                          ({sizeVariant.priceAdjustment > 0 ? "+" : ""}
-                          {formatPrice(sizeVariant.priceAdjustment)})
-                        </span>
-                      )}
                     </button>
                   ))}
                 </div>
@@ -687,11 +601,6 @@ export default function ProductDetailsClient({ productId }) {
             {/* Technical Specifications */}
             {hasTechSpecs && (
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 space-y-4">
-                <h3 className="font-semibold text-gray-800 flex items-center gap-2">
-                  <Cpu className="text-blue-600" size={18} />
-                  Technical Specifications
-                </h3>
-
                 {/* Storage Options */}
                 {hasStorageOptions && (
                   <div>
@@ -716,12 +625,6 @@ export default function ProductDetailsClient({ productId }) {
                           }`}
                         >
                           {storage.value}
-                          {storage.priceAdjustment !== 0 && (
-                            <span className="text-xs ml-1">
-                              ({storage.priceAdjustment > 0 ? "+" : ""}
-                              {formatPrice(storage.priceAdjustment)})
-                            </span>
-                          )}
                         </button>
                       ))}
                     </div>
@@ -752,12 +655,6 @@ export default function ProductDetailsClient({ productId }) {
                           }`}
                         >
                           {memory.value}
-                          {memory.priceAdjustment !== 0 && (
-                            <span className="text-xs ml-1">
-                              ({memory.priceAdjustment > 0 ? "+" : ""}
-                              {formatPrice(memory.priceAdjustment)})
-                            </span>
-                          )}
                         </button>
                       ))}
                     </div>
@@ -868,7 +765,7 @@ export default function ProductDetailsClient({ productId }) {
                   onClick={() => isInStock && handleBuyNow()}
                   disabled={!isInStock}
                 >
-                  <Zap size={20} />
+                  <ShoppingBag size={20} />
                   Buy Now
                 </button>
               </div>
@@ -1009,6 +906,12 @@ export default function ProductDetailsClient({ productId }) {
                 </div>
               </div>
             </div>
+          </div>
+          <div className="text-gray-800 text-base leading-relaxed block md:hidden">
+            <div
+              className="prose prose-base max-w-none"
+              dangerouslySetInnerHTML={{ __html: product.description }}
+            />
           </div>
         </div>
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { supabase } from "@/lib/supabase-client";
 import {
   Upload,
@@ -19,6 +19,7 @@ import {
   Antenna,
 } from "lucide-react";
 import { v4 as uuidv4 } from "uuid";
+import RichTextEditor from "./RichTextEditor";
 
 // Predefined color palette with common colors
 const PRESET_COLORS = [
@@ -42,6 +43,7 @@ const PRESET_COLORS = [
 
 export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
   const AUTOSAVE_KEY = "product_form_autosave";
+  const AUTOSAVE_DEBOUNCE = 2000; // 2 seconds
 
   const [formData, setFormData] = useState({
     name: "",
@@ -101,8 +103,17 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
   const [lastSaved, setLastSaved] = useState(null);
   const [showColorPicker, setShowColorPicker] = useState(false);
 
-  // Check if category requires tech specs
-  const isTechCategory = () => {
+  // ==========================================
+  // PERFORMANCE OPTIMIZATION: Refs for debouncing
+  // ==========================================
+  const autosaveTimerRef = useRef(null);
+  const isInitialMount = useRef(true);
+  const imagePreviewURLs = useRef([]);
+
+  // ==========================================
+  // PERFORMANCE FIX: Memoize computed values
+  // ==========================================
+  const isTechCategory = useMemo(() => {
     if (!selectedCategory) return false;
     const categoryName = selectedCategory.name?.toLowerCase() || "";
     return (
@@ -112,27 +123,34 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
       categoryName.includes("laptop") ||
       categoryName.includes("tablet")
     );
-  };
+  }, [selectedCategory]);
 
-  // Autosave form data to localStorage
+  // ==========================================
+  // PERFORMANCE FIX: Stable callback references
+  // ==========================================
   const saveToLocalStorage = useCallback(() => {
-    if (!isEditMode) {
-      const dataToSave = {
-        formData,
-        colorVariants,
-        sizeVariants,
-        storageOptions,
-        memoryOptions,
-        simTypes,
-        images: images.map((img) => ({
-          id: img.id,
-          preview: img.preview,
-          name: img.name,
-        })),
-        timestamp: new Date().toISOString(),
-      };
-      localStorage.setItem(AUTOSAVE_KEY, JSON.stringify(dataToSave));
-      setLastSaved(new Date());
+    if (!isEditMode && isOpen) {
+      try {
+        const dataToSave = {
+          formData,
+          colorVariants,
+          sizeVariants,
+          storageOptions,
+          memoryOptions,
+          simTypes,
+          images: images.map((img) => ({
+            id: img.id,
+            preview: img.preview,
+            name: img.name,
+          })),
+          timestamp: new Date().toISOString(),
+        };
+        localStorage.setItem(AUTOSAVE_KEY, JSON.stringify(dataToSave));
+        setLastSaved(new Date());
+      } catch (err) {
+        console.error("Failed to save to localStorage:", err);
+        // Don't crash the app if localStorage fails
+      }
     }
   }, [
     formData,
@@ -143,51 +161,94 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
     simTypes,
     images,
     isEditMode,
+    isOpen,
   ]);
 
-  // Load from localStorage on mount
-  useEffect(() => {
-    if (!productToEdit) {
-      const saved = localStorage.getItem(AUTOSAVE_KEY);
-      if (saved) {
-        try {
-          const parsed = JSON.parse(saved);
-          const savedTime = new Date(parsed.timestamp);
-          const hoursSinceLastSave =
-            (new Date() - savedTime) / (1000 * 60 * 60);
+  // ==========================================
+  // CRASH FIX: Safe localStorage loading with error handling
+  // ==========================================
+  const loadFromLocalStorage = useCallback(() => {
+    if (productToEdit) return; // Don't load draft when editing
 
-          if (hoursSinceLastSave < 24) {
-            setFormData(parsed.formData);
-            setColorVariants(parsed.colorVariants || []);
-            setSizeVariants(parsed.sizeVariants || []);
-            setStorageOptions(parsed.storageOptions || []);
-            setMemoryOptions(parsed.memoryOptions || []);
-            setSimTypes(parsed.simTypes || []);
-            if (parsed.images.length > 0) {
-              setSuccess(
-                `Draft restored from ${savedTime.toLocaleString()}. Please re-upload images.`
-              );
-            }
-            setLastSaved(savedTime);
-          } else {
-            localStorage.removeItem(AUTOSAVE_KEY);
-          }
-        } catch (err) {
-          console.error("Error loading autosave:", err);
-          localStorage.removeItem(AUTOSAVE_KEY);
+    try {
+      const saved = localStorage.getItem(AUTOSAVE_KEY);
+      if (!saved) return;
+
+      const parsed = JSON.parse(saved);
+      if (!parsed || typeof parsed !== "object") {
+        throw new Error("Invalid saved data");
+      }
+
+      const savedTime = new Date(parsed.timestamp);
+      if (isNaN(savedTime.getTime())) {
+        throw new Error("Invalid timestamp");
+      }
+
+      const hoursSinceLastSave = (new Date() - savedTime) / (1000 * 60 * 60);
+
+      if (hoursSinceLastSave < 24) {
+        // Safely restore data with fallbacks
+        if (parsed.formData && typeof parsed.formData === "object") {
+          setFormData(parsed.formData);
         }
+        if (Array.isArray(parsed.colorVariants))
+          setColorVariants(parsed.colorVariants);
+        if (Array.isArray(parsed.sizeVariants))
+          setSizeVariants(parsed.sizeVariants);
+        if (Array.isArray(parsed.storageOptions))
+          setStorageOptions(parsed.storageOptions);
+        if (Array.isArray(parsed.memoryOptions))
+          setMemoryOptions(parsed.memoryOptions);
+        if (Array.isArray(parsed.simTypes)) setSimTypes(parsed.simTypes);
+
+        if (parsed.images && parsed.images.length > 0) {
+          setSuccess(
+            `Draft restored from ${savedTime.toLocaleString()}. Please re-upload images.`
+          );
+        }
+        setLastSaved(savedTime);
+      } else {
+        localStorage.removeItem(AUTOSAVE_KEY);
+      }
+    } catch (err) {
+      console.error("Error loading autosave:", err);
+      // Clear corrupted data
+      try {
+        localStorage.removeItem(AUTOSAVE_KEY);
+      } catch (clearErr) {
+        console.error("Failed to clear corrupted autosave:", clearErr);
       }
     }
   }, [productToEdit]);
 
-  // Autosave on form changes (debounced)
+  // ==========================================
+  // PERFORMANCE FIX: Debounced autosave
+  // Only save after user stops typing for 2 seconds
+  // ==========================================
   useEffect(() => {
-    if (!isEditMode && isOpen) {
-      const timer = setTimeout(() => {
-        saveToLocalStorage();
-      }, 2000);
+    // Skip on initial mount
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      return;
+    }
 
-      return () => clearTimeout(timer);
+    if (!isEditMode && isOpen) {
+      // Clear existing timer
+      if (autosaveTimerRef.current) {
+        clearTimeout(autosaveTimerRef.current);
+      }
+
+      // Set new timer
+      autosaveTimerRef.current = setTimeout(() => {
+        saveToLocalStorage();
+      }, AUTOSAVE_DEBOUNCE);
+
+      // Cleanup
+      return () => {
+        if (autosaveTimerRef.current) {
+          clearTimeout(autosaveTimerRef.current);
+        }
+      };
     }
   }, [
     formData,
@@ -201,6 +262,26 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
     isOpen,
     saveToLocalStorage,
   ]);
+
+  // ==========================================
+  // MEMORY LEAK FIX: Cleanup image preview URLs
+  // ==========================================
+  useEffect(() => {
+    return () => {
+      // Revoke all blob URLs to prevent memory leaks
+      imagePreviewURLs.current.forEach((url) => {
+        if (url.startsWith("blob:")) {
+          URL.revokeObjectURL(url);
+        }
+      });
+      imagePreviewURLs.current = [];
+    };
+  }, []);
+
+  // Load autosave on mount
+  useEffect(() => {
+    loadFromLocalStorage();
+  }, [loadFromLocalStorage]);
 
   // Save on visibility change (tab switch)
   useEffect(() => {
@@ -260,21 +341,26 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
     const randomPart = uuidv4().split("-")[0].toUpperCase();
     const potentialSKU = `${prefix}-${randomPart}`;
 
-    const { data, error } = await supabase
-      .from("products")
-      .select("sku")
-      .eq("sku", potentialSKU);
+    try {
+      const { data, error } = await supabase
+        .from("products")
+        .select("sku")
+        .eq("sku", potentialSKU);
 
-    if (error) {
-      console.error("Error checking SKU:", error.message);
+      if (error) {
+        console.error("Error checking SKU:", error.message);
+        return potentialSKU;
+      }
+
+      if (data && data.length > 0) {
+        return generateRandomSKU();
+      }
+
+      return potentialSKU;
+    } catch (err) {
+      console.error("SKU generation error:", err);
       return potentialSKU;
     }
-
-    if (data && data.length > 0) {
-      return generateRandomSKU();
-    }
-
-    return potentialSKU;
   };
 
   useEffect(() => {
@@ -298,12 +384,30 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
         is_featured: productToEdit.is_featured,
       });
 
-      // Load variants
-      setColorVariants(productToEdit.color_variants || []);
-      setSizeVariants(productToEdit.size_variants || []);
-      setStorageOptions(productToEdit.storage_options || []);
-      setMemoryOptions(productToEdit.memory_options || []);
-      setSimTypes(productToEdit.sim_types || []);
+      // Load variants safely
+      setColorVariants(
+        Array.isArray(productToEdit.color_variants)
+          ? productToEdit.color_variants
+          : []
+      );
+      setSizeVariants(
+        Array.isArray(productToEdit.size_variants)
+          ? productToEdit.size_variants
+          : []
+      );
+      setStorageOptions(
+        Array.isArray(productToEdit.storage_options)
+          ? productToEdit.storage_options
+          : []
+      );
+      setMemoryOptions(
+        Array.isArray(productToEdit.memory_options)
+          ? productToEdit.memory_options
+          : []
+      );
+      setSimTypes(
+        Array.isArray(productToEdit.sim_types) ? productToEdit.sim_types : []
+      );
 
       setExistingImages(
         (productToEdit.images || []).map((url, index) => ({
@@ -349,6 +453,9 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
               setSelectedCategory(category);
             }
           }
+        } catch (err) {
+          console.error("Unexpected error fetching categories:", err);
+          setError("Failed to load categories");
         } finally {
           setCategoriesLoading(false);
         }
@@ -392,6 +499,9 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
     }));
   };
 
+  // ==========================================
+  // MEMORY LEAK FIX: Proper image URL management
+  // ==========================================
   const handleImageChange = (e) => {
     const files = Array.from(e.target.files);
 
@@ -413,15 +523,24 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
 
       const reader = new FileReader();
       reader.onload = (e) => {
+        const previewURL = e.target.result;
+        // Track blob URLs for cleanup
+        if (previewURL.startsWith("blob:")) {
+          imagePreviewURLs.current.push(previewURL);
+        }
+
         const newImage = {
           id: Date.now() + Math.random(),
           file,
-          preview: e.target.result,
+          preview: previewURL,
           name: file.name,
           isNew: true,
         };
         setImages((prev) => [...prev, newImage]);
         setImageFiles((prev) => [...prev, file]);
+      };
+      reader.onerror = () => {
+        setError("Failed to read image file");
       };
       reader.readAsDataURL(file);
     });
@@ -434,27 +553,51 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
       images.find((img) => img.id === imageId) ||
       existingImages.find((img) => img.id === imageId);
 
+    if (!imageToRemove) return;
+
     if (imageToRemove.isNew) {
+      // Revoke blob URL to free memory
+      if (imageToRemove.preview.startsWith("blob:")) {
+        URL.revokeObjectURL(imageToRemove.preview);
+        imagePreviewURLs.current = imagePreviewURLs.current.filter(
+          (url) => url !== imageToRemove.preview
+        );
+      }
+
       setImages((prev) => prev.filter((img) => img.id !== imageId));
       setImageFiles((prev) =>
         prev.filter((file) => file !== imageToRemove.file)
       );
     } else {
-      const path = imageToRemove.url.split("/").pop();
-      const { error: storageError } = await supabase.storage
-        .from("product-images")
-        .remove([path]);
+      try {
+        const path = imageToRemove.url.split("/").pop();
+        const { error: storageError } = await supabase.storage
+          .from("product-images")
+          .remove([path]);
 
-      if (storageError) {
-        console.error("Error deleting image from storage:", storageError);
-        setError(
-          "Failed to delete image from storage: " + storageError.message
-        );
-        return;
+        if (storageError) {
+          console.error("Error deleting image from storage:", storageError);
+          setError(
+            "Failed to delete image from storage: " + storageError.message
+          );
+          return;
+        }
+
+        setExistingImages((prev) => prev.filter((img) => img.id !== imageId));
+      } catch (err) {
+        console.error("Unexpected error removing image:", err);
+        setError("Failed to remove image");
       }
-
-      setExistingImages((prev) => prev.filter((img) => img.id !== imageId));
     }
+  };
+
+  // ==========================================
+  // CRASH FIX: Safe number parsing for variants
+  // ==========================================
+  const safeParseFloat = (value) => {
+    if (value === "" || value === null || value === undefined) return 0;
+    const parsed = parseFloat(value);
+    return isNaN(parsed) ? 0 : parsed;
   };
 
   // Color variant functions
@@ -463,9 +606,7 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
       const newColor = {
         name: colorInput.name.trim(),
         hex: colorInput.hex,
-        priceAdjustment: colorInput.priceAdjustment
-          ? parseFloat(colorInput.priceAdjustment)
-          : 0,
+        priceAdjustment: safeParseFloat(colorInput.priceAdjustment),
       };
       setColorVariants((prev) => [...prev, newColor]);
       setColorInput({ name: "", hex: "#000000", priceAdjustment: "" });
@@ -486,9 +627,7 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
     if (sizeInput.name.trim()) {
       const newSize = {
         name: sizeInput.name.trim(),
-        priceAdjustment: sizeInput.priceAdjustment
-          ? parseFloat(sizeInput.priceAdjustment)
-          : 0,
+        priceAdjustment: safeParseFloat(sizeInput.priceAdjustment),
       };
       setSizeVariants((prev) => [...prev, newSize]);
       setSizeInput({ name: "", priceAdjustment: "" });
@@ -504,9 +643,7 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
     if (storageInput.value.trim()) {
       const newStorage = {
         value: storageInput.value.trim(),
-        priceAdjustment: storageInput.priceAdjustment
-          ? parseFloat(storageInput.priceAdjustment)
-          : 0,
+        priceAdjustment: safeParseFloat(storageInput.priceAdjustment),
       };
       setStorageOptions((prev) => [...prev, newStorage]);
       setStorageInput({ value: "", priceAdjustment: "" });
@@ -522,9 +659,7 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
     if (memoryInput.value.trim()) {
       const newMemory = {
         value: memoryInput.value.trim(),
-        priceAdjustment: memoryInput.priceAdjustment
-          ? parseFloat(memoryInput.priceAdjustment)
-          : 0,
+        priceAdjustment: safeParseFloat(memoryInput.priceAdjustment),
       };
       setMemoryOptions((prev) => [...prev, newMemory]);
       setMemoryInput({ value: "", priceAdjustment: "" });
@@ -540,9 +675,7 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
     if (simInput.value.trim()) {
       const newSim = {
         value: simInput.value.trim(),
-        priceAdjustment: simInput.priceAdjustment
-          ? parseFloat(simInput.priceAdjustment)
-          : 0,
+        priceAdjustment: safeParseFloat(simInput.priceAdjustment),
       };
       setSimTypes((prev) => [...prev, newSim]);
       setSimInput({ value: "", priceAdjustment: "" });
@@ -661,11 +794,6 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
     }
   };
 
-  // ============================================
-  // GUARANTEED WORKING handleSubmit Function
-  // Schema verified - all JSONB columns exist
-  // ============================================
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     e.stopPropagation();
@@ -736,11 +864,7 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
 
       const location = await getLocationFromIP();
 
-      // ==========================================
-      // CRITICAL: Safe variant array preparation
-      // This guarantees valid JSONB arrays
-      // ==========================================
-
+      // Safe variant array preparation
       const safeArray = (arr) => (Array.isArray(arr) ? arr : []);
 
       const finalColorVariants = safeArray(colorVariants);
@@ -749,21 +873,7 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
       const finalMemoryOptions = safeArray(memoryOptions);
       const finalSimTypes = safeArray(simTypes);
 
-      // Debug logging
-      console.log("🔍 Variant data being prepared:");
-      console.log("colorVariants state:", colorVariants);
-      console.log("finalColorVariants:", finalColorVariants);
-      console.log("Counts:", {
-        colors: finalColorVariants.length,
-        sizes: finalSizeVariants.length,
-        storage: finalStorageOptions.length,
-        memory: finalMemoryOptions.length,
-        sim: finalSimTypes.length,
-      });
-
-      // ==========================================
-      // Build product data - EXACT schema match
-      // ==========================================
+      // Build product data
       const productData = {
         // TEXT columns
         name: formData.name,
@@ -801,10 +911,7 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
         colors: finalColorVariants.map((c) => c.name),
         sizes: finalSizeVariants.map((s) => s.name),
 
-        // ==========================================
         // JSONB columns - NEW VARIANTS
-        // These MUST be arrays, never null
-        // ==========================================
         color_variants: finalColorVariants,
         size_variants: finalSizeVariants,
         storage_options: finalStorageOptions,
@@ -812,26 +919,9 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
         sim_types: finalSimTypes,
       };
 
-      console.log("📦 Product data to insert/update:", {
-        name: productData.name,
-        price: productData.price,
-        category_id: productData.category_id,
-        variant_data: {
-          color_variants_length: productData.color_variants.length,
-          size_variants_length: productData.size_variants.length,
-          storage_options_length: productData.storage_options.length,
-          memory_options_length: productData.memory_options.length,
-          sim_types_length: productData.sim_types.length,
-        },
-        color_variants_sample: productData.color_variants[0] || null,
-        size_variants_sample: productData.size_variants[0] || null,
-      });
-
       // Execute database operation
       let result;
       if (isEditMode) {
-        console.log("🔄 Updating product ID:", productToEdit.id);
-
         const { data, error } = await supabase
           .from("products")
           .update(productData)
@@ -840,19 +930,11 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
 
         if (error) {
           console.error("❌ Update error:", error);
-          console.error("Error details:", {
-            message: error.message,
-            details: error.details,
-            hint: error.hint,
-            code: error.code,
-          });
           throw new Error("Failed to update product: " + error.message);
         }
 
         result = data;
       } else {
-        console.log("➕ Inserting new product");
-
         const { data, error } = await supabase
           .from("products")
           .insert([productData])
@@ -860,79 +942,18 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
 
         if (error) {
           console.error("❌ Insert error:", error);
-          console.error("Error details:", {
-            message: error.message,
-            details: error.details,
-            hint: error.hint,
-            code: error.code,
-          });
           throw new Error("Failed to add product: " + error.message);
         }
 
         result = data;
       }
 
-      // ==========================================
-      // Verify what was actually saved
-      // ==========================================
-      if (result && result[0]) {
-        const saved = result[0];
-
-        console.log("✅ Product saved successfully!");
-        console.log("📊 Verification - what's in database:");
-        console.log({
-          id: saved.id,
-          name: saved.name,
-          color_variants: saved.color_variants,
-          size_variants: saved.size_variants,
-          storage_options: saved.storage_options,
-          memory_options: saved.memory_options,
-          sim_types: saved.sim_types,
-        });
-
-        // Check if variants match what we sent
-        const sentCounts = {
-          colors: finalColorVariants.length,
-          sizes: finalSizeVariants.length,
-          storage: finalStorageOptions.length,
-          memory: finalMemoryOptions.length,
-          sim: finalSimTypes.length,
-        };
-
-        const savedCounts = {
-          colors: saved.color_variants?.length || 0,
-          sizes: saved.size_variants?.length || 0,
-          storage: saved.storage_options?.length || 0,
-          memory: saved.memory_options?.length || 0,
-          sim: saved.sim_types?.length || 0,
-        };
-
-        console.log("📈 Comparison:");
-        console.log("Sent:", sentCounts);
-        console.log("Saved:", savedCounts);
-
-        // Warn if mismatch
-        if (sentCounts.colors !== savedCounts.colors) {
-          console.warn("⚠️ Color variants mismatch!");
-          console.warn("Sent:", finalColorVariants);
-          console.warn("Saved:", saved.color_variants);
-        }
-
-        if (sentCounts.sizes !== savedCounts.sizes) {
-          console.warn("⚠️ Size variants mismatch!");
-          console.warn("Sent:", finalSizeVariants);
-          console.warn("Saved:", saved.size_variants);
-        }
-
-        if (sentCounts.storage !== savedCounts.storage) {
-          console.warn("⚠️ Storage options mismatch!");
-          console.warn("Sent:", finalStorageOptions);
-          console.warn("Saved:", saved.storage_options);
-        }
-      }
-
       // Clear autosave
-      localStorage.removeItem(AUTOSAVE_KEY);
+      try {
+        localStorage.removeItem(AUTOSAVE_KEY);
+      } catch (err) {
+        console.error("Failed to clear autosave:", err);
+      }
 
       setSuccess(`Product ${isEditMode ? "updated" : "added"} successfully!`);
 
@@ -951,6 +972,14 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
   };
 
   const resetForm = () => {
+    // Cleanup image preview URLs
+    imagePreviewURLs.current.forEach((url) => {
+      if (url.startsWith("blob:")) {
+        URL.revokeObjectURL(url);
+      }
+    });
+    imagePreviewURLs.current = [];
+
     setFormData({
       name: "",
       slug: "",
@@ -992,9 +1021,14 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
 
   const clearAutosave = () => {
     if (confirm("Are you sure you want to discard the saved draft?")) {
-      localStorage.removeItem(AUTOSAVE_KEY);
-      resetForm();
-      setSuccess("Draft cleared successfully!");
+      try {
+        localStorage.removeItem(AUTOSAVE_KEY);
+        resetForm();
+        setSuccess("Draft cleared successfully!");
+      } catch (err) {
+        console.error("Failed to clear autosave:", err);
+        setError("Failed to clear draft");
+      }
     }
   };
 
@@ -1249,7 +1283,7 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
               <h3 className="text-lg font-semibold text-gray-900 mb-4">
                 Product Descriptions
               </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-6">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Short Description{" "}
@@ -1274,15 +1308,22 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Full Description <span className="text-orange-500">*</span>
                   </label>
-                  <textarea
-                    name="description"
+                  <p className="text-sm text-gray-600 mb-3">
+                    Provide detailed product information with rich formatting.
+                    Use headings, lists, and emphasis to make your description
+                    clear and engaging.
+                  </p>
+                  <RichTextEditor
                     value={formData.description}
-                    onChange={handleInputChange}
-                    placeholder="Detailed product description with features and specifications"
-                    rows={3}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent resize-none"
-                    disabled={isLoading}
-                    required
+                    onChange={(content) =>
+                      setFormData((prev) => ({ ...prev, description: content }))
+                    }
+                    placeholder="Describe your product in detail... 
+
+• Highlight key features
+• Explain benefits
+• Include specifications
+• Mention what's included"
                   />
                 </div>
               </div>
@@ -1752,7 +1793,7 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
             </div>
 
             {/* Tech Specifications (Conditional) */}
-            {isTechCategory() && (
+            {isTechCategory && (
               <div className="border-b pb-6 bg-blue-50 -mx-6 px-6 py-6">
                 <h3 className="text-lg font-semibold text-gray-900 mb-2 flex items-center gap-2">
                   <Smartphone className="w-5 h-5 text-blue-600" />
@@ -2035,7 +2076,7 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
                           key={index}
                           className="inline-flex items-center gap-2 px-3 py-1.5 bg-blue-50 border border-blue-200 rounded-lg text-sm"
                         >
-                          <Sim className="w-4 h-4" />
+                          <Antenna className="w-4 h-4" />
                           <span className="font-medium">{sim.value}</span>
                           {sim.priceAdjustment !== 0 && (
                             <span className="text-xs text-blue-700 bg-blue-100 px-2 py-0.5 rounded">

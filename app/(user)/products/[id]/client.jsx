@@ -504,11 +504,7 @@ export default function ProductDetailsClient({ productId }) {
                 <div className="text-3xl font-bold text-gray-800">
                   {formatPrice(finalPrice * quantity)}
                 </div>
-                {quantity > 1 && (
-                  <div className="text-sm text-gray-600">
-                    ({formatPrice(finalPrice)} × {quantity})
-                  </div>
-                )}
+
                 {originalPriceWithVariants && quantity === 1 && (
                   <div className="text-lg text-gray-400 line-through">
                     {formatPrice(originalPriceWithVariants)}
@@ -520,18 +516,6 @@ export default function ProductDetailsClient({ productId }) {
                   </span>
                 )}
               </div>
-
-              {/* Price per unit if quantity > 1 */}
-              {quantity > 1 && (
-                <div className="text-sm text-gray-600 mb-2">
-                  Price per unit: {formatPrice(finalPrice)}
-                  {originalPriceWithVariants && (
-                    <span className="text-gray-400 line-through ml-2">
-                      {formatPrice(originalPriceWithVariants)}
-                    </span>
-                  )}
-                </div>
-              )}
             </div>
 
             {/* Color Variants */}
@@ -858,7 +842,7 @@ export default function ProductDetailsClient({ productId }) {
             </div>
 
             {/* Delivery Information */}
-            <div className="border border-gray-200 rounded-lg p-4 space-y-3">
+            <div className="border border-gray-200 rounded-lg p-4 space-y-3 hidden md:block">
               <div className="flex items-start gap-3">
                 <svg
                   className="w-5 h-5 text-gray-600 mt-1"
@@ -913,6 +897,55 @@ export default function ProductDetailsClient({ productId }) {
               className="prose prose-base max-w-none"
               dangerouslySetInnerHTML={{ __html: product.description }}
             />
+            <div className="border border-gray-200 rounded-lg p-4 space-y-3 block md:hidden">
+              <div className="flex items-start gap-3">
+                <svg
+                  className="w-5 h-5 text-gray-600 mt-1"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"
+                  />
+                </svg>
+                <div>
+                  <h4 className="font-semibold text-gray-800">Free Delivery</h4>
+                  <p className="text-sm text-gray-600">
+                    Enter your postal code to check delivery availability
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <svg
+                  className="w-5 h-5 text-gray-600 mt-1"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"
+                  />
+                </svg>
+                <div>
+                  <h4 className="font-semibold text-gray-800">
+                    Return Delivery
+                  </h4>
+                  <p className="text-sm text-gray-600">
+                    Free 30-days Delivery Returns{" "}
+                    <Link href="#" className="text-blue-500 underline">
+                      Details
+                    </Link>
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 

@@ -5,12 +5,13 @@ import { useToast } from "@/lib/toast";
 import { useCart } from "@/lib/cart";
 import { useWishlist } from "@/hooks/useWishlist";
 import { supabase } from "@/lib/supabase-client";
-import { Heart, ShoppingCart, Zap, HardDrive, Cpu, Sim } from "lucide-react";
+import { Heart, ShoppingCart, Zap, HardDrive, Cpu } from "lucide-react";
 import { motion } from "framer-motion";
 import ProductReviews, { StarRating } from "./reviews";
 import { getProductAverageRating, getProductReviewCount } from "@/lib/reviews";
 import { useRouter } from "next/navigation";
 import { ShoppingBag } from "lucide-react";
+import { Antenna } from "lucide-react";
 
 export default function ProductDetailsClient({ productId }) {
   const router = useRouter();
@@ -665,7 +666,7 @@ export default function ProductDetailsClient({ productId }) {
                 {hasSimTypes && (
                   <div>
                     <label className="text-sm font-medium text-gray-700 mb-2 block flex items-center gap-2">
-                      <Sim size={14} />
+                      <Antenna size={14} />
                       SIM Type:{" "}
                       {selectedSimType?.value || (
                         <span className="text-gray-400 font-normal">

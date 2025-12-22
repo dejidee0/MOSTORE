@@ -12,6 +12,7 @@ import { getProductAverageRating, getProductReviewCount } from "@/lib/reviews";
 import { useRouter } from "next/navigation";
 import { ShoppingBag } from "lucide-react";
 import { Antenna } from "lucide-react";
+import RichContentRenderer from "@/components/rich-text-renderer";
 
 export default function ProductDetailsClient({ productId }) {
   const router = useRouter();
@@ -452,10 +453,10 @@ export default function ProductDetailsClient({ productId }) {
               </div>
             )}
             <div className="text-gray-800 text-xl leading-relaxed hidden md:block">
-              <div
-                className="prose prose-lg max-w-none"
-                dangerouslySetInnerHTML={{ __html: product.description }}
-              />
+              <h1 className="font-bold text-black text-2xl">
+                Product Description
+              </h1>
+              <RichContentRenderer content={product.description} />
             </div>
           </div>
 
@@ -522,12 +523,7 @@ export default function ProductDetailsClient({ productId }) {
             {hasColorVariants && (
               <div>
                 <h3 className="font-semibold text-gray-800 mb-3">
-                  Color:{" "}
-                  {selectedColorVariant?.name || (
-                    <span className="text-gray-400 font-normal">
-                      Please select a color
-                    </span>
-                  )}
+                  Color: {selectedColorVariant?.name}
                 </h3>
                 <div className="flex flex-wrap gap-2">
                   {product.color_variants.map((colorVariant, index) => (
@@ -545,9 +541,6 @@ export default function ProductDetailsClient({ productId }) {
                         className="w-6 h-6 rounded-full border-2 border-gray-300"
                         style={{ backgroundColor: colorVariant.hex }}
                       />
-                      <span className="text-sm font-medium">
-                        {colorVariant.name}
-                      </span>
                     </button>
                   ))}
                 </div>
@@ -558,12 +551,7 @@ export default function ProductDetailsClient({ productId }) {
             {hasSizeVariants && (
               <div>
                 <h3 className="font-semibold text-gray-800 mb-3">
-                  Size:{" "}
-                  {selectedSizeVariant?.name || (
-                    <span className="text-gray-400 font-normal">
-                      Please select a size
-                    </span>
-                  )}
+                  Size: {selectedSizeVariant?.name}
                 </h3>
                 <div className="flex flex-wrap gap-2">
                   {product.size_variants.map((sizeVariant, index) => (
@@ -585,18 +573,13 @@ export default function ProductDetailsClient({ productId }) {
 
             {/* Technical Specifications */}
             {hasTechSpecs && (
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 space-y-4">
+              <div className="space-y-4">
                 {/* Storage Options */}
                 {hasStorageOptions && (
                   <div>
                     <label className="text-sm font-medium text-gray-700 mb-2 block flex items-center gap-2">
                       <HardDrive size={14} />
-                      Storage:{" "}
-                      {selectedStorage?.value || (
-                        <span className="text-gray-400 font-normal">
-                          Please select
-                        </span>
-                      )}
+                      Storage: {selectedStorage?.value}
                     </label>
                     <div className="flex flex-wrap gap-2">
                       {product.storage_options.map((storage, index) => (
@@ -605,8 +588,8 @@ export default function ProductDetailsClient({ productId }) {
                           onClick={() => setSelectedStorage(storage)}
                           className={`px-3 py-2 text-sm border-2 rounded ${
                             selectedStorage?.value === storage.value
-                              ? "bg-blue-500 text-white border-blue-500"
-                              : "border-blue-200 text-gray-700 hover:border-blue-400"
+                              ? "bg-orange-500 text-white border-orange-500"
+                              : "border-orange-200 text-gray-700 hover:border-orange-400"
                           }`}
                         >
                           {storage.value}
@@ -621,12 +604,7 @@ export default function ProductDetailsClient({ productId }) {
                   <div>
                     <label className="text-sm font-medium text-gray-700 mb-2 block flex items-center gap-2">
                       <Cpu size={14} />
-                      Memory:{" "}
-                      {selectedMemory?.value || (
-                        <span className="text-gray-400 font-normal">
-                          Please select
-                        </span>
-                      )}
+                      Memory: {selectedMemory?.value}
                     </label>
                     <div className="flex flex-wrap gap-2">
                       {product.memory_options.map((memory, index) => (
@@ -635,8 +613,8 @@ export default function ProductDetailsClient({ productId }) {
                           onClick={() => setSelectedMemory(memory)}
                           className={`px-3 py-2 text-sm border-2 rounded ${
                             selectedMemory?.value === memory.value
-                              ? "bg-blue-500 text-white border-blue-500"
-                              : "border-blue-200 text-gray-700 hover:border-blue-400"
+                              ? "bg-orange-500 text-white border-orange-500"
+                              : "border-orange-200 text-gray-700 hover:border-orange-400"
                           }`}
                         >
                           {memory.value}
@@ -651,12 +629,7 @@ export default function ProductDetailsClient({ productId }) {
                   <div>
                     <label className="text-sm font-medium text-gray-700 mb-2 block flex items-center gap-2">
                       <Antenna size={14} />
-                      SIM Type:{" "}
-                      {selectedSimType?.value || (
-                        <span className="text-gray-400 font-normal">
-                          Please select
-                        </span>
-                      )}
+                      SIM Type: {selectedSimType?.value}
                     </label>
                     <div className="flex flex-wrap gap-2">
                       {product.sim_types.map((simType, index) => (
@@ -665,8 +638,8 @@ export default function ProductDetailsClient({ productId }) {
                           onClick={() => setSelectedSimType(simType)}
                           className={`px-3 py-2 text-sm border-2 rounded ${
                             selectedSimType?.value === simType.value
-                              ? "bg-blue-500 text-white border-blue-500"
-                              : "border-blue-200 text-gray-700 hover:border-blue-400"
+                              ? "bg-orange-500 text-white border-orange-500"
+                              : "border-orange-200 text-gray-700 hover:border-orange-400"
                           }`}
                         >
                           {simType.value}
@@ -892,12 +865,9 @@ export default function ProductDetailsClient({ productId }) {
               </div>
             </div>
           </div>
-          <div className="text-gray-800 text-base leading-relaxed block md:hidden">
-            <div
-              className="prose prose-base max-w-none"
-              dangerouslySetInnerHTML={{ __html: product.description }}
-            />
-            <div className="border border-gray-200 rounded-lg p-4 space-y-3 block md:hidden">
+          <div className="text-gray-800 text-base leading-relaxed flex flex-col md:flex-row gap-4 md:hidden">
+            <RichContentRenderer content={product.description} />
+            <div className="border border-gray-200 rounded-lg p-4 space-y-3 block md:hidden pt-3">
               <div className="flex items-start gap-3">
                 <svg
                   className="w-5 h-5 text-gray-600 mt-1"

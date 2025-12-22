@@ -23,6 +23,7 @@ import {
   Check,
   Copy,
 } from "lucide-react";
+import RichContentRenderer from "@/components/rich-text-renderer";
 
 // Toast Notification Component
 const Toast = memo(({ message, type = "success", onClose }) => (
@@ -741,10 +742,7 @@ export default function BlogPostDetail({ post }) {
             </p>
           )}
 
-          <div
-            className="prose prose-lg max-w-none text-gray-700 leading-relaxed"
-            dangerouslySetInnerHTML={{ __html: post.content }}
-          />
+          <RichContentRenderer content={post.content} className="mb-6" />
 
           {post.images && post.images.length > 0 && (
             <ImageGallery images={post.images} />

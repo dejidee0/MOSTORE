@@ -1,12 +1,6 @@
 "use client";
 
-import React, {
-  useEffect,
-  useState,
-  useMemo,
-  useRef,
-  useCallback,
-} from "react";
+import React, { useEffect, useState, useMemo, useCallback } from "react";
 import { supabase } from "@/lib/supabase-client";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -18,33 +12,18 @@ import {
   Search,
   Heart,
   MessageCircle,
-  TrendingUp,
   Upload,
   Save,
   X,
   Image as ImageIcon,
   Star,
-  Bold,
-  Italic,
-  List,
-  ListOrdered,
-  Link as LinkIcon,
-  Code,
-  Quote,
-  Heading1,
-  Heading2,
-  Heading3,
-  AlignLeft,
-  AlignCenter,
-  AlignRight,
-  Underline,
-  Strikethrough,
   ImagePlus,
   Trash,
   GripVertical,
 } from "lucide-react";
 import { v4 as uuidv4 } from "uuid";
 import useUserStore from "@/lib/stores/useUserStore";
+import RichTextEditor from "@/components/rich-text-editor";
 
 const BUCKET = "blog-images";
 
@@ -55,264 +34,6 @@ function generateSlug(title) {
     .replace(/\s+/g, "-")
     .replace(/-+/g, "-")
     .replace(/(^-|-$)+/g, "");
-}
-
-// Rich Text Editor Component with Active State Indicators
-function RichTextEditor({ value, onChange }) {
-  const editorRef = useRef(null);
-  const [isFocused, setIsFocused] = useState(false);
-  const [activeFormats, setActiveFormats] = useState({
-    bold: false,
-    italic: false,
-    underline: false,
-    strikeThrough: false,
-    justifyLeft: false,
-    justifyCenter: false,
-    justifyRight: false,
-    insertUnorderedList: false,
-    insertOrderedList: false,
-  });
-
-  const updateActiveFormats = useCallback(() => {
-    if (!editorRef.current) return;
-
-    const selection = window.getSelection();
-    if (!selection || selection.rangeCount === 0) return;
-
-    setActiveFormats({
-      bold: document.queryCommandState("bold"),
-      italic: document.queryCommandState("italic"),
-      underline: document.queryCommandState("underline"),
-      strikeThrough: document.queryCommandState("strikeThrough"),
-      justifyLeft: document.queryCommandState("justifyLeft"),
-      justifyCenter: document.queryCommandState("justifyCenter"),
-      justifyRight: document.queryCommandState("justifyRight"),
-      insertUnorderedList: document.queryCommandState("insertUnorderedList"),
-      insertOrderedList: document.queryCommandState("insertOrderedList"),
-    });
-  }, []);
-
-  const execCommand = useCallback(
-    (command, value = null) => {
-      document.execCommand(command, false, value);
-      editorRef.current?.focus();
-      updateActiveFormats();
-    },
-    [updateActiveFormats]
-  );
-
-  const insertHeading = useCallback(
-    (level) => {
-      const selection = window.getSelection();
-      if (selection.rangeCount > 0) {
-        execCommand("formatBlock", `<h${level}>`);
-      }
-    },
-    [execCommand]
-  );
-
-  const handleInput = useCallback(() => {
-    if (editorRef.current) {
-      onChange(editorRef.current.innerHTML);
-      updateActiveFormats();
-    }
-  }, [onChange, updateActiveFormats]);
-
-  const handlePaste = useCallback((e) => {
-    e.preventDefault();
-    const text = e.clipboardData.getData("text/plain");
-    document.execCommand("insertText", false, text);
-  }, []);
-
-  const handleMouseUp = useCallback(() => {
-    updateActiveFormats();
-  }, [updateActiveFormats]);
-
-  const handleKeyUp = useCallback(() => {
-    updateActiveFormats();
-  }, [updateActiveFormats]);
-
-  useEffect(() => {
-    if (editorRef.current && editorRef.current.innerHTML !== value) {
-      const selection = window.getSelection();
-      const range = selection?.rangeCount > 0 ? selection.getRangeAt(0) : null;
-      const startOffset = range?.startOffset;
-
-      editorRef.current.innerHTML = value;
-
-      // Restore cursor position if possible
-      if (range && startOffset !== undefined) {
-        try {
-          const newRange = document.createRange();
-          newRange.setStart(
-            editorRef.current.firstChild || editorRef.current,
-            Math.min(startOffset, editorRef.current.textContent.length)
-          );
-          newRange.collapse(true);
-          selection.removeAllRanges();
-          selection.addRange(newRange);
-        } catch (e) {
-          // Ignore cursor restoration errors
-        }
-      }
-    }
-  }, [value]);
-
-  return (
-    <div className="border border-gray-300 rounded-lg overflow-hidden bg-white">
-      {/* Toolbar */}
-      <div className="bg-gray-50 border-b border-gray-200 p-2 flex flex-wrap gap-1">
-        {/* Text Formatting */}
-        <div className="flex gap-1 border-r border-gray-300 pr-2">
-          <ToolbarButton
-            onClick={() => execCommand("bold")}
-            title="Bold (Ctrl+B)"
-            isActive={activeFormats.bold}
-          >
-            <Bold className="w-4 h-4" />
-          </ToolbarButton>
-          <ToolbarButton
-            onClick={() => execCommand("italic")}
-            title="Italic (Ctrl+I)"
-            isActive={activeFormats.italic}
-          >
-            <Italic className="w-4 h-4" />
-          </ToolbarButton>
-          <ToolbarButton
-            onClick={() => execCommand("underline")}
-            title="Underline (Ctrl+U)"
-            isActive={activeFormats.underline}
-          >
-            <Underline className="w-4 h-4" />
-          </ToolbarButton>
-          <ToolbarButton
-            onClick={() => execCommand("strikeThrough")}
-            title="Strikethrough"
-            isActive={activeFormats.strikeThrough}
-          >
-            <Strikethrough className="w-4 h-4" />
-          </ToolbarButton>
-        </div>
-
-        {/* Headings */}
-        <div className="flex gap-1 border-r border-gray-300 pr-2">
-          <ToolbarButton onClick={() => insertHeading(1)} title="Heading 1">
-            <Heading1 className="w-4 h-4" />
-          </ToolbarButton>
-          <ToolbarButton onClick={() => insertHeading(2)} title="Heading 2">
-            <Heading2 className="w-4 h-4" />
-          </ToolbarButton>
-          <ToolbarButton onClick={() => insertHeading(3)} title="Heading 3">
-            <Heading3 className="w-4 h-4" />
-          </ToolbarButton>
-        </div>
-
-        {/* Alignment */}
-        <div className="flex gap-1 border-r border-gray-300 pr-2">
-          <ToolbarButton
-            onClick={() => execCommand("justifyLeft")}
-            title="Align Left"
-            isActive={activeFormats.justifyLeft}
-          >
-            <AlignLeft className="w-4 h-4" />
-          </ToolbarButton>
-          <ToolbarButton
-            onClick={() => execCommand("justifyCenter")}
-            title="Align Center"
-            isActive={activeFormats.justifyCenter}
-          >
-            <AlignCenter className="w-4 h-4" />
-          </ToolbarButton>
-          <ToolbarButton
-            onClick={() => execCommand("justifyRight")}
-            title="Align Right"
-            isActive={activeFormats.justifyRight}
-          >
-            <AlignRight className="w-4 h-4" />
-          </ToolbarButton>
-        </div>
-
-        {/* Lists */}
-        <div className="flex gap-1 border-r border-gray-300 pr-2">
-          <ToolbarButton
-            onClick={() => execCommand("insertUnorderedList")}
-            title="Bullet List"
-            isActive={activeFormats.insertUnorderedList}
-          >
-            <List className="w-4 h-4" />
-          </ToolbarButton>
-          <ToolbarButton
-            onClick={() => execCommand("insertOrderedList")}
-            title="Numbered List"
-            isActive={activeFormats.insertOrderedList}
-          >
-            <ListOrdered className="w-4 h-4" />
-          </ToolbarButton>
-        </div>
-
-        {/* Other */}
-        <div className="flex gap-1">
-          <ToolbarButton
-            onClick={() => {
-              const url = prompt("Enter URL:");
-              if (url) execCommand("createLink", url);
-            }}
-            title="Insert Link"
-          >
-            <LinkIcon className="w-4 h-4" />
-          </ToolbarButton>
-          <ToolbarButton
-            onClick={() => execCommand("formatBlock", "<blockquote>")}
-            title="Quote"
-          >
-            <Quote className="w-4 h-4" />
-          </ToolbarButton>
-          <ToolbarButton
-            onClick={() => execCommand("formatBlock", "<pre>")}
-            title="Code Block"
-          >
-            <Code className="w-4 h-4" />
-          </ToolbarButton>
-        </div>
-      </div>
-
-      {/* Editor Area */}
-      <div
-        ref={editorRef}
-        contentEditable
-        onInput={handleInput}
-        onPaste={handlePaste}
-        onMouseUp={handleMouseUp}
-        onKeyUp={handleKeyUp}
-        onFocus={() => setIsFocused(true)}
-        onBlur={() => setIsFocused(false)}
-        className={`min-h-[400px] p-4 outline-none prose prose-sm max-w-none ${
-          isFocused ? "ring-2 ring-orange-500 ring-inset" : ""
-        }`}
-        style={{
-          wordWrap: "break-word",
-          overflowWrap: "break-word",
-        }}
-      />
-    </div>
-  );
-}
-
-function ToolbarButton({ onClick, title, children, isActive = false }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      title={title}
-      className={`p-2 rounded transition-colors ${
-        isActive
-          ? "bg-orange-500 text-white hover:bg-orange-600"
-          : "text-gray-700 hover:bg-gray-200 hover:text-gray-900"
-      }`}
-    >
-      {children}
-    </button>
-  );
 }
 
 // Optimized Image Gallery Manager Component
@@ -1315,10 +1036,13 @@ export default function BlogAdmin() {
                         Content <span className="text-red-500">*</span>
                       </label>
                       <RichTextEditor
-                        value={formData.content}
+                        content={formData.content}
                         onChange={(content) =>
                           setFormData((s) => ({ ...s, content }))
                         }
+                        placeholder="Start writing your blog post..."
+                        minHeight="500px"
+                        showWordCount={true}
                       />
                       <p className="mt-2 text-xs text-gray-500">
                         Estimated read time:{" "}

@@ -10,7 +10,113 @@ import {
   RefreshCw,
   Shield,
   MessageCircle,
+  X,
+  Phone,
+  Copy,
+  Check,
 } from "lucide-react";
+
+const PhonePopup = ({ isOpen, onClose }) => {
+  const [copied, setCopied] = useState(false);
+  const phoneNumber = "+2348067814903";
+  const displayNumber = "02018881106";
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(phoneNumber);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleCall = () => {
+    window.location.href = `tel:${phoneNumber}`;
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <>
+      {/* Backdrop */}
+      <div
+        className="fixed inset-0 bg-black/50 z-50 transition-opacity duration-300 animate-in fade-in"
+        onClick={onClose}
+      />
+
+      {/* Popup */}
+      <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-full max-w-md mx-4 animate-in zoom-in-95 duration-300">
+        <div className="bg-white rounded-2xl shadow-2xl p-6 relative">
+          {/* Close button */}
+          <button
+            onClick={onClose}
+            className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors"
+          >
+            <X className="w-5 h-5" />
+          </button>
+
+          {/* Icon */}
+          <div className="flex justify-center mb-4">
+            <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center">
+              <Phone className="w-8 h-8 text-orange-600" />
+            </div>
+          </div>
+
+          {/* Content */}
+          <div className="text-center mb-6">
+            <h3 className="text-2xl font-bold text-gray-900 mb-2">
+              Call Us Now
+            </h3>
+            <p className="text-sm text-gray-600 mb-4">
+              We're available Monday to Friday (8 am to 6 pm) and weekends (8 am
+              to 5 pm)
+            </p>
+
+            {/* Phone number display */}
+            <div className="bg-gray-50 rounded-xl p-4 mb-4">
+              <div className="text-3xl font-bold text-orange-600 mb-2">
+                {displayNumber}
+              </div>
+              <div className="text-sm text-gray-500">{phoneNumber}</div>
+            </div>
+          </div>
+
+          {/* Action buttons */}
+          <div className="space-y-3">
+            <button
+              onClick={handleCall}
+              className="w-full bg-orange-600 text-white py-3 px-4 rounded-xl font-medium hover:bg-orange-700 transition-colors duration-200 flex items-center justify-center gap-2"
+            >
+              <Phone className="w-5 h-5" />
+              Call Now
+            </button>
+
+            <button
+              onClick={handleCopy}
+              className="w-full bg-gray-100 text-gray-700 py-3 px-4 rounded-xl font-medium hover:bg-gray-200 transition-colors duration-200 flex items-center justify-center gap-2"
+            >
+              {copied ? (
+                <>
+                  <Check className="w-5 h-5 text-green-600" />
+                  <span className="text-green-600">Copied!</span>
+                </>
+              ) : (
+                <>
+                  <Copy className="w-5 h-5" />
+                  Copy Number
+                </>
+              )}
+            </button>
+          </div>
+
+          {/* Hours info */}
+          <div className="mt-4 pt-4 border-t border-gray-100">
+            <p className="text-xs text-gray-500 text-center">
+              On Public Holidays, we are available between 9 am and 5 pm
+            </p>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+};
 
 const ContactForm = () => {
   const [formData, setFormData] = useState({
@@ -20,12 +126,33 @@ const ContactForm = () => {
     subject: "",
     message: "",
   });
+  const [showPhonePopup, setShowPhonePopup] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const whatsappNumber = "+2348067814903"; // Replace with your actual WhatsApp number
+
+  const handleChatWithUs = () => {
+    const message = encodeURIComponent(
+      "Hello! I'm reaching out from the Mostore website and would like some assistance."
+    );
+    window.open(`https://wa.me/${whatsappNumber}?text=${message}`, "_blank");
+  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    setIsSubmitting(true);
+
+    // Format the type for better readability
+    const typeLabels = {
+      inquiry: "General Inquiry",
+      complaint: "Complaint",
+      suggestion: "Suggestion",
+      order: "Order Issue",
+      technical: "Technical Support",
+    };
 
     const whatsappMessage = `
-*${formData.type.toUpperCase()}* from Mostore FAQ
+*${typeLabels[formData.type].toUpperCase()}* from Mostore Help Center
 
 *Name:* ${formData.name}
 *Email:* ${formData.email}
@@ -35,12 +162,28 @@ const ContactForm = () => {
 ${formData.message}
 
 ---
-_Sent from Mostore Help Center_
+_Sent via Mostore FAQ Contact Form_
     `.trim();
 
     const encodedMessage = encodeURIComponent(whatsappMessage);
 
-    window.open(`https://wa.me/+33753602218?text=${encodedMessage}`, "_blank");
+    // Open WhatsApp with the message
+    window.open(
+      `https://wa.me/${whatsappNumber}?text=${encodedMessage}`,
+      "_blank"
+    );
+
+    // Reset form after a short delay
+    setTimeout(() => {
+      setFormData({
+        type: "inquiry",
+        name: "",
+        email: "",
+        subject: "",
+        message: "",
+      });
+      setIsSubmitting(false);
+    }, 1000);
   };
 
   const handleChange = (e) => {
@@ -51,129 +194,130 @@ _Sent from Mostore Help Center_
   };
 
   return (
-    <div className="bg-white rounded-2xl shadow-lg p-6">
-      <h3 className="text-lg font-semibold text-gray-900 mb-4">
-        Contact Support
-      </h3>
-      <div className="bg-orange-500 text-white p-4 rounded-t-2xl mb-4 text-center">
-        <h2 className="text-2xl font-bold">NEED HELP?</h2>
-        <p className="text-sm mt-2">
-          If you have inquiries or need assistance, do not hesitate to chat with
-          us.
-        </p>
-        <p className="text-sm mt-1">
-          <strong>Live Chat Hours:</strong> We are available Monday to Friday (8
-          am to 6 pm) and weekends (8 am to 5 pm). On Public Holidays, we are
-          available between 9 am and 5 pm.
-        </p>
-      </div>
-      <div className="flex justify-center mb-4">
-        <button className="bg-gray-200 text-gray-800 px-4 py-2 rounded-full flex items-center gap-2 hover:bg-gray-300 transition">
-          <MessageCircle className="w-4 h-4" /> Chat with us
-        </button>
-        <button className="bg-orange-500 text-white px-4 py-2 rounded-full flex items-center gap-2 ml-2 hover:bg-orange-600 transition">
-          <svg
-            className="w-4 h-4"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="2"
-              d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
-            ></path>
-          </svg>
-          Call
-        </button>
-      </div>
-      <p className="text-sm text-gray-600 mb-4 text-center">
-        You can also reach us on 02018881106 from Monday to Friday (8 am to 6
-        pm) and weekends (8 am to 5 pm). On Public Holidays, we are available
-        between 9 am and 5 pm.
-      </p>
-      <form onSubmit={handleSubmit} className="space-y-5">
-        <div className="relative">
-          <label className="text-xs text-gray-500 mb-1 block">Type</label>
-          <select
-            name="type"
-            value={formData.type}
-            onChange={handleChange}
-            className="w-full px-3 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 bg-gray-50 text-sm"
-            required
-          >
-            <option value="inquiry">General Inquiry</option>
-            <option value="complaint">Complaint</option>
-            <option value="suggestion">Suggestion</option>
-            <option value="order">Order Issue</option>
-            <option value="technical">Technical Support</option>
-          </select>
-        </div>
+    <>
+      <PhonePopup
+        isOpen={showPhonePopup}
+        onClose={() => setShowPhonePopup(false)}
+      />
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div className="bg-white rounded-2xl shadow-lg p-6">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">
+          Contact Support
+        </h3>
+        <div className="bg-orange-500 text-white p-4 rounded-t-2xl mb-4 text-center">
+          <h2 className="text-2xl font-bold">NEED HELP?</h2>
+          <p className="text-sm mt-2">
+            If you have inquiries or need assistance, do not hesitate to chat
+            with us.
+          </p>
+          <p className="text-sm mt-1">
+            <strong>Live Chat Hours:</strong> We are available Monday to Friday
+            (8 am to 6 pm) and weekends (8 am to 5 pm). On Public Holidays, we
+            are available between 9 am and 5 pm.
+          </p>
+        </div>
+        <div className="flex justify-center mb-4 gap-2">
+          <button
+            onClick={handleChatWithUs}
+            className="bg-[#25D366] text-white px-4 py-2 rounded-full flex items-center gap-2 hover:bg-[#1ebe5c] transition-all duration-200 shadow-md hover:shadow-lg transform hover:scale-105"
+          >
+            <MessageCircle className="w-4 h-4" /> Chat with us
+          </button>
+          <button
+            onClick={() => setShowPhonePopup(true)}
+            className="bg-orange-500 text-white px-4 py-2 rounded-full flex items-center gap-2 hover:bg-orange-600 transition-all duration-200 shadow-md hover:shadow-lg transform hover:scale-105"
+          >
+            <Phone className="w-4 h-4" />
+            Call
+          </button>
+        </div>
+        <p className="text-sm text-gray-600 mb-4 text-center">
+          You can also reach us on 02018881106 from Monday to Friday (8 am to 6
+          pm) and weekends (8 am to 5 pm). On Public Holidays, we are available
+          between 9 am and 5 pm.
+        </p>
+        <form onSubmit={handleSubmit} className="space-y-5">
           <div className="relative">
-            <label className="text-xs text-gray-500 mb-1 block">Name</label>
+            <label className="text-xs text-gray-500 mb-1 block">Type</label>
+            <select
+              name="type"
+              value={formData.type}
+              onChange={handleChange}
+              className="w-full px-3 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 bg-gray-50 text-sm"
+              required
+            >
+              <option value="inquiry">General Inquiry</option>
+              <option value="complaint">Complaint</option>
+              <option value="suggestion">Suggestion</option>
+              <option value="order">Order Issue</option>
+              <option value="technical">Technical Support</option>
+            </select>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="relative">
+              <label className="text-xs text-gray-500 mb-1 block">Name</label>
+              <input
+                type="text"
+                name="name"
+                placeholder="Your name"
+                value={formData.name}
+                onChange={handleChange}
+                className="w-full px-3 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 bg-gray-50 text-sm"
+                required
+              />
+            </div>
+            <div className="relative">
+              <label className="text-xs text-gray-500 mb-1 block">Email</label>
+              <input
+                type="email"
+                name="email"
+                placeholder="Your email"
+                value={formData.email}
+                onChange={handleChange}
+                className="w-full px-3 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 bg-gray-50 text-sm"
+                required
+              />
+            </div>
+          </div>
+
+          <div className="relative">
+            <label className="text-xs text-gray-500 mb-1 block">Subject</label>
             <input
               type="text"
-              name="name"
-              placeholder="Your name"
-              value={formData.name}
+              name="subject"
+              placeholder="Subject"
+              value={formData.subject}
               onChange={handleChange}
               className="w-full px-3 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 bg-gray-50 text-sm"
               required
             />
           </div>
+
           <div className="relative">
-            <label className="text-xs text-gray-500 mb-1 block">Email</label>
-            <input
-              type="email"
-              name="email"
-              placeholder="Your email"
-              value={formData.email}
+            <label className="text-xs text-gray-500 mb-1 block">Message</label>
+            <textarea
+              name="message"
+              placeholder="Tell us more about your inquiry..."
+              value={formData.message}
               onChange={handleChange}
-              className="w-full px-3 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 bg-gray-50 text-sm"
+              rows="4"
+              className="w-full px-3 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 bg-gray-50 text-sm resize-none"
               required
-            />
+            ></textarea>
           </div>
-        </div>
 
-        <div className="relative">
-          <label className="text-xs text-gray-500 mb-1 block">Subject</label>
-          <input
-            type="text"
-            name="subject"
-            placeholder="Subject"
-            value={formData.subject}
-            onChange={handleChange}
-            className="w-full px-3 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 bg-gray-50 text-sm"
-            required
-          />
-        </div>
-
-        <div className="relative">
-          <label className="text-xs text-gray-500 mb-1 block">Message</label>
-          <textarea
-            name="message"
-            placeholder="Tell us more about your inquiry..."
-            value={formData.message}
-            onChange={handleChange}
-            rows="4"
-            className="w-full px-3 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 bg-gray-50 text-sm resize-none"
-            required
-          ></textarea>
-        </div>
-
-        <button
-          type="submit"
-          className="w-full bg-[#25D366] text-white py-3 px-4 rounded-xl font-medium hover:bg-[#1ebe5c] transition-colors duration-200 text-sm flex items-center justify-center gap-2 shadow-md"
-        >
-          <MessageCircle className="w-4 h-4" />
-          Send via WhatsApp
-        </button>
-      </form>
-    </div>
+          <button
+            type="submit"
+            disabled={isSubmitting}
+            className="w-full bg-[#25D366] text-white py-3 px-4 rounded-xl font-medium hover:bg-[#1ebe5c] transition-colors duration-200 text-sm flex items-center justify-center gap-2 shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <MessageCircle className="w-4 h-4" />
+            {isSubmitting ? "Sending..." : "Send via WhatsApp"}
+          </button>
+        </form>
+      </div>
+    </>
   );
 };
 
@@ -303,7 +447,7 @@ const FAQ = () => {
                   No results found
                 </h3>
                 <p className="text-gray-600 mb-4">
-                  We couldn’t find any FAQs matching "{searchTerm}"
+                  We couldn't find any FAQs matching "{searchTerm}"
                 </p>
                 <button
                   onClick={() => setSearchTerm("")}

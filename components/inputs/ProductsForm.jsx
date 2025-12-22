@@ -19,7 +19,7 @@ import {
   Antenna,
 } from "lucide-react";
 import { v4 as uuidv4 } from "uuid";
-import RichTextEditor from "./RichTextEditor";
+import RichTextEditor from "../rich-text-editor";
 
 // Predefined color palette with common colors
 const PRESET_COLORS = [
@@ -1286,26 +1286,6 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
               <div className="space-y-6">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Short Description{" "}
-                    <span className="text-gray-400">(Optional)</span>
-                  </label>
-                  <textarea
-                    name="short_description"
-                    value={formData.short_description}
-                    onChange={handleInputChange}
-                    placeholder="Brief product summary for listings (max 300 characters)"
-                    rows={3}
-                    maxLength={300}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent resize-none"
-                    disabled={isLoading}
-                  />
-                  <p className="text-xs text-gray-500 mt-1">
-                    {formData.short_description.length}/300 characters
-                  </p>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
                     Full Description <span className="text-orange-500">*</span>
                   </label>
                   <p className="text-sm text-gray-600 mb-3">
@@ -1314,7 +1294,7 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
                     clear and engaging.
                   </p>
                   <RichTextEditor
-                    value={formData.description}
+                    content={formData.description}
                     onChange={(content) =>
                       setFormData((prev) => ({ ...prev, description: content }))
                     }
@@ -1324,6 +1304,9 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
 • Explain benefits
 • Include specifications
 • Mention what's included"
+                    minHeight="300px"
+                    disabled={isLoading}
+                    showWordCount={true}
                   />
                 </div>
               </div>
@@ -1476,6 +1459,7 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
                         alt={image.name || "Product image"}
                         className="w-full h-32 object-cover rounded-lg border border-gray-200"
                       />
+                      th
                       <button
                         type="button"
                         onClick={() => removeImage(image.id)}

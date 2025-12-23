@@ -453,10 +453,13 @@ export default function ProductDetailsClient({ productId }) {
               </div>
             )}
             <div className="text-gray-800 text-xl leading-relaxed hidden md:block">
-              <h1 className="font-bold text-black text-2xl">
+              <h1 className="font-bold text-primary text-2xl">
                 Product Description
               </h1>
-              <RichContentRenderer content={product.description} />
+              <RichContentRenderer
+                content={product.description}
+                compact={true}
+              />
             </div>
           </div>
 

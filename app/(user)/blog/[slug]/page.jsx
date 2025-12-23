@@ -1,130 +1,229 @@
-"use client";
-import { useParams } from "next/navigation";
-import { useEffect, useState } from "react";
+// app/blog/[slug]/page.jsx
+import { Suspense } from "react";
 import { supabase } from "@/lib/supabase-client";
 import BlogPostDetail from "@/components/shared/blog/BlogDetailComponent";
+import { notFound } from "next/navigation";
 
-export default function BlogDetailPage() {
-  const { slug } = useParams(); // Changed from id to slug for SEO
-  const [post, setPost] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(null);
+// Generate metadata for SEO
+export async function generateMetadata({ params }) {
+  const { slug } = await params; // Await params
 
-  useEffect(() => {
-    if (!slug) return;
+  try {
+    const { data: post, error } = await supabase
+      .from("blog_posts")
+      .select(
+        `
+        id,
+        title,
+        slug,
+        excerpt,
+        featured_image,
+        published_at,
+        read_time,
+        blog_categories (
+          name
+        )
+      `
+      )
+      .eq("slug", slug)
+      .eq("status", "published")
+      .single();
 
-    const fetchPost = async () => {
-      setIsLoading(true);
-      setError(null);
+    if (error || !post) {
+      return {
+        title: "Post Not Found",
+        description: "The blog post you're looking for doesn't exist.",
+      };
+    }
 
-      try {
-        // Fetch post by slug and include images
-        const { data, error: fetchError } = await supabase
-          .from("blog_posts")
-          .select(
-            `
-            id,
-            title,
-            slug,
-            content,
-            excerpt,
-            featured_image,
-            images,
-            likes_count,
-            comments_count,
-            views_count,
-            read_time,
-            published_at,
-            created_at,
-            blog_categories (
-              id,
-              name,
-              slug
-            )
-          `
-          )
-          .eq("slug", slug)
-          .eq("status", "published")
-          .single();
+    const metaTitle = `${post.title} | MOSTORE Blog`;
+    const metaDescription = post.excerpt || `Read ${post.title} on our blog.`;
+    const metaImage = post.featured_image || "/default-og-image.jpg";
+    const url = `${process.env.NEXT_PUBLIC_SITE_URL}/blog/${post.slug}`;
+    const publishedTime = new Date(post.published_at).toISOString();
 
-        if (fetchError) throw fetchError;
-
-        if (data) {
-          setPost(data);
-
-          // Increment view count
-          await supabase.rpc("increment_post_views", { post_id: data.id });
-        }
-      } catch (err) {
-        console.error("Error fetching post:", err);
-        setError(err.message);
-      } finally {
-        setIsLoading(false);
-      }
+    return {
+      title: metaTitle,
+      description: metaDescription,
+      keywords: post.blog_categories?.name
+        ? [post.blog_categories.name, "blog", "article", "MOSTORE"]
+        : ["blog", "article", "MOSTORE"],
+      authors: [{ name: "Admin" }],
+      creator: "MOSTORE",
+      publisher: "MOSTORE",
+      formatDetection: {
+        email: false,
+        address: false,
+        telephone: false,
+      },
+      openGraph: {
+        title: post.title,
+        description: metaDescription,
+        url: url,
+        siteName: "MOSTORE Blog",
+        images: [
+          {
+            url: metaImage,
+            width: 1200,
+            height: 630,
+            alt: post.title,
+          },
+        ],
+        locale: "en_US",
+        type: "article",
+        publishedTime: publishedTime,
+        modifiedTime: publishedTime,
+        section: post.blog_categories?.name || "Blog",
+        tags: post.blog_categories?.name ? [post.blog_categories.name] : [],
+      },
+      twitter: {
+        card: "summary_large_image",
+        title: post.title,
+        description: metaDescription,
+        images: [metaImage],
+        creator: "@mostore",
+        site: "@mostore",
+      },
+      robots: {
+        index: true,
+        follow: true,
+        googleBot: {
+          index: true,
+          follow: true,
+          "max-video-preview": -1,
+          "max-image-preview": "large",
+          "max-snippet": -1,
+        },
+      },
+      alternates: {
+        canonical: url,
+      },
     };
-
-    fetchPost();
-  }, [slug]);
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-white">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="animate-pulse">
-            <div className="h-8 bg-gray-200 rounded w-24 mb-6"></div>
-            <div className="h-12 bg-gray-200 rounded w-3/4 mb-4"></div>
-            <div className="h-4 bg-gray-200 rounded w-1/2 mb-8"></div>
-            <div className="h-96 bg-gray-200 rounded-2xl mb-8"></div>
-            <div className="space-y-3">
-              <div className="h-4 bg-gray-200 rounded"></div>
-              <div className="h-4 bg-gray-200 rounded w-5/6"></div>
-              <div className="h-4 bg-gray-200 rounded w-4/5"></div>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
+  } catch (error) {
+    console.error("Error generating metadata:", error);
+    return {
+      title: "Error Loading Post",
+      description: "There was an error loading this blog post.",
+    };
   }
+}
 
-  if (error) {
-    return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
-        <div className="text-center">
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">
-            Error Loading Post
-          </h2>
-          <p className="text-gray-600 mb-4">{error}</p>
-          <a
-            href="/blog"
-            className="text-orange-600 hover:text-orange-700 font-medium"
-          >
-            Back to Blog
-          </a>
-        </div>
-      </div>
-    );
+// Server Component
+async function getPost(slug) {
+  try {
+    const { data: post, error } = await supabase
+      .from("blog_posts")
+      .select(
+        `
+        id,
+        title,
+        slug,
+        content,
+        excerpt,
+        featured_image,
+        images,
+        likes_count,
+        comments_count,
+        views_count,
+        read_time,
+        published_at,
+        created_at,
+        blog_categories (
+          id,
+          name,
+          slug
+        )
+      `
+      )
+      .eq("slug", slug)
+      .eq("status", "published")
+      .single();
+
+    if (error) throw error;
+
+    // Increment view count
+    if (post) {
+      await supabase.rpc("increment_post_views", { post_id: post.id });
+    }
+
+    return post;
+  } catch (error) {
+    console.error("Error fetching post:", error);
+    return null;
   }
+}
+
+export default async function BlogDetailPage({ params }) {
+  const { slug } = await params; // Await params
+  const post = await getPost(slug);
 
   if (!post) {
-    return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
-        <div className="text-center">
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">
-            Post Not Found
-          </h2>
-          <p className="text-gray-600 mb-4">
-            The blog post you're looking for doesn't exist or has been removed.
-          </p>
-          <a
-            href="/blog"
-            className="text-orange-600 hover:text-orange-700 font-medium"
-          >
-            Back to Blog
-          </a>
-        </div>
-      </div>
-    );
+    notFound();
   }
 
-  return <BlogPostDetail post={post} />;
+  // Generate JSON-LD structured data for rich snippets
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    headline: post.title,
+    description: post.excerpt || post.title,
+    image: post.featured_image || "/default-og-image.jpg",
+    datePublished: new Date(post.published_at).toISOString(),
+    dateModified: new Date(post.published_at).toISOString(),
+    author: {
+      "@type": "Person",
+      name: "Admin",
+      url: process.env.NEXT_PUBLIC_SITE_URL,
+    },
+    publisher: {
+      "@type": "Organization",
+      name: "MOSTORE",
+      logo: {
+        "@type": "ImageObject",
+        url: `${process.env.NEXT_PUBLIC_SITE_URL}/logo.png`,
+      },
+    },
+    mainEntityOfPage: {
+      "@type": "WebPage",
+      "@id": `${process.env.NEXT_PUBLIC_SITE_URL}/blog/${post.slug}`,
+    },
+    articleSection: post.blog_categories?.name || "Blog",
+    wordCount: post.content?.length || 0,
+    timeRequired: `PT${post.read_time || 5}M`,
+    inLanguage: "en-US",
+    articleBody: post.excerpt,
+  };
+
+  return (
+    <>
+      {/* JSON-LD Structured Data */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+
+      {/* Main Content */}
+      <BlogPostDetail post={post} />
+    </>
+  );
+}
+
+// Generate static params for static generation (optional but recommended)
+export async function generateStaticParams() {
+  try {
+    const { data: posts } = await supabase
+      .from("blog_posts")
+      .select("slug")
+      .eq("status", "published")
+      .limit(100);
+
+    return (
+      posts?.map((post) => ({
+        slug: post.slug,
+      })) || []
+    );
+  } catch (error) {
+    console.error("Error generating static params:", error);
+    return [];
+  }
 }

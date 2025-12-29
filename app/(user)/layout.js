@@ -7,6 +7,7 @@ import AuthProvider from "@/components/AuthProvider";
 import { CartProvider } from "@/lib/cart";
 import NavBar from "@/components/shared/NavBar";
 import ChristmasPopup from "@/components/pop-up";
+import QueryProvider from "@/components/QueryProvider";
 
 const raleway = Raleway({
   subsets: ["latin"],
@@ -73,16 +74,18 @@ export default function UserLayout({ children }) {
       <body
         className={`${raleway.variable} font-raleway antialiased bg-white min-h-[calc(100vh-4rem)] flex flex-col`}
       >
-        <AuthProvider>
-          <CartProvider>
-            <ToastProvider>
-              <NavBar />
-              <main className="flex-1">{children}</main>
-              <Footer />
-              <ChristmasPopup />
-            </ToastProvider>
-          </CartProvider>
-        </AuthProvider>
+        <QueryProvider>
+          <AuthProvider>
+            <CartProvider>
+              <ToastProvider>
+                <NavBar />
+                <main className="flex-1">{children}</main>
+                <Footer />
+                <ChristmasPopup />
+              </ToastProvider>
+            </CartProvider>
+          </AuthProvider>
+        </QueryProvider>
       </body>
     </html>
   );

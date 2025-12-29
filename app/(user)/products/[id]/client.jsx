@@ -13,6 +13,7 @@ import { useRouter } from "next/navigation";
 import { ShoppingBag } from "lucide-react";
 import { Antenna } from "lucide-react";
 import RichContentRenderer from "@/components/rich-text-renderer";
+import { MessageCircle } from "lucide-react";
 
 export default function ProductDetailsClient({ productId }) {
   const router = useRouter();
@@ -341,7 +342,17 @@ export default function ProductDetailsClient({ productId }) {
       currency: "EUR",
     }).format(price);
   };
+  const handleMessageVendor = () => {
+    if (!product.supplier_id) {
+      addToast("Vendor information not available", "error");
+      return;
+    }
 
+    // Redirect to chat with product context
+    router.push(
+      `/messages?product=${product.id}&vendor=${product.supplier_id}`
+    );
+  };
   if (loading) {
     return (
       <div className="flex justify-center items-center min-h-screen">
@@ -704,7 +715,7 @@ export default function ProductDetailsClient({ productId }) {
 
               {/* Action Buttons */}
               <div className="grid grid-cols-2 gap-3">
-                <button
+                {/* <button
                   className={`px-6 py-3 rounded font-semibold flex items-center justify-center gap-2 ${
                     isInStock
                       ? "bg-white border-2 border-orange-500 text-orange-500 hover:bg-orange-50"
@@ -728,7 +739,45 @@ export default function ProductDetailsClient({ productId }) {
                 >
                   <ShoppingBag size={20} />
                   Buy Now
-                </button>
+                </button> */}
+                {/* // Replace the cart/checkout buttons section with: */}
+                <div className="space-y-3">
+                  <div className="flex items-center gap-4">
+                    <button
+                      onClick={handleWishlist}
+                      className={`border p-3 rounded transition-all duration-300 ${
+                        isWishlisted
+                          ? "bg-red-500 border-red-500 text-white hover:bg-red-600"
+                          : "border-gray-300 text-gray-600 hover:bg-gray-100 hover:border-gray-400"
+                      }`}
+                      title={
+                        isWishlisted
+                          ? "Remove from wishlist"
+                          : "Add to wishlist"
+                      }
+                    >
+                      <Heart
+                        className={`w-5 h-5 transition-all duration-200 ${
+                          isWishlisted ? "fill-current" : ""
+                        }`}
+                      />
+                    </button>
+                  </div>
+
+                  {/* Message Vendor Button */}
+                  <button
+                    className={`w-full px-6 py-4 rounded-lg font-semibold flex items-center justify-center gap-3 transition-all ${
+                      isInStock
+                        ? "bg-orange-500 text-white hover:bg-orange-600 shadow-lg hover:shadow-xl"
+                        : "bg-gray-400 text-white cursor-not-allowed"
+                    }`}
+                    onClick={() => isInStock && handleMessageVendor()}
+                    disabled={!isInStock}
+                  >
+                    <MessageCircle size={22} />
+                    Message Vendor About This Product
+                  </button>
+                </div>
               </div>
             </div>
 

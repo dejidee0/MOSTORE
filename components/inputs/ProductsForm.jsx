@@ -553,6 +553,8 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
       return;
     }
 
+    const newImages = [];
+
     files.forEach((file) => {
       if (!file.type.startsWith("image/")) {
         setError("Please select only image files");
@@ -573,13 +575,13 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
 
         const newImage = {
           id: Date.now() + Math.random(),
-          file,
+          file: file, // Store the actual file object
           preview: previewURL,
           name: file.name,
           isNew: true,
         };
+
         setImages((prev) => [...prev, newImage]);
-        setImageFiles((prev) => [...prev, file]);
       };
       reader.onerror = () => {
         setError("Failed to read image file");
@@ -603,22 +605,24 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
 
     if (isNew) {
       // Remove new image (not yet uploaded)
-      const imageToRemove = images.find((img) => img.id === imageId);
+      setImages((prev) => {
+        const imageToRemove = prev.find((img) => img.id === imageId);
 
-      if (imageToRemove) {
-        // Revoke blob URL to free memory
-        if (imageToRemove.preview.startsWith("blob:")) {
-          URL.revokeObjectURL(imageToRemove.preview);
-          imagePreviewURLs.current = imagePreviewURLs.current.filter(
-            (url) => url !== imageToRemove.preview
-          );
+        if (imageToRemove) {
+          // Revoke blob URL to free memory
+          if (
+            imageToRemove.preview &&
+            imageToRemove.preview.startsWith("blob:")
+          ) {
+            URL.revokeObjectURL(imageToRemove.preview);
+            imagePreviewURLs.current = imagePreviewURLs.current.filter(
+              (url) => url !== imageToRemove.preview
+            );
+          }
         }
 
-        setImages((prev) => prev.filter((img) => img.id !== imageId));
-        setImageFiles((prev) =>
-          prev.filter((file) => file !== imageToRemove.file)
-        );
-      }
+        return prev.filter((img) => img.id !== imageId);
+      });
 
       setShowDeleteConfirm(false);
       setImageToDelete(null);
@@ -900,8 +904,11 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
         }
       }
 
+      // Extract files from images array (files that haven't been uploaded yet)
+      const filesToUpload = images.map((img) => img.file).filter(Boolean);
+
       const uploadedImageUrls = [];
-      for (const file of imageFiles) {
+      for (const file of filesToUpload) {
         const fileName = `${Date.now()}-${uuidv4()}-${file.name}`;
         const { data, error } = await supabase.storage
           .from("product-images")

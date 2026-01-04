@@ -78,12 +78,12 @@ export default function UserLayout({ children }) {
           <AuthProvider>
             <CartProvider>
               <ToastProvider>
-                <MessageNotificationProvider>
-                  <NavBar />
-                  <main className="flex-1">{children}</main>
-                  <Footer />
-                  <ChristmasPopup />
-                </MessageNotificationProvider>
+                {/* <MessageNotificationProvider> */}
+                <NavBar />
+                <main className="flex-1">{children}</main>
+                <Footer />
+                <ChristmasPopup />
+                {/* </MessageNotificationProvider> */}
               </ToastProvider>
             </CartProvider>
           </AuthProvider>

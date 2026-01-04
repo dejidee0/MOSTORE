@@ -1,7 +1,7 @@
 // src/hooks/useChat/useConversations.js
 import { useQuery } from "@tanstack/react-query";
 import { chatApi } from "@/lib/chat/api";
-import { queryKeys } from "@/utils/queryClient";
+import { queryKeys } from "@/components/QueryProvider";
 
 export function useConversations(userId, options = {}) {
   return useQuery({

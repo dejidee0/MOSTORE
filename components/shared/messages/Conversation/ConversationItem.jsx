@@ -2,7 +2,6 @@
 "use client";
 
 import { formatDistanceToNow } from "date-fns";
-import { useUserPresence } from "@/hooks/useChat";
 import PresenceIndicator from "../presenceIndicator";
 
 export default function ConversationItem({
@@ -10,10 +9,10 @@ export default function ConversationItem({
   isSelected,
   onSelect,
   currentUserId,
+  presence, // ✅ Now received as prop instead of fetching individually
 }) {
   const isVendor = conversation.vendor_id === currentUserId;
   const otherUser = isVendor ? conversation.customer : conversation.vendor;
-  const presence = useUserPresence(otherUser?.id);
 
   const formatLastMessageTime = (date) => {
     if (!date) return "";

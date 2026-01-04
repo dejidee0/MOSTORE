@@ -11,7 +11,7 @@ import {
 } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase-client";
-import { useConversations, useUpdatePresence } from "@/hooks/useChat";
+import { useUpdatePresence } from "@/hooks/useChat";
 import { MessageCircle } from "lucide-react";
 import { getCurrentUserOrGuest } from "@/lib/guestUtils";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
@@ -20,6 +20,7 @@ import { chatApi } from "@/lib/chat/api";
 import { useToast } from "@/lib/toast";
 import ChatWindow from "@/components/shared/messages/ChatWindow";
 import ConversationList from "@/components/shared/messages/Conversation/index";
+import { useConversations } from "@/hooks/useChat/useConversations";
 
 function MessagesContent() {
   const searchParams = useSearchParams();
@@ -54,7 +55,10 @@ function MessagesContent() {
     enabled: !!user?.userId && !isMigrating,
   });
 
+  console.log("Conversations:", conversations);
+
   // **CRITICAL FIX**: Maintain stable conversation reference
+
   useEffect(() => {
     if (!conversationId) {
       selectedConversationRef.current = null;
@@ -62,12 +66,18 @@ function MessagesContent() {
       return;
     }
 
-    if (!conversations?.length) return;
+    if (!conversations) return;
+
+    // ✅ Handle empty conversations list
+    if (conversations.length === 0 && !isConversationsLoading) {
+      selectedConversationRef.current = null;
+      setStableConversation(null);
+      return;
+    }
 
     const found = conversations.find((c) => c.id === conversationId);
 
     if (found) {
-      // Only update if conversation data actually changed
       const hasChanged =
         !selectedConversationRef.current ||
         selectedConversationRef.current.id !== found.id ||
@@ -79,11 +89,11 @@ function MessagesContent() {
         setStableConversation(found);
       }
     } else if (!isConversationsLoading) {
-      // Only clear if we're sure it doesn't exist (not loading)
       console.warn(`Conversation ${conversationId} not found`);
+      selectedConversationRef.current = null;
+      setStableConversation(null);
     }
   }, [conversations, conversationId, isConversationsLoading]);
-
   // Backward compatibility redirect
   useEffect(() => {
     if (!productId || !vendorId || conversationId || isMigrating) return;
@@ -107,6 +117,7 @@ function MessagesContent() {
         })
         .catch((error) => {
           console.error("Migration error:", error);
+          console.log(error);
           addToast("Failed to load conversation", "error");
         })
         .finally(() => {
@@ -173,10 +184,7 @@ function MessagesContent() {
 
   // Determine if conversation should be shown as not found
   const shouldShowNotFound =
-    conversationId &&
-    !stableConversation &&
-    !isConversationsLoading &&
-    conversations?.length > 0;
+    conversationId && !stableConversation && !isConversationsLoading;
 
   // Mobile view
   if (isMobileView) {

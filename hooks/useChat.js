@@ -1,14 +1,21 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { chatApi } from "@/lib/chat";
+import { chatApi } from "@/lib/chat/api";
 import { useEffect, useState, useRef } from "react";
+import { supabase } from "@/lib/supabase-client";
 
 // ========== PRESENCE HOOKS ==========
 
+// src/hooks/useChat.js - Update useUserPresence
+
 export function useUserPresence(userId) {
   const [presence, setPresence] = useState(null);
+  const channelRef = useRef(null);
 
   useEffect(() => {
-    if (!userId) return;
+    if (!userId) {
+      setPresence(null);
+      return;
+    }
 
     let mounted = true;
 
@@ -17,18 +24,107 @@ export function useUserPresence(userId) {
       if (mounted && data) setPresence(data);
     });
 
+    // Clean up existing subscription before creating new one
+    if (channelRef.current) {
+      channelRef.current.unsubscribe();
+      channelRef.current = null;
+    }
+
     // Subscribe to real-time changes
     const channel = chatApi.subscribeToPresence(userId, (newPresence) => {
       if (mounted) setPresence(newPresence);
     });
 
+    channelRef.current = channel;
+
     return () => {
       mounted = false;
-      channel.unsubscribe();
+      if (channelRef.current) {
+        channelRef.current.unsubscribe();
+        channelRef.current = null;
+      }
     };
-  }, [userId]);
+  }, [userId]); // Only re-run if userId changes
 
   return presence;
+}
+// src/hooks/useChat.js - Add new hook for batch presence
+
+export function useBatchPresence(userIds) {
+  const [presenceMap, setPresenceMap] = useState({});
+  const channelRef = useRef(null);
+
+  useEffect(() => {
+    if (!userIds || userIds.length === 0) {
+      setPresenceMap({});
+      return;
+    }
+
+    let mounted = true;
+
+    // Fetch all presences initially
+    Promise.all(
+      userIds.map(async (userId) => {
+        const presence = await chatApi.getUserPresence(userId);
+        return { userId, presence };
+      })
+    ).then((results) => {
+      if (mounted) {
+        const map = {};
+        results.forEach(({ userId, presence }) => {
+          if (presence) map[userId] = presence;
+        });
+        setPresenceMap(map);
+      }
+    });
+
+    // Clean up existing channel
+    if (channelRef.current) {
+      channelRef.current.unsubscribe();
+      channelRef.current = null;
+    }
+
+    // Subscribe to all user presence changes at once
+    const channel = supabase
+      .channel("batch-presence")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "user_presence",
+          filter: `user_id=in.(${userIds.join(",")})`,
+        },
+        (payload) => {
+          if (mounted && payload.new) {
+            const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
+            const isRecentlyActive =
+              new Date(payload.new.last_seen) > fiveMinutesAgo;
+
+            setPresenceMap((prev) => ({
+              ...prev,
+              [payload.new.user_id]: {
+                ...payload.new,
+                is_online: payload.new.is_online && isRecentlyActive,
+              },
+            }));
+          }
+        }
+      )
+      .subscribe();
+
+    channelRef.current = channel;
+
+    return () => {
+      mounted = false;
+      if (channelRef.current) {
+        channelRef.current.unsubscribe();
+        channelRef.current = null;
+      }
+    };
+  }, [JSON.stringify(userIds?.sort())]); // Stable dependency
+
+  return presenceMap;
 }
 
 export function useUpdatePresence() {

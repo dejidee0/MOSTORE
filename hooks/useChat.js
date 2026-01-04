@@ -1,31 +1,29 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { chatApi } from "@/lib/chat";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 
 // ========== PRESENCE HOOKS ==========
 
-/**
- * Hook to get and subscribe to a user's online presence
- * @param {string} userId - User ID to track
- * @returns {Object|null} Presence data with is_online status
- */
 export function useUserPresence(userId) {
   const [presence, setPresence] = useState(null);
 
   useEffect(() => {
     if (!userId) return;
 
+    let mounted = true;
+
     // Initial fetch
     chatApi.getUserPresence(userId).then((data) => {
-      if (data) setPresence(data);
+      if (mounted && data) setPresence(data);
     });
 
     // Subscribe to real-time changes
     const channel = chatApi.subscribeToPresence(userId, (newPresence) => {
-      setPresence(newPresence);
+      if (mounted) setPresence(newPresence);
     });
 
     return () => {
+      mounted = false;
       channel.unsubscribe();
     };
   }, [userId]);
@@ -33,62 +31,179 @@ export function useUserPresence(userId) {
   return presence;
 }
 
-/**
- * Hook to automatically update current user's presence
- * Updates presence every 2 minutes and on component mount/unmount
- */
 export function useUpdatePresence() {
+  const hasUpdated = useRef(false);
+
   useEffect(() => {
-    // Set user as online when component mounts
+    // Prevent double execution in Strict Mode
+    if (hasUpdated.current) return;
+    hasUpdated.current = true;
+
+    // Set user as online
     chatApi.updatePresence(true);
 
-    // Update presence every 2 minutes to keep user active
+    // Update every 5 minutes (reduced from 2 minutes)
     const interval = setInterval(() => {
       chatApi.updatePresence(true);
-    }, 2 * 60 * 1000);
+    }, 5 * 60 * 1000);
 
-    // Update presence when page visibility changes
+    // Handle visibility changes
     const handleVisibilityChange = () => {
-      if (document.hidden) {
-        chatApi.updatePresence(false);
-      } else {
-        chatApi.updatePresence(true);
-      }
+      chatApi.updatePresence(!document.hidden);
     };
 
     document.addEventListener("visibilitychange", handleVisibilityChange);
 
-    // Set user as offline when component unmounts or page closes
-    const handleBeforeUnload = () => {
-      chatApi.updatePresence(false);
-    };
-
-    window.addEventListener("beforeunload", handleBeforeUnload);
-
+    // Cleanup
     return () => {
       clearInterval(interval);
       document.removeEventListener("visibilitychange", handleVisibilityChange);
-      window.removeEventListener("beforeunload", handleBeforeUnload);
       chatApi.updatePresence(false);
     };
   }, []);
 }
+export async function navigateToConversation(
+  productId,
+  vendorId,
+  router,
+  addToast
+) {
+  try {
+    // Show loading toast if available
+    addToast?.("Loading conversation...", "info");
+
+    // Get or create the conversation
+    const conversation = await chatApi.getOrCreateConversation(
+      productId,
+      vendorId
+    );
+
+    // Redirect to messages page with conversation ID
+    router.push(`/messages?id=${conversation.id}`);
+  } catch (error) {
+    console.error("Failed to open conversation:", error);
+    addToast?.(error.message || "Failed to open conversation", "error");
+  }
+}
 
 // ========== CONVERSATION HOOKS ==========
 
-/**
- * Hook to fetch all conversations for a user
- * @param {string} userId - User ID
- * @returns {Object} React Query result with conversations data
- */
 export function useConversations(userId) {
   return useQuery({
     queryKey: ["conversations", userId],
     queryFn: () => chatApi.getConversations(userId),
     enabled: !!userId,
-    staleTime: 30 * 1000, // 30 seconds
+    staleTime: 30 * 1000,
+    gcTime: 5 * 60 * 1000, // Keep in cache for 5 minutes
   });
 }
+
+// ========== MESSAGE HOOKS ==========
+
+export function useMessages(conversationId) {
+  const queryClient = useQueryClient();
+  const subscriptionRef = useRef(null);
+
+  const query = useQuery({
+    queryKey: ["messages", conversationId],
+    queryFn: () => {
+      if (!conversationId) return [];
+      return chatApi.getMessages(conversationId);
+    },
+    enabled: !!conversationId,
+    staleTime: 10 * 1000,
+    retry: 1, // Only retry once
+    retryDelay: 1000,
+  });
+
+  // Real-time subscription
+  useEffect(() => {
+    if (!conversationId) return;
+
+    // Prevent duplicate subscriptions
+    if (subscriptionRef.current) {
+      subscriptionRef.current.unsubscribe();
+    }
+
+    const channel = chatApi.subscribeToMessages(
+      conversationId,
+      (newMessage) => {
+        queryClient.setQueryData(["messages", conversationId], (old) => {
+          if (!old) return [newMessage];
+          if (old.some((m) => m.id === newMessage.id)) return old;
+          return [...old, newMessage];
+        });
+
+        // Invalidate conversations list
+        queryClient.invalidateQueries({ queryKey: ["conversations"] });
+      }
+    );
+
+    subscriptionRef.current = channel;
+
+    return () => {
+      if (subscriptionRef.current) {
+        subscriptionRef.current.unsubscribe();
+        subscriptionRef.current = null;
+      }
+    };
+  }, [conversationId, queryClient]);
+
+  return query;
+}
+
+export function useSendMessage(conversationId) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ content, messageType = "text" }) =>
+      chatApi.sendMessage(conversationId, content, messageType),
+    onMutate: async ({ content }) => {
+      await queryClient.cancelQueries({
+        queryKey: ["messages", conversationId],
+      });
+
+      const previousMessages = queryClient.getQueryData([
+        "messages",
+        conversationId,
+      ]);
+
+      const tempId = `temp-${Date.now()}`;
+      queryClient.setQueryData(["messages", conversationId], (old) => [
+        ...(old || []),
+        {
+          id: tempId,
+          content,
+          sender_id: "current-user",
+          created_at: new Date().toISOString(),
+          is_read: false,
+          message_type: "text",
+          _isOptimistic: true,
+        },
+      ]);
+
+      return { previousMessages };
+    },
+    onError: (err, variables, context) => {
+      queryClient.setQueryData(
+        ["messages", conversationId],
+        context.previousMessages
+      );
+    },
+    onSuccess: (newMessage) => {
+      queryClient.setQueryData(["messages", conversationId], (old) => {
+        if (!old) return [newMessage];
+        const filtered = old.filter((m) => !m._isOptimistic);
+        if (filtered.some((m) => m.id === newMessage.id)) return filtered;
+        return [...filtered, newMessage];
+      });
+
+      queryClient.invalidateQueries({ queryKey: ["conversations"] });
+    },
+  });
+}
+
+// ========== CONVERSATION HOOKS ==========
 
 /**
  * Hook to get or create a conversation
@@ -143,115 +258,6 @@ export function useUpdateConversationStatus() {
 }
 
 // ========== MESSAGE HOOKS ==========
-
-/**
- * Hook to fetch and subscribe to messages in a conversation
- * @param {string} conversationId - Conversation ID
- * @returns {Object} React Query result with messages data
- */
-export function useMessages(conversationId) {
-  const queryClient = useQueryClient();
-
-  const query = useQuery({
-    queryKey: ["messages", conversationId],
-    queryFn: () => chatApi.getMessages(conversationId),
-    enabled: !!conversationId,
-    staleTime: 10 * 1000, // 10 seconds
-  });
-
-  // Real-time subscription to new messages
-  useEffect(() => {
-    if (!conversationId) return;
-
-    const channel = chatApi.subscribeToMessages(
-      conversationId,
-      (newMessage) => {
-        queryClient.setQueryData(["messages", conversationId], (old) => {
-          if (!old) return [newMessage];
-
-          // Prevent duplicate messages
-          if (old.some((m) => m.id === newMessage.id)) return old;
-
-          return [...old, newMessage];
-        });
-
-        // Update the conversation's last message
-        queryClient.invalidateQueries(["conversations"]);
-      }
-    );
-
-    return () => {
-      channel.unsubscribe();
-    };
-  }, [conversationId, queryClient]);
-
-  return query;
-}
-
-/**
- * Hook to send a message
- * @param {string} conversationId - Conversation ID
- * @returns {Object} React Query mutation result
- */
-export function useSendMessage(conversationId) {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: ({ content, messageType = "text" }) =>
-      chatApi.sendMessage(conversationId, content, messageType),
-    onMutate: async ({ content }) => {
-      // Cancel outgoing refetches
-      await queryClient.cancelQueries(["messages", conversationId]);
-
-      // Snapshot previous value
-      const previousMessages = queryClient.getQueryData([
-        "messages",
-        conversationId,
-      ]);
-
-      // Optimistically update to show message immediately
-      const tempId = `temp-${Date.now()}`;
-      queryClient.setQueryData(["messages", conversationId], (old) => [
-        ...(old || []),
-        {
-          id: tempId,
-          content,
-          sender_id: "current-user",
-          created_at: new Date().toISOString(),
-          is_read: false,
-          message_type: "text",
-          _isOptimistic: true,
-        },
-      ]);
-
-      return { previousMessages };
-    },
-    onError: (err, variables, context) => {
-      // Rollback on error
-      queryClient.setQueryData(
-        ["messages", conversationId],
-        context.previousMessages
-      );
-    },
-    onSuccess: (newMessage) => {
-      // Replace optimistic message with real one
-      queryClient.setQueryData(["messages", conversationId], (old) => {
-        if (!old) return [newMessage];
-
-        // Remove optimistic message and add real one
-        const filtered = old.filter((m) => !m._isOptimistic);
-
-        // Prevent duplicates
-        if (filtered.some((m) => m.id === newMessage.id)) return filtered;
-
-        return [...filtered, newMessage];
-      });
-
-      // Invalidate conversations to update last message
-      queryClient.invalidateQueries(["conversations"]);
-    },
-  });
-}
 
 /**
  * Hook to mark messages as read

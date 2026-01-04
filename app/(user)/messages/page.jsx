@@ -1,163 +1,232 @@
+// src/app/messages/page.jsx
 "use client";
 
-import { useEffect, useState, Suspense, useRef } from "react";
-import { useSearchParams } from "next/navigation";
-import { supabase } from "@/lib/supabase-client";
 import {
-  useConversations,
-  useConversation,
-  useUpdatePresence,
-} from "@/hooks/useChat";
-
-import { MessageCircle, ArrowLeft } from "lucide-react";
-import ChatWindow from "@/components/shared/messages/window";
-import ConversationList from "@/components/shared/messages/conversation";
+  Suspense,
+  useEffect,
+  useState,
+  useMemo,
+  useCallback,
+  useRef,
+} from "react";
+import { useSearchParams, useRouter } from "next/navigation";
+import { supabase } from "@/lib/supabase-client";
+import { useConversations, useUpdatePresence } from "@/hooks/useChat";
+import { MessageCircle } from "lucide-react";
+import { getCurrentUserOrGuest } from "@/lib/guestUtils";
+import { useMediaQuery } from "@/hooks/useMediaQuery";
+import { useQuery } from "@tanstack/react-query";
+import { chatApi } from "@/lib/chat/api";
+import { useToast } from "@/lib/toast";
+import ChatWindow from "@/components/shared/messages/ChatWindow";
+import ConversationList from "@/components/shared/messages/Conversation/index";
 
 function MessagesContent() {
   const searchParams = useSearchParams();
+  const router = useRouter();
+  const { addToast } = useToast();
+
+  const conversationId = searchParams.get("id");
   const productId = searchParams.get("product");
   const vendorId = searchParams.get("vendor");
 
-  const [user, setUser] = useState(null);
-  const [selectedConversation, setSelectedConversation] = useState(null);
-  const [isMobileView, setIsMobileView] = useState(false);
-  const hasCreatedConversation = useRef(false); // Prevent duplicate creation
+  const [isMigrating, setIsMigrating] = useState(false);
+  const isMobileView = useMediaQuery("(max-width: 768px)");
 
-  useUpdatePresence(); // Track user presence
+  // **CRITICAL**: Store stable reference to selected conversation
+  const selectedConversationRef = useRef(null);
+  const [stableConversation, setStableConversation] = useState(null);
 
-  const { data: conversations, isLoading } = useConversations(user?.id);
-  const createConversation = useConversation(productId, vendorId);
+  // Always call hooks
+  useUpdatePresence();
 
+  const { data: user, isLoading: isUserLoading } = useQuery({
+    queryKey: ["currentUser"],
+    queryFn: () => getCurrentUserOrGuest(supabase),
+    staleTime: Infinity,
+  });
+
+  const {
+    data: conversations,
+    isLoading: isConversationsLoading,
+    error: conversationsError,
+  } = useConversations(user?.userId, {
+    enabled: !!user?.userId && !isMigrating,
+  });
+
+  // **CRITICAL FIX**: Maintain stable conversation reference
   useEffect(() => {
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      setUser(user);
-    });
-  }, []);
-
-  // Detect mobile view
-  useEffect(() => {
-    const checkMobile = () => {
-      setIsMobileView(window.innerWidth < 768);
-    };
-
-    checkMobile();
-    window.addEventListener("resize", checkMobile);
-    return () => window.removeEventListener("resize", checkMobile);
-  }, []);
-
-  // Auto-create or find conversation if product and vendor are in URL
-  useEffect(() => {
-    // Prevent running if:
-    // 1. No productId or vendorId
-    // 2. No user
-    // 3. Already created/found conversation
-    // 4. Mutation is pending
-    if (
-      !productId ||
-      !vendorId ||
-      !user ||
-      hasCreatedConversation.current ||
-      createConversation.isPending
-    ) {
+    if (!conversationId) {
+      selectedConversationRef.current = null;
+      setStableConversation(null);
       return;
     }
 
-    // Check if conversation already exists in the list
-    if (conversations && conversations.length > 0) {
-      const existingConv = conversations.find(
-        (conv) =>
-          conv.product_id === parseInt(productId) &&
-          conv.vendor_id === vendorId &&
-          conv.customer_id === user.id
-      );
+    if (!conversations?.length) return;
 
-      if (existingConv) {
-        setSelectedConversation(existingConv);
-        hasCreatedConversation.current = true;
-        return;
+    const found = conversations.find((c) => c.id === conversationId);
+
+    if (found) {
+      // Only update if conversation data actually changed
+      const hasChanged =
+        !selectedConversationRef.current ||
+        selectedConversationRef.current.id !== found.id ||
+        JSON.stringify(selectedConversationRef.current) !==
+          JSON.stringify(found);
+
+      if (hasChanged) {
+        selectedConversationRef.current = found;
+        setStableConversation(found);
       }
+    } else if (!isConversationsLoading) {
+      // Only clear if we're sure it doesn't exist (not loading)
+      console.warn(`Conversation ${conversationId} not found`);
     }
+  }, [conversations, conversationId, isConversationsLoading]);
 
-    // Only create if we haven't tried yet
-    if (!hasCreatedConversation.current) {
-      hasCreatedConversation.current = true;
-
-      createConversation.mutate(undefined, {
-        onSuccess: (conv) => {
-          setSelectedConversation(conv);
-        },
-        onError: (error) => {
-          console.error("Error creating conversation:", error);
-          hasCreatedConversation.current = false; // Allow retry on error
-        },
-      });
-    }
-  }, [productId, vendorId, user, conversations, createConversation]);
-
-  // Reset ref when productId or vendorId changes
+  // Backward compatibility redirect
   useEffect(() => {
-    hasCreatedConversation.current = false;
-  }, [productId, vendorId]);
+    if (!productId || !vendorId || conversationId || isMigrating) return;
+    if (!user?.userId || !conversations) return;
 
-  const handleBackToList = () => {
-    setSelectedConversation(null);
-  };
+    const existing = conversations.find(
+      (c) =>
+        c.product_id === Number(productId) &&
+        c.vendor_id === vendorId &&
+        (c.customer_id === user.userId || c.vendor_id === user.userId)
+    );
 
-  if (!user) {
+    if (existing) {
+      router.replace(`/messages?id=${existing.id}`);
+    } else {
+      setIsMigrating(true);
+      chatApi
+        .getOrCreateConversation(Number(productId), vendorId)
+        .then((conv) => {
+          router.replace(`/messages?id=${conv.id}`);
+        })
+        .catch((error) => {
+          console.error("Migration error:", error);
+          addToast("Failed to load conversation", "error");
+        })
+        .finally(() => {
+          setIsMigrating(false);
+        });
+    }
+  }, [
+    productId,
+    vendorId,
+    conversationId,
+    user?.userId,
+    conversations,
+    isMigrating,
+    router,
+    addToast,
+  ]);
+
+  const handleSelectConversation = useCallback(
+    (conv) => {
+      router.push(`/messages?id=${conv.id}`);
+    },
+    [router]
+  );
+
+  const handleBackToList = useCallback(() => {
+    router.push("/messages");
+  }, [router]);
+
+  // Loading states
+  if (isUserLoading || isMigrating) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-50">
+      <div className="flex items-center justify-center h-screen bg-gray-50">
         <div className="text-center">
-          <MessageCircle className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-          <p className="text-gray-600">Please sign in to view messages</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto mb-3" />
+          <p className="text-gray-600">
+            {isMigrating ? "Loading conversation..." : "Authenticating..."}
+          </p>
         </div>
       </div>
     );
   }
 
-  // Mobile: Show either list or chat
+  if (!user) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-gray-50">
+        <div className="text-center text-red-500">
+          <p className="font-medium">Unable to load user</p>
+          <p className="text-sm mt-2">Please refresh the page</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (conversationsError) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-gray-50">
+        <div className="text-center text-red-500">
+          <p className="font-medium">Error loading conversations</p>
+          <p className="text-sm mt-2">{conversationsError.message}</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Determine if conversation should be shown as not found
+  const shouldShowNotFound =
+    conversationId &&
+    !stableConversation &&
+    !isConversationsLoading &&
+    conversations?.length > 0;
+
+  // Mobile view
   if (isMobileView) {
     return (
       <div className="h-screen flex flex-col bg-gray-50">
-        {!selectedConversation ? (
-          // Conversation List
-          <div className="flex-1 flex flex-col bg-white">
+        {!conversationId || shouldShowNotFound ? (
+          <>
             <div className="bg-orange-500 text-white p-4 shadow-md">
               <h1 className="text-xl font-bold">Messages</h1>
             </div>
-            <div className="flex-1 overflow-y-auto">
-              {isLoading ? (
-                <div className="flex justify-center items-center h-full">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500"></div>
-                </div>
-              ) : (
-                <ConversationList
-                  conversations={conversations || []}
-                  selectedId={selectedConversation?.id}
-                  onSelect={setSelectedConversation}
-                  currentUserId={user.id}
-                />
-              )}
-            </div>
-          </div>
+
+            {shouldShowNotFound ? (
+              <ConversationNotFoundState onBack={handleBackToList} />
+            ) : (
+              <div className="flex-1 overflow-y-auto">
+                {isConversationsLoading ? (
+                  <div className="flex justify-center items-center h-full">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500" />
+                  </div>
+                ) : (
+                  <ConversationList
+                    conversations={conversations || []}
+                    selectedId={conversationId}
+                    onSelect={handleSelectConversation}
+                    currentUserId={user.userId}
+                  />
+                )}
+              </div>
+            )}
+          </>
+        ) : stableConversation ? (
+          <ChatWindow
+            key={stableConversation.id}
+            conversation={stableConversation}
+            currentUserId={user.userId}
+            onBack={handleBackToList}
+            isMobile
+          />
         ) : (
-          // Chat Window
-          <div className="flex-1 flex flex-col">
-            <ChatWindow
-              conversation={selectedConversation}
-              currentUserId={user.id}
-              onBack={handleBackToList}
-              isMobile={true}
-            />
+          <div className="flex items-center justify-center h-full">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500" />
           </div>
         )}
       </div>
     );
   }
 
-  // Desktop: Show both side by side
+  // Desktop view
   return (
     <div className="flex h-screen bg-gray-50">
-      {/* Sidebar - Conversation List */}
       <div className="w-96 border-r bg-white flex flex-col">
         <div className="bg-orange-500 text-white p-4 shadow-md">
           <h1 className="text-2xl font-bold flex items-center gap-2">
@@ -166,36 +235,70 @@ function MessagesContent() {
           </h1>
         </div>
         <div className="flex-1 overflow-y-auto">
-          {isLoading ? (
+          {isConversationsLoading ? (
             <div className="flex justify-center items-center h-full">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500"></div>
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500" />
             </div>
           ) : (
             <ConversationList
               conversations={conversations || []}
-              selectedId={selectedConversation?.id}
-              onSelect={setSelectedConversation}
-              currentUserId={user.id}
+              selectedId={conversationId}
+              onSelect={handleSelectConversation}
+              currentUserId={user.userId}
             />
           )}
         </div>
       </div>
 
-      {/* Main Chat Area */}
       <div className="flex-1 flex flex-col">
-        {selectedConversation ? (
+        {stableConversation ? (
           <ChatWindow
-            conversation={selectedConversation}
-            currentUserId={user.id}
-            isMobile={false}
+            key={stableConversation.id}
+            conversation={stableConversation}
+            currentUserId={user.userId}
           />
+        ) : shouldShowNotFound ? (
+          <ConversationNotFoundState />
+        ) : conversationId ? (
+          <div className="flex items-center justify-center h-full">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500" />
+          </div>
         ) : (
-          <div className="flex items-center justify-center h-full bg-gray-100">
-            <div className="text-center text-gray-500">
+          <div className="flex items-center justify-center h-full bg-gray-100 text-gray-500">
+            <div className="text-center">
               <MessageCircle className="w-20 h-20 mx-auto mb-4 text-gray-300" />
-              <p className="text-lg">Select a conversation to start chatting</p>
+              <p className="text-lg font-medium">Select a conversation</p>
+              <p className="text-sm mt-2">
+                Choose a chat from the sidebar to start messaging
+              </p>
             </div>
           </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function ConversationNotFoundState({ onBack }) {
+  return (
+    <div className="flex items-center justify-center h-full p-6">
+      <div className="text-center max-w-md">
+        <div className="mb-6">
+          <MessageCircle className="w-20 h-20 mx-auto text-gray-300" />
+        </div>
+        <h2 className="text-2xl font-bold text-gray-800 mb-2">
+          Conversation Not Found
+        </h2>
+        <p className="text-gray-600 mb-6">
+          This conversation doesn't exist or may have been deleted.
+        </p>
+        {onBack && (
+          <button
+            onClick={onBack}
+            className="bg-orange-500 text-white px-6 py-3 rounded-full hover:bg-orange-600 transition-colors font-medium shadow-lg"
+          >
+            Back to Messages
+          </button>
         )}
       </div>
     </div>
@@ -207,7 +310,7 @@ export default function MessagesPage() {
     <Suspense
       fallback={
         <div className="flex justify-center items-center h-screen">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500" />
         </div>
       }
     >

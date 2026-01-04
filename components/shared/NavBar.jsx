@@ -268,6 +268,10 @@ const NavBar = () => {
             label: "My Account",
             href: "/my-account?tab=profile",
           },
+        user && {
+          label: "My Messages",
+          href: "/messages",
+        },
         user &&
           role !== "customer" && {
             label: "My Account",
@@ -617,6 +621,11 @@ const NavBar = () => {
                             label="My Account"
                           />
                         )}
+                        {/* <MenuButton
+                          onClick={() => router.push("/messages")}
+                          icon={<Home className="w-5 h-5" />}
+                          label="My Messages"
+                        /> */}
                       </div>
                       <div className="border-t border-gray-100 pt-2">
                         <MenuButton

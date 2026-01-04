@@ -14,6 +14,7 @@ import { ShoppingBag } from "lucide-react";
 import { Antenna } from "lucide-react";
 import RichContentRenderer from "@/components/rich-text-renderer";
 import { MessageCircle } from "lucide-react";
+import { chatApi } from "@/lib/chat/api";
 
 export default function ProductDetailsClient({ productId }) {
   const router = useRouter();
@@ -21,6 +22,7 @@ export default function ProductDetailsClient({ productId }) {
   const [relatedProducts, setRelatedProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [isLoadingChat, setIsLoadingChat] = useState(false);
   const [selectedImage, setSelectedImage] = useState(0);
 
   // Variant selections
@@ -342,16 +344,29 @@ export default function ProductDetailsClient({ productId }) {
       currency: "EUR",
     }).format(price);
   };
-  const handleMessageVendor = () => {
+  const handleMessageVendor = async () => {
     if (!product.supplier_id) {
       addToast("Vendor information not available", "error");
       return;
     }
 
-    // Redirect to chat with product context
-    router.push(
-      `/messages?product=${product.id}&vendor=${product.supplier_id}`
-    );
+    setIsLoadingChat(true);
+
+    try {
+      // Get or create conversation directly
+      const conversation = await chatApi.getOrCreateConversation(
+        product.id,
+        product.supplier_id
+      );
+
+      // Navigate directly to the conversation
+      router.push(`/messages?id=${conversation.id}`);
+    } catch (error) {
+      console.error("Failed to open chat:", error);
+      addToast("Failed to open chat. Please try again.", "error");
+    } finally {
+      setIsLoadingChat(false);
+    }
   };
   if (loading) {
     return (
@@ -765,20 +780,20 @@ export default function ProductDetailsClient({ productId }) {
                   </div>
 
                   {/* Message Vendor Button */}
-                  <button
-                    className={`w-full px-6 py-4 rounded-lg font-semibold flex items-center justify-center gap-3 transition-all ${
-                      isInStock
-                        ? "bg-orange-500 text-white hover:bg-orange-600 shadow-lg hover:shadow-xl"
-                        : "bg-gray-400 text-white cursor-not-allowed"
-                    }`}
-                    onClick={() => isInStock && handleMessageVendor()}
-                    disabled={!isInStock}
-                  >
-                    <MessageCircle size={22} />
-                    Message Vendor About This Product
-                  </button>
                 </div>
               </div>
+              <button
+                className={`w-full px-6 py-4 rounded-lg font-semibold flex items-center justify-center gap-3 transition-all ${
+                  isInStock
+                    ? "bg-orange-500 text-white hover:bg-orange-600 shadow-lg hover:shadow-xl"
+                    : "bg-gray-400 text-white cursor-not-allowed"
+                }`}
+                onClick={() => isInStock && handleMessageVendor()}
+                disabled={!isInStock}
+              >
+                <MessageCircle size={22} />
+                Message Vendor About This Product
+              </button>
             </div>
 
             {/* Product Details */}

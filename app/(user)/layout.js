@@ -1,3 +1,4 @@
+// app/(user)/layout.jsx
 import { Raleway } from "next/font/google";
 import "../globals.css";
 
@@ -8,6 +9,7 @@ import { CartProvider } from "@/lib/cart";
 import NavBar from "@/components/shared/NavBar";
 import ChristmasPopup from "@/components/pop-up";
 import QueryProvider from "@/components/QueryProvider";
+import MessageNotificationProvider from "@/components/MessageNotificationProvider";
 
 const raleway = Raleway({
   subsets: ["latin"],
@@ -18,7 +20,7 @@ const raleway = Raleway({
 
 export const metadata = {
   title:
-    "MOSTORE | Online Shopping Store built for Automobiles, Autoparts, Electronics,  Home Appliances and More…",
+    "MOSTORE | Online Shopping Store built for Automobiles, Autoparts, Electronics, Home Appliances and More…",
   description: `Mostore is an Online Shopping Store that gives your more value More choice and varieties for less. Shop more out of every products from Automobiles, Autoparts, Electronics to Home Appliances and so much more…. Start Shopping Now…`,
 
   icons: {
@@ -46,14 +48,12 @@ export const metadata = {
         type: "image/png",
       },
     ],
-
     shortcut: "/favicon.ico",
   },
   openGraph: {
     title:
-      "MOSTORE | Online Shopping Store built for Automobiles, Autoparts, Electronics,  Home Appliances and More…",
+      "MOSTORE | Online Shopping Store built for Automobiles, Autoparts, Electronics, Home Appliances and More…",
     description: `Mostore is an Online Shopping Store that gives your more value More choice and varieties for less. Shop more out of every products from Automobiles, Autoparts, Electronics to Home Appliances and so much more…. Start Shopping Now…`,
-
     images: [
       {
         url: "/favicon.jpg",
@@ -78,10 +78,12 @@ export default function UserLayout({ children }) {
           <AuthProvider>
             <CartProvider>
               <ToastProvider>
-                <NavBar />
-                <main className="flex-1">{children}</main>
-                <Footer />
-                <ChristmasPopup />
+                <MessageNotificationProvider>
+                  <NavBar />
+                  <main className="flex-1">{children}</main>
+                  <Footer />
+                  <ChristmasPopup />
+                </MessageNotificationProvider>
               </ToastProvider>
             </CartProvider>
           </AuthProvider>

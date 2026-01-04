@@ -48,6 +48,7 @@ import { BsGear } from "react-icons/bs";
 import { IoPhonePortraitSharp } from "react-icons/io5";
 import { ArrowRight } from "lucide-react";
 import { Tv } from "lucide-react";
+import { useUnreadCount } from "@/hooks/useChat";
 
 const MenuButton = ({ onClick, icon, label, className = "" }) => {
   return (
@@ -79,6 +80,7 @@ const NavBar = () => {
   const [categories, setCategories] = useState([]);
   const [categoriesLoading, setCategoriesLoading] = useState(true);
   const [searchFocused, setSearchFocused] = useState(false);
+  const { data: unreadCount } = useUnreadCount(user?.id);
 
   const role = user?.user_metadata?.role;
   const realUser = user?.user_metadata;
@@ -271,6 +273,7 @@ const NavBar = () => {
         user && {
           label: "My Messages",
           href: "/messages",
+          badge: unreadCount > 0 ? unreadCount : null, // Add badge
         },
         user &&
           role !== "customer" && {
@@ -279,7 +282,7 @@ const NavBar = () => {
           },
         user && role === "customer" && { label: "Wishlist", href: "/wishlist" },
       ].filter(Boolean),
-    [user, role]
+    [user, role, unreadCount] // Add unreadCount to dependencies
   );
 
   if (!isClient) return null;
@@ -713,9 +716,14 @@ const NavBar = () => {
                             key={link.label}
                             href={link.href}
                             onClick={() => setIsDrawerOpen(false)}
-                            className="block py-2  hover:text-blue-600"
+                            className="block py-2 hover:text-blue-600 flex items-center justify-between"
                           >
-                            {link.label}
+                            <span>{link.label}</span>
+                            {link.badge && (
+                              <span className="bg-red-500 text-white text-xs rounded-full px-2 py-0.5 font-bold">
+                                {link.badge > 9 ? "9+" : link.badge}
+                              </span>
+                            )}
                           </Link>
                         ))}
                       </div>{" "}

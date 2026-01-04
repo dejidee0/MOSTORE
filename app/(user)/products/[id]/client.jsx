@@ -708,29 +708,11 @@ export default function ProductDetailsClient({ productId }) {
                     +
                   </button>
                 </div>
-
-                <button
-                  onClick={handleWishlist}
-                  className={`border p-3 rounded transition-all duration-300 ${
-                    isWishlisted
-                      ? "bg-red-500 border-red-500 text-white hover:bg-red-600"
-                      : "border-gray-300 text-gray-600 hover:bg-gray-100 hover:border-gray-400"
-                  }`}
-                  title={
-                    isWishlisted ? "Remove from wishlist" : "Add to wishlist"
-                  }
-                >
-                  <Heart
-                    className={`w-5 h-5 transition-all duration-200 ${
-                      isWishlisted ? "fill-current" : ""
-                    }`}
-                  />
-                </button>
               </div>
 
               {/* Action Buttons */}
-              <div className="grid grid-cols-2 gap-3">
-                {/* <button
+              <div className="flex w-full gap-3">
+                <button
                   className={`px-6 py-3 rounded font-semibold flex items-center justify-center gap-2 ${
                     isInStock
                       ? "bg-white border-2 border-orange-500 text-orange-500 hover:bg-orange-50"
@@ -754,33 +736,24 @@ export default function ProductDetailsClient({ productId }) {
                 >
                   <ShoppingBag size={20} />
                   Buy Now
-                </button> */}
-                {/* // Replace the cart/checkout buttons section with: */}
-                <div className="space-y-3">
-                  <div className="flex items-center gap-4">
-                    <button
-                      onClick={handleWishlist}
-                      className={`border p-3 rounded transition-all duration-300 ${
-                        isWishlisted
-                          ? "bg-red-500 border-red-500 text-white hover:bg-red-600"
-                          : "border-gray-300 text-gray-600 hover:bg-gray-100 hover:border-gray-400"
-                      }`}
-                      title={
-                        isWishlisted
-                          ? "Remove from wishlist"
-                          : "Add to wishlist"
-                      }
-                    >
-                      <Heart
-                        className={`w-5 h-5 transition-all duration-200 ${
-                          isWishlisted ? "fill-current" : ""
-                        }`}
-                      />
-                    </button>
-                  </div>
-
-                  {/* Message Vendor Button */}
-                </div>
+                </button>
+                <button
+                  onClick={handleWishlist}
+                  className={`border p-3 rounded transition-all duration-300 ${
+                    isWishlisted
+                      ? "bg-red-500 border-red-500 text-white hover:bg-red-600"
+                      : "border-gray-300 text-gray-600 hover:bg-gray-100 hover:border-gray-400"
+                  }`}
+                  title={
+                    isWishlisted ? "Remove from wishlist" : "Add to wishlist"
+                  }
+                >
+                  <Heart
+                    className={`w-5 h-5 transition-all duration-200 ${
+                      isWishlisted ? "fill-current" : ""
+                    }`}
+                  />
+                </button>
               </div>
               <button
                 className={`w-full px-6 py-4 rounded-lg font-semibold flex items-center justify-center gap-3 transition-all ${
@@ -792,7 +765,7 @@ export default function ProductDetailsClient({ productId }) {
                 disabled={!isInStock}
               >
                 <MessageCircle size={22} />
-                Message Vendor About This Product
+                Chat with Seller About This Product
               </button>
             </div>
 

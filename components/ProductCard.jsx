@@ -200,7 +200,7 @@ export const ProductCard = ({ product }) => {
       </div>
 
       {/* Content Section */}
-      <div className="p-4 flex flex-col flex-1 justify-between">
+      <div className="px-4 py-2 flex flex-col flex-1 justify-between">
         <div className="space-y-2 overflow-hidden">
           {/* Category & Brand */}
           <div className="flex items-center justify-between text-xs truncate">
@@ -257,7 +257,7 @@ export const ProductCard = ({ product }) => {
         </div>
 
         {/* Add to Cart Button */}
-        <motion.button
+        {/* <motion.button
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
           disabled={isAddingToCart || product.stock_quantity === 0}
@@ -284,7 +284,7 @@ export const ProductCard = ({ product }) => {
             : inCart
             ? `In Cart (${cartQuantity})`
             : "Add to Cart"}
-        </motion.button>
+        </motion.button> */}
       </div>
     </motion.div>
   );

@@ -49,6 +49,8 @@ import { IoPhonePortraitSharp } from "react-icons/io5";
 import { ArrowRight } from "lucide-react";
 import { Tv } from "lucide-react";
 import { useUnreadCount } from "@/hooks/useChat";
+import { MessageSquare } from "lucide-react";
+import { Mail } from "lucide-react";
 
 const MenuButton = ({ onClick, icon, label, className = "" }) => {
   return (
@@ -641,6 +643,7 @@ const NavBar = () => {
                     </div>
                   )}
                 </div>
+
                 <button
                   onClick={() => router.push("/cart")}
                   className="relative p-3 text-white hover:text-orange-300 hover:bg-gray-700 rounded-xl transition-all duration-200 group"
@@ -676,6 +679,22 @@ const NavBar = () => {
                     </span>
                   )}
                 </button>
+                {user && (
+                  <button
+                    onClick={() => router.push("/messages")}
+                    className="relative p-2.5 text-gray-300 hover:text-white hover:bg-gray-700 rounded-lg transition-all duration-200"
+                    title="Messages"
+                  >
+                    <Mail className="w-5 h-5" />
+
+                    {unreadCount > 0 && (
+                      <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold rounded-full min-w-[16px] h-4 px-1 flex items-center justify-center">
+                        {unreadCount > 9 ? "9+" : unreadCount}
+                      </span>
+                    )}
+                  </button>
+                )}
+
                 <button
                   onClick={() => router.push("/cart")}
                   className="relative p-2.5 text-gray-300 hover:text-white hover:bg-gray-700 rounded-lg transition-all duration-200"

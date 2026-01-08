@@ -26,6 +26,7 @@ import { getAllProducts, getAllCategories } from "@/lib/data/products";
 import { ProductCard } from "@/components/ProductCard";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
+import { MapPin } from "lucide-react";
 
 // Debounce hook for search optimization
 const useDebounce = (value, delay) => {
@@ -76,26 +77,23 @@ const StarRating = memo(({ rating = 0 }) => {
 StarRating.displayName = "StarRating";
 
 // Memoized List View Product Card Component
+
 const ListViewProductCard = memo(({ product }) => {
-  if (!isValidProduct(product)) return null;
+  if (!product) return null;
 
   return (
     <div className="bg-white rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 border border-gray-100 overflow-hidden">
       <div className="flex flex-col sm:flex-row">
-        <div className="relative w-full sm:w-48 h-48 sm:h-32 flex-shrink-0 bg-gray-100">
+        <div className="relative w-full sm:w-48 h-48 sm:h-32 bg-gray-100 flex-shrink-0">
           {product.images?.[0] ? (
             <img
               src={product.images[0]}
-              alt={product.name || "Product"}
+              alt={product.name}
               className="w-full h-full object-cover"
-              loading="lazy"
-              onError={(e) => {
-                e.target.style.display = "none";
-              }}
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center">
-              <Package className="w-12 h-12 text-gray-400" />
+              <span className="text-gray-400">No Image</span>
             </div>
           )}
           {product.discount > 0 && (
@@ -105,66 +103,64 @@ const ListViewProductCard = memo(({ product }) => {
           )}
         </div>
 
-        <div className="flex-1 p-4">
-          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between h-full">
-            <div className="flex-1">
-              <div className="flex items-center gap-2 mb-2">
-                {product.categories?.name && (
-                  <span className="text-xs text-orange-600 bg-orange-50 px-2 py-1 rounded-full font-medium">
-                    {product.categories.name}
-                  </span>
-                )}
-                {product.brand && (
-                  <span className="text-xs text-gray-500">{product.brand}</span>
-                )}
-              </div>
-
-              <h3 className="text-lg font-semibold text-gray-900 mb-2 line-clamp-1">
-                {product.name}
-              </h3>
-
-              {product.short_description && (
-                <p className="text-gray-600 text-sm mb-3 line-clamp-2">
-                  {product.short_description}
-                </p>
-              )}
-
-              <div className="flex items-center gap-2 mb-2">
-                <StarRating rating={product.rating || 0} />
-                <span className="text-sm text-gray-500">
-                  ({product.total_reviews || 0})
+        <div className="flex-1 p-4 flex flex-col sm:flex-row sm:justify-between">
+          <div className="flex-1">
+            <div className="flex items-center gap-2 mb-2">
+              {product.categories?.name && (
+                <span className="text-xs text-orange-600 bg-orange-50 px-2 py-1 rounded-full font-medium">
+                  {product.categories.name}
                 </span>
-              </div>
+              )}
+              {product.brand && (
+                <span className="text-xs text-gray-500">{product.brand}</span>
+              )}
             </div>
 
-            <div className="flex flex-col sm:items-end gap-3 mt-4 sm:mt-0">
-              <div className="flex items-center gap-2">
-                <span className="text-xl font-bold text-gray-900">
-                  €{product.price.toLocaleString()}
-                </span>
-                {product.originalprice &&
-                  product.originalprice > product.price && (
-                    <span className="text-sm text-gray-500 line-through">
-                      €{product.originalprice.toLocaleString()}
-                    </span>
-                  )}
-              </div>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2 line-clamp-1">
+              {product.name}
+            </h3>
 
-              <div className="flex items-center gap-2">
-                <button className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors">
-                  <Heart className="w-4 h-4" />
-                </button>
+            {product.short_description && (
+              <p className="text-gray-600 text-sm mb-2 line-clamp-2">
+                {product.short_description}
+              </p>
+            )}
 
-                <Link href={`/products/${product.id}`}>
-                  <button className="p-2 text-gray-400 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition-colors">
-                    <Eye className="w-4 h-4" />
-                  </button>
-                </Link>
-                <button className="bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600 transition-colors flex items-center gap-2">
-                  <ShoppingCart className="w-4 h-4" />
-                  Add
-                </button>
+            {product.location && (
+              <div className="flex items-center gap-1 text-gray-500 text-xs mb-2">
+                <MapPin className="w-3 h-3" />
+                <span>{product.location}</span>
               </div>
+            )}
+          </div>
+
+          <div className="flex flex-col sm:items-end gap-3 mt-4 sm:mt-0">
+            <div className="flex items-center gap-2">
+              <span className="text-xl font-bold text-gray-900">
+                {product.price.toLocaleString()}€
+              </span>
+              {product.originalprice &&
+                product.originalprice > product.price && (
+                  <span className="text-sm text-gray-500 line-through">
+                    {product.originalprice.toLocaleString()}€
+                  </span>
+                )}
+            </div>
+
+            <div className="flex items-center gap-2">
+              <button className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors">
+                <Heart className="w-4 h-4" />
+              </button>
+
+              <Link href={`/products/${product.id}`}>
+                <button className="p-2 text-gray-400 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition-colors">
+                  <Eye className="w-4 h-4" />
+                </button>
+              </Link>
+
+              <button className="bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600 transition-colors flex items-center gap-2">
+                <ShoppingCart className="w-4 h-4" /> Add
+              </button>
             </div>
           </div>
         </div>

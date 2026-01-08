@@ -1264,7 +1264,7 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
                           onClick={() =>
                             initiateImageRemoval(image.id, image.name, true)
                           }
-                          className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-2 opacity-0 group-hover:opacity-100 transition-all hover:bg-red-600 hover:scale-110 shadow-lg"
+                          className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-2 opacity-100 transition-all hover:bg-red-600 hover:scale-110 shadow-lg"
                           disabled={isLoading}
                           title="Remove image"
                         >

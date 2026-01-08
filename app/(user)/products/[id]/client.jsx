@@ -529,7 +529,7 @@ export default function ProductDetailsClient({ productId }) {
             </div>
 
             {/* Price Display */}
-            <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+            <div className="bg-gray-50 border border-gray-200 rounded-lg py-4 px-0">
               <div className="flex items-baseline gap-3 mb-2">
                 <div className="text-3xl font-bold text-gray-800">
                   {formatPrice(finalPrice * quantity)}

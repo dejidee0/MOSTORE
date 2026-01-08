@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Star, Heart } from "lucide-react";
+import { Star, Heart, MapPin } from "lucide-react";
 import { useWishlist } from "@/hooks/useWishlist";
 import { supabase } from "@/lib/supabase-client";
 import Link from "next/link";
@@ -116,7 +116,7 @@ export default function ProductShowcaseSection() {
             </div>
           </div>
 
-          {/* Product Grid - Jumia Style */}
+          {/* Product Grid */}
           <div className="lg:col-span-9">
             <div className="grid grid-cols-3 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-2 sm:gap-3">
               {products.map((product) => (
@@ -157,13 +157,13 @@ export default function ProductShowcaseSection() {
                     </div>
 
                     {/* Product Info */}
-                    <div className="p-1 space-y-0.5">
+                    <div className="p-2 space-y-1">
                       {/* Product Name */}
                       <h3 className="text-xs font-medium text-gray-900 line-clamp-2 leading-tight">
                         {product.name}
                       </h3>
 
-                      {/* Rating - Only show on larger screens */}
+                      {/* Rating */}
                       <div className="hidden sm:flex items-center gap-1">
                         {renderStars(product.rating || 0)}
                         <span className="text-gray-500 text-xs">
@@ -171,7 +171,7 @@ export default function ProductShowcaseSection() {
                         </span>
                       </div>
 
-                      {/* Price Section */}
+                      {/* Price */}
                       <div className="space-y-0.5">
                         <div className="text-sm font-bold text-gray-900">
                           {formatPrice(product.price)}
@@ -187,6 +187,14 @@ export default function ProductShowcaseSection() {
                           </div>
                         )}
                       </div>
+
+                      {/* Location */}
+                      {product.location && (
+                        <div className="flex items-center gap-1 text-xs text-gray-500 truncate">
+                          <MapPin className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
+                          <span className="truncate">{product.location}</span>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </Link>

@@ -14,6 +14,9 @@ import FeaturedBanners from "@/components/shared/Home/FeaaturedBanners";
 import AutomotiveHeroSection from "@/components/shared/Home/AutomotiveHeroSection";
 import BusinessPartners from "@/components/shared/Home/BrandSection";
 import { FaWhatsapp } from "react-icons/fa";
+import FeaturedAdsSection from "@/components/shared/Home/ads";
+import PremiumAdsSection from "@/components/shared/Home/ads";
+import SponsoredProductsSection from "@/components/shared/Home/ads";
 
 // Lazy-load heavy sections
 const ProductShowcaseSection = dynamic(() =>
@@ -38,7 +41,7 @@ const HomePage = () => {
       try {
         setCategoriesLoading(true);
         const data = await getAllCategories();
-        console.log(data);
+
         setCategories(data);
       } catch (error) {
         console.error("Error loading categories:", error);
@@ -111,6 +114,7 @@ const HomePage = () => {
       <FeaturedBanners />
 
       <ScrollingBanner />
+      <SponsoredProductsSection />
       <CategoriesSection
         categories={categories}
         categoriesLoading={categoriesLoading}

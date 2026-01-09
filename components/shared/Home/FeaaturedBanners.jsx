@@ -5,7 +5,7 @@ export default function FeaturedBanners() {
   const router = useRouter();
 
   return (
-    <section className="py-0 md:py-4 px-4 sm:px-8 lg:px-16 ">
+    <section className="py-0 md:py-4 px-4 sm:px-8 lg:px-2 ">
       <div className="max-w-7xl mx-auto">
         {/* Mobile: Single Row with Horizontal Scroll */}
         <div className="block md:hidden">
@@ -76,7 +76,7 @@ export default function FeaturedBanners() {
         </div>
 
         {/* Desktop: Grid Layout */}
-        <div className="hidden md:grid grid-cols-3 gap-6">
+        <div className="hidden md:grid grid-cols-3 gap-12 w-full">
           {[
             {
               title: "Grab Mega Deals Today",

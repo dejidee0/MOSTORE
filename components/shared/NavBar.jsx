@@ -447,7 +447,7 @@ const NavBar = () => {
 
               <Link href="/products">
                 <button className="hidden lg:flex items-center text-white font-medium hover:text-orange-300 transition-colors duration-200 ml-2">
-                  Shop
+                  Shop Now
                 </button>
               </Link>
               <div className="relative help-dropdown hidden lg:block">

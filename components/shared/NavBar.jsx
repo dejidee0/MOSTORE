@@ -551,6 +551,21 @@ const NavBar = () => {
                 )}
               </div>
               <div className="hidden lg:flex items-center space-x-1 ml-4">
+                {user && (
+                  <button
+                    onClick={() => router.push("/messages")}
+                    className="relative p-2.5 text-gray-300 hover:text-white hover:bg-gray-700 rounded-lg transition-all duration-200"
+                    title="Messages"
+                  >
+                    <Mail className="w-5 h-5" />
+
+                    {unreadCount > 0 && (
+                      <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold rounded-full min-w-[16px] h-4 px-1 flex items-center justify-center">
+                        {unreadCount > 9 ? "9+" : unreadCount}
+                      </span>
+                    )}
+                  </button>
+                )}
                 <Link href="/wishlist">
                   <button
                     className="relative p-3 text-white hover:text-orange-300 hover:bg-gray-700 rounded-xl transition-all duration-200 group"
@@ -567,21 +582,7 @@ const NavBar = () => {
                     </span>
                   </button>
                 </Link>
-                {user && (
-                  <button
-                    onClick={() => router.push("/messages")}
-                    className="relative p-2.5 text-gray-300 hover:text-white hover:bg-gray-700 rounded-lg transition-all duration-200"
-                    title="Messages"
-                  >
-                    <Mail className="w-5 h-5" />
 
-                    {unreadCount > 0 && (
-                      <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold rounded-full min-w-[16px] h-4 px-1 flex items-center justify-center">
-                        {unreadCount > 9 ? "9+" : unreadCount}
-                      </span>
-                    )}
-                  </button>
-                )}
                 <div className="relative profile-dropdown">
                   <button
                     onClick={handleProfileClick}

@@ -686,3 +686,19 @@ nav[data-search-open="true"] + div .dropdown-menu-content {
     line-height: 1.5rem;
   }
 }
+.slider-track {
+  animation: scroll 35s linear infinite;
+}
+
+.slider-track:hover {
+  animation-play-state: paused;
+}
+
+@keyframes scroll {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}

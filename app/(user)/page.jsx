@@ -119,30 +119,9 @@ const HomePage = () => {
         categories={categories}
         categoriesLoading={categoriesLoading}
       />
-      {/* Featured Products */}
-      <section className="py-8 ">
-        <div className="max-w-7xl mx-auto px-4">
-          <motion.div
-            initial={{ opacity: 0, y: 50 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-            viewport={{ once: true }}
-            className="mb-8"
-          >
-            <div className="flex flex-col">
-              <h2 className="text-2xl font-black text-gray-900 mb-0">
-                Featured <span className="text-orange-500">Products</span>
-              </h2>
-              <p className="text-sm m-0 leading-tight">
-                Explore premium products from worldwide stores
-              </p>
-            </div>
-          </motion.div>
-          <ProductGrid />
-        </div>
-      </section>
+
       <ProductShowcaseSection />
-      <ProductSections />
+      {/* <ProductSections /> */}
       <AutomotiveHeroSection />
       <BusinessPartners />
       <BlogLandingSection />

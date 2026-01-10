@@ -77,157 +77,99 @@ export default function SponsoredProductsSection() {
       <div className="max-w-7xl mx-auto px-3">
         {/* Clean Header */}
         <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2">
-              <Megaphone className="w-5 h-5 text-orange-500" />
-              <h2 className="text-xl font-bold text-gray-900">
-                Sponsored Products
-              </h2>
-            </div>
-            <span className="hidden sm:inline-block text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
-              Featured
-            </span>
+          <div className="flex flex-col">
+            <h2 className="text-2xl font-black text-gray-900 mb-0">
+              Featured <span className="text-orange-500">Products</span>
+            </h2>
+            <p className="text-sm m-0 leading-tight">
+              Explore premium products from worldwide stores
+            </p>
           </div>
-          <Link href="/products">
-            <button className="text-sm text-gray-600 hover:text-orange-600 font-medium transition-colors flex items-center gap-1">
-              View all
-              <ArrowRight className="w-4 h-4" />
-            </button>
-          </Link>
         </div>
 
         {/* Products Grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-          {sponsoredProducts.map((product, index) => (
-            <Link key={product.id} href={`/products/${product.id}`}>
-              <div className="group bg-white rounded-lg border border-gray-200 hover:border-orange-300 hover:shadow-lg transition-all duration-300 overflow-hidden">
-                {/* Product Image */}
-                <div className="relative aspect-square bg-gray-50 overflow-hidden">
-                  {product.images?.[0] && (
-                    <Image
-                      src={product.images[0]}
-                      alt={product.name}
-                      fill
-                      className="object-cover group-hover:scale-105 transition-transform duration-300"
-                      sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 16vw"
-                    />
-                  )}
+        {/* Infinite Slider */}
+        <div className="relative overflow-hidden">
+          <div className="slider-track flex w-max gap-3">
+            {[...sponsoredProducts, ...sponsoredProducts].map(
+              (product, index) => (
+                <Link
+                  key={`${product.id}-${index}`}
+                  href={`/products/${product.id}`}
+                  className="flex-shrink-0 w-[160px] sm:w-[200px] lg:w-[220px]"
+                >
+                  <div className="group bg-white rounded-lg border border-gray-200 hover:border-orange-300 hover:shadow-lg transition-all duration-300 overflow-hidden">
+                    {/* Product Image */}
+                    <div className="relative aspect-square bg-gray-50 overflow-hidden">
+                      {product.images?.[0] && (
+                        <Image
+                          src={product.images[0]}
+                          alt={product.name}
+                          fill
+                          className="object-cover group-hover:scale-105 transition-transform duration-300"
+                        />
+                      )}
 
-                  {/* Sponsored Badge - Subtle */}
-                  <div className="absolute top-2 left-2">
-                    <div className="bg-gradient-to-r from-orange-500 to-amber-500 text-white text-[10px] font-semibold px-2 py-0.5 rounded flex items-center gap-1">
-                      <Megaphone className="w-2.5 h-2.5" />
-                      Ad
+                      {/* Sponsored Badge */}
+                      <div className="absolute top-2 left-2">
+                        <div className="bg-gradient-to-r from-orange-500 to-amber-500 text-white text-[10px] font-semibold px-2 py-0.5 rounded flex items-center gap-1">
+                          <Megaphone className="w-2.5 h-2.5" />
+                          Ad
+                        </div>
+                      </div>
+
+                      {/* Wishlist */}
+                      <button
+                        onClick={(e) => handleWishlistClick(product, e)}
+                        className="absolute bottom-2 right-2 p-1.5 bg-white/90 rounded-full opacity-0 group-hover:opacity-100 transition"
+                      >
+                        <Heart
+                          className={`w-3.5 h-3.5 ${
+                            isInWishlist(product.id)
+                              ? "fill-red-500 text-red-500"
+                              : "text-gray-600"
+                          }`}
+                        />
+                      </button>
                     </div>
-                  </div>
 
-                  {/* Discount Badge */}
-                  {product.discount && (
-                    <div className="absolute top-2 right-2 bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded">
-                      -{product.discount}%
-                    </div>
-                  )}
+                    {/* Info */}
+                    <div className="p-2.5 space-y-1 border-t border-gray-300">
+                      <h3 className="text-xs font-medium line-clamp-2">
+                        {product.name}
+                      </h3>
 
-                  {/* Wishlist Heart */}
-                  <button
-                    onClick={(e) => handleWishlistClick(product, e)}
-                    className="absolute bottom-2 right-2 p-1.5 bg-white/90 backdrop-blur-sm rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-white shadow-sm"
-                  >
-                    <Heart
-                      className={`w-3.5 h-3.5 ${
-                        isInWishlist(product.id)
-                          ? "fill-red-500 text-red-500"
-                          : "text-gray-600"
-                      }`}
-                    />
-                  </button>
-
-                  {/* Premium Indicator - Top Product */}
-                  {index === 0 && (
-                    <div className="absolute bottom-2 left-2 bg-amber-500 text-white text-[10px] font-bold px-2 py-0.5 rounded flex items-center gap-1">
-                      <TrendingUp className="w-2.5 h-2.5" />
-                      Top
-                    </div>
-                  )}
-                </div>
-
-                {/* Product Info */}
-                <div className="p-2.5 space-y-1.5">
-                  {/* Category - Small */}
-                  {product.category && (
-                    <div className="text-[10px] text-gray-500 font-medium uppercase tracking-wide truncate">
-                      {product.category}
-                    </div>
-                  )}
-
-                  {/* Product Name */}
-                  <h3 className="text-xs font-semibold text-gray-900 line-clamp-2 leading-tight">
-                    {product.name}
-                  </h3>
-
-                  {/* Rating - Compact */}
-                  {product.rating > 0 && (
-                    <div className="hidden sm:flex items-center gap-1">
-                      <Star className="w-3 h-3 text-orange-400 fill-orange-400" />
-                      <span className="text-[10px] text-gray-600 font-medium">
-                        {product.rating}
-                      </span>
-                      <span className="text-[10px] text-gray-400">
-                        ({product.total_reviews || 0})
-                      </span>
-                    </div>
-                  )}
-
-                  {/* Price */}
-                  <div className="space-y-0.5">
-                    <div className="flex items-baseline gap-1.5">
-                      <span className="text-sm font-bold text-gray-900">
+                      <span className="text-sm font-bold">
                         {formatPrice(product.price)}
                       </span>
-                      {product.originalprice && (
-                        <span className="text-[10px] text-gray-400 line-through">
-                          {formatPrice(product.originalprice)}
-                        </span>
-                      )}
-                    </div>
-
-                    {/* Stock Status - Minimal */}
-                    {product.stock_quantity !== undefined &&
-                      product.stock_quantity > 0 && (
-                        <div className="flex items-center gap-1">
-                          <div className="w-1.5 h-1.5 rounded-full bg-green-500"></div>
-                          <span className="text-[10px] text-green-700 font-medium">
-                            In stock
-                          </span>
+                      {product.location && (
+                        <div className="flex items-center gap-1 text-[10px] text-gray-500">
+                          <svg
+                            className="w-3 h-3 text-gray-400"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              d="M12 11.5a2.5 2.5 0 100-5 2.5 2.5 0 000 5z"
+                            />
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              d="M19 11.5c0 5-7 10-7 10s-7-5-7-10a7 7 0 1114 0z"
+                            />
+                          </svg>
+                          <span className="truncate">{product.location}</span>
                         </div>
                       )}
+                    </div>
                   </div>
-                </div>
-
-                {/* Hover CTA */}
-                <div className="px-2.5 pb-2.5 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                  <button className="w-full bg-orange-500 text-white text-xs font-semibold py-2 rounded hover:bg-orange-600 transition-colors">
-                    View Details
-                  </button>
-                </div>
-              </div>
-            </Link>
-          ))}
-        </div>
-
-        {/* Bottom Info - Subtle */}
-        <div className="mt-6 flex items-center justify-center">
-          <div className="flex items-center gap-2 text-xs text-gray-500">
-            <Megaphone className="w-3.5 h-3.5 text-gray-400" />
-            <span>
-              These are sponsored listings.{" "}
-              <Link
-                href="#"
-                className="text-orange-600 hover:text-orange-700 font-medium"
-              >
-                Advertise your products
-              </Link>
-            </span>
+                </Link>
+              )
+            )}
           </div>
         </div>
       </div>

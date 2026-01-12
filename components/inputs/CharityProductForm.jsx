@@ -845,34 +845,104 @@ export default function CharityProductForm({
     setIsLoading(true);
 
     try {
-      // Prepare FormData for server action
-      const submitData = {
-        ...formData,
-        images: imageFiles, // Array of File objects
-        existingImages: existingImages.map((img) => img.url),
-        colorVariants,
-        sizeVariants,
-        storageOptions,
-        memoryOptions,
-        simTypes,
+      // Extract files from images array that need to be uploaded
+      const filesToUpload = images.map((img) => img.file).filter(Boolean);
+
+      const uploadedImageUrls = [];
+      for (const file of filesToUpload) {
+        const fileName = `${Date.now()}-${crypto.randomUUID()}-${file.name}`;
+        const { data, error } = await supabase.storage
+          .from("product-images")
+          .upload(fileName, file);
+
+        if (error) {
+          console.error("Image upload error:", error);
+          throw new Error("Image upload failed: " + error.message);
+        }
+
+        const { data: publicUrlData } = supabase.storage
+          .from("product-images")
+          .getPublicUrl(fileName);
+
+        if (!publicUrlData?.publicUrl) {
+          throw new Error("Failed to get public URL for uploaded image");
+        }
+
+        uploadedImageUrls.push(publicUrlData.publicUrl);
+      }
+
+      // Combine existing images with newly uploaded ones
+      const allImages = [
+        ...existingImages.map((img) => img.url),
+        ...uploadedImageUrls,
+      ];
+
+      // Get location
+      const location = await getLocationFromIP();
+
+      // Prepare data for database
+      const safeArray = (arr) => (Array.isArray(arr) ? arr : []);
+
+      const finalColorVariants = safeArray(colorVariants);
+      const finalSizeVariants = safeArray(sizeVariants);
+      const finalStorageOptions = safeArray(storageOptions);
+      const finalMemoryOptions = safeArray(memoryOptions);
+      const finalSimTypes = safeArray(simTypes);
+
+      const productData = {
+        name: formData.name,
+        slug: formData.slug,
+        description: formData.description,
+        short_description: formData.short_description || null,
+        sku: formData.sku,
+        brand: formData.brand || null,
+        condition: formData.condition,
+        location: location || null,
+        supplier_id: authUser.id,
+        product_type: "charity", // Important: Mark as charity product
+        price: null, // Charity products don't have prices
+        stock_quantity: parseInt(formData.stock_quantity, 10),
+        category_id: formData.category_id
+          ? parseInt(formData.category_id, 10)
+          : null,
+        is_active: formData.is_active,
+        is_featured: formData.is_featured,
+        images: allImages,
+        colors: finalColorVariants.map((c) => c.name),
+        sizes: finalSizeVariants.map((s) => s.name),
+        color_variants: finalColorVariants,
+        size_variants: finalSizeVariants,
+        storage_options: finalStorageOptions,
+        memory_options: finalMemoryOptions,
+        sim_types: finalSimTypes,
       };
 
       let result;
       if (isEditMode) {
-        // Extract only new images that need to be uploaded
-        const newImageFiles = images
-          .filter((img) => img.isNew)
-          .map((img) => img.file);
-        result = await updateCharityProduct(productToEdit.id, {
-          ...submitData,
-          newImages: newImageFiles,
-        });
-      } else {
-        result = await createCharityProduct(submitData);
-      }
+        const { data, error } = await supabase
+          .from("products")
+          .update(productData)
+          .eq("id", productToEdit.id)
+          .select();
 
-      if (!result.success) {
-        throw new Error(result.error);
+        if (error) {
+          console.error("❌ Update error:", error);
+          throw new Error("Failed to update charity product: " + error.message);
+        }
+
+        result = data;
+      } else {
+        const { data, error } = await supabase
+          .from("products")
+          .insert([productData])
+          .select();
+
+        if (error) {
+          console.error("❌ Insert error:", error);
+          throw new Error("Failed to add charity product: " + error.message);
+        }
+
+        result = data;
       }
 
       // Clear autosave
@@ -882,14 +952,16 @@ export default function CharityProductForm({
         console.error("Failed to clear autosave:", err);
       }
 
-      setSuccess(result.message);
+      setSuccess(
+        `Charity product ${isEditMode ? "updated" : "added"} successfully!`
+      );
 
       setTimeout(() => {
         onClose();
         resetForm();
       }, 2000);
     } catch (err) {
-      console.error("Submit error:", err);
+      console.error("💥 Submit error:", err);
       setError(
         err.message ||
           `Failed to ${isEditMode ? "update" : "add"} charity product`
@@ -898,7 +970,6 @@ export default function CharityProductForm({
       setIsLoading(false);
     }
   };
-
   // ... (copy remaining helper functions from original ProductForm)
 
   if (!isOpen) return null;

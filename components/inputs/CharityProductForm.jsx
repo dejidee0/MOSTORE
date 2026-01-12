@@ -1,30 +1,36 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef, useMemo } from "react";
+import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { supabase } from "@/lib/supabase-client";
 import {
   Upload,
   X,
   Loader2,
   Plus,
-  Check,
-  X as XIcon,
   Package,
   Save,
   Palette,
-  DollarSign,
   Smartphone,
   HardDrive,
   Cpu,
   Antenna,
   Trash2,
   AlertCircle,
+  Heart,
+  Target,
+  Calendar,
 } from "lucide-react";
 import { v4 as uuidv4 } from "uuid";
 import RichTextEditor from "../rich-text-editor";
 import { AnimatePresence, motion } from "framer-motion";
+import {
+  createCharityProduct,
+  updateCharityProduct,
+} from "@/app/actions/charityActions";
+import { Check } from "lucide-react";
 
-// Predefined color palette with common colors
+// Import all the helper components and constants from original ProductForm
+// (ConfirmationModal, PRESET_COLORS, etc.)
 const PRESET_COLORS = [
   { name: "Black", hex: "#000000" },
   { name: "White", hex: "#FFFFFF" },
@@ -36,7 +42,7 @@ const PRESET_COLORS = [
   { name: "Yellow", hex: "#FFFF00" },
   { name: "Orange", hex: "#FFA500" },
   { name: "Purple", hex: "#800080" },
-  { name: "Pink", hex: "#FFC0CB" },
+  { name: "orange", hex: "#FFC0CB" },
   { name: "Brown", hex: "#A52A2A" },
   { name: "Gold", hex: "#FFD700" },
   { name: "Rose Gold", hex: "#B76E79" },
@@ -44,7 +50,6 @@ const PRESET_COLORS = [
   { name: "Teal", hex: "#008080" },
 ];
 
-// Confirmation Modal Component
 const ConfirmationModal = ({
   isOpen,
   onClose,
@@ -114,8 +119,13 @@ const ConfirmationModal = ({
   );
 };
 
-export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
-  const AUTOSAVE_KEY = "product_form_autosave";
+export default function CharityProductForm({
+  isOpen,
+  onClose,
+  productToEdit,
+  user,
+}) {
+  const AUTOSAVE_KEY = "charity_product_form_autosave";
   const AUTOSAVE_DEBOUNCE = 2000;
 
   const [formData, setFormData] = useState({
@@ -123,19 +133,18 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
     slug: "",
     description: "",
     short_description: "",
-    price: "",
-    originalprice: "",
+    charity_description: "",
+
     sku: "",
     brand: "",
     stock_quantity: "",
     category_id: "",
     condition: "new",
-    discount: "",
-    rating: "",
     is_active: true,
     is_featured: false,
   });
 
+  // ... (copy all state declarations from original ProductForm)
   const [colorVariants, setColorVariants] = useState([]);
   const [sizeVariants, setSizeVariants] = useState([]);
   const [storageOptions, setStorageOptions] = useState([]);
@@ -145,18 +154,15 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
   const [colorInput, setColorInput] = useState({
     name: "",
     hex: "#000000",
-    priceAdjustment: "",
   });
-  const [sizeInput, setSizeInput] = useState({ name: "", priceAdjustment: "" });
+  const [sizeInput, setSizeInput] = useState({ name: "" });
   const [storageInput, setStorageInput] = useState({
     value: "",
-    priceAdjustment: "",
   });
   const [memoryInput, setMemoryInput] = useState({
     value: "",
-    priceAdjustment: "",
   });
-  const [simInput, setSimInput] = useState({ value: "", priceAdjustment: "" });
+  const [simInput, setSimInput] = useState({ value: "" });
 
   const [images, setImages] = useState([]);
   const [imageFiles, setImageFiles] = useState([]);
@@ -174,7 +180,6 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
   const [lastSaved, setLastSaved] = useState(null);
   const [showColorPicker, setShowColorPicker] = useState(false);
 
-  // Image deletion state
   const [imageToDelete, setImageToDelete] = useState(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isDeletingImage, setIsDeletingImage] = useState(false);
@@ -195,8 +200,8 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
     );
   }, [selectedCategory]);
 
-  // ... (keep all existing useEffects and functions until handleImageChange)
-
+  // ... (copy all helper functions and useEffects from original ProductForm)
+  // But modify the handleSubmit function
   const saveToLocalStorage = useCallback(() => {
     if (!isEditMode && isOpen) {
       try {
@@ -359,6 +364,7 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
   useEffect(() => {
     const fetchUser = async () => {
       if (!authUser) {
+        console.log("No user auth");
         try {
           const {
             data: { user: fetchedUser },
@@ -419,8 +425,7 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
         slug: productToEdit.slug,
         description: productToEdit.description,
         short_description: productToEdit.short_description || "",
-        price: productToEdit.price.toString(),
-        originalprice: productToEdit.originalprice?.toString() || "",
+
         sku: productToEdit.sku,
         brand: productToEdit.brand || "",
         stock_quantity: productToEdit.stock_quantity.toString(),
@@ -682,10 +687,9 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
       const newColor = {
         name: colorInput.name.trim(),
         hex: colorInput.hex,
-        priceAdjustment: safeParseFloat(colorInput.priceAdjustment),
       };
       setColorVariants((prev) => [...prev, newColor]);
-      setColorInput({ name: "", hex: "#000000", priceAdjustment: "" });
+      setColorInput({ name: "", hex: "#000000" });
     }
   };
 
@@ -702,10 +706,9 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
     if (sizeInput.name.trim()) {
       const newSize = {
         name: sizeInput.name.trim(),
-        priceAdjustment: safeParseFloat(sizeInput.priceAdjustment),
       };
       setSizeVariants((prev) => [...prev, newSize]);
-      setSizeInput({ name: "", priceAdjustment: "" });
+      setSizeInput({ name: "" });
     }
   };
 
@@ -717,10 +720,9 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
     if (storageInput.value.trim()) {
       const newStorage = {
         value: storageInput.value.trim(),
-        priceAdjustment: safeParseFloat(storageInput.priceAdjustment),
       };
       setStorageOptions((prev) => [...prev, newStorage]);
-      setStorageInput({ value: "", priceAdjustment: "" });
+      setStorageInput({ value: "" });
     }
   };
 
@@ -732,10 +734,9 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
     if (memoryInput.value.trim()) {
       const newMemory = {
         value: memoryInput.value.trim(),
-        priceAdjustment: safeParseFloat(memoryInput.priceAdjustment),
       };
       setMemoryOptions((prev) => [...prev, newMemory]);
-      setMemoryInput({ value: "", priceAdjustment: "" });
+      setMemoryInput({ value: "" });
     }
   };
 
@@ -747,10 +748,9 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
     if (simInput.value.trim()) {
       const newSim = {
         value: simInput.value.trim(),
-        priceAdjustment: safeParseFloat(simInput.priceAdjustment),
       };
       setSimTypes((prev) => [...prev, newSim]);
-      setSimInput({ value: "", priceAdjustment: "" });
+      setSimInput({ value: "" });
     }
   };
 
@@ -795,63 +795,6 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
     }
   };
 
-  const validateForm = () => {
-    const required = [
-      "name",
-      "description",
-      "price",
-      "sku",
-      "stock_quantity",
-      "category_id",
-      "condition",
-    ];
-    const missing = required.filter((field) => !formData[field]);
-
-    if (missing.length > 0) {
-      setError(`Please fill in required fields: ${missing.join(", ")}`);
-      return false;
-    }
-
-    if (images.length + existingImages.length === 0) {
-      setError("Please add at least one product image");
-      return false;
-    }
-
-    if (isNaN(Number(formData.price)) || Number(formData.price) <= 0) {
-      setError("Price must be a positive number");
-      return false;
-    }
-
-    if (
-      formData.originalprice &&
-      (isNaN(Number(formData.originalprice)) ||
-        Number(formData.originalprice) <= 0)
-    ) {
-      setError("Original price must be a positive number if provided");
-      return false;
-    }
-
-    if (
-      formData.discount &&
-      (isNaN(Number(formData.discount)) ||
-        Number(formData.discount) < 0 ||
-        Number(formData.discount) > 100)
-    ) {
-      setError("Discount must be between 0 and 100 if provided");
-      return false;
-    }
-
-    if (
-      isNaN(Number(formData.stock_quantity)) ||
-      Number(formData.stock_quantity) < 0
-    ) {
-      setError("Stock quantity must be a non-negative number");
-      return false;
-    }
-
-    return true;
-  };
-
   const getLocationFromIP = async () => {
     try {
       const response = await fetch("https://ipapi.co/json/");
@@ -872,161 +815,93 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
 
     if (!authUser) {
       setError("User not authenticated");
-      console.error("No authenticated user available");
       return;
     }
 
     setError("");
     setSuccess("");
 
-    if (!validateForm()) {
-      console.error("Form validation failed");
+    // Validate form
+    const required = [
+      "name",
+      "description",
+      "sku",
+      "stock_quantity",
+      "category_id",
+      "condition",
+    ];
+    const missing = required.filter((field) => !formData[field]);
+
+    if (missing.length > 0) {
+      setError(`Please fill in required fields: ${missing.join(", ")}`);
+      return;
+    }
+
+    if (images.length + existingImages.length === 0) {
+      setError("Please add at least one product image");
       return;
     }
 
     setIsLoading(true);
 
     try {
-      if (!isEditMode) {
-        const { data: existingSKU, error: skuError } = await supabase
-          .from("products")
-          .select("sku")
-          .eq("sku", formData.sku);
-
-        if (skuError) {
-          throw new Error("Error checking SKU: " + skuError.message);
-        }
-
-        if (existingSKU && existingSKU.length > 0) {
-          const newSKU = await generateRandomSKU();
-          setFormData((prev) => ({ ...prev, sku: newSKU }));
-          throw new Error("SKU already exists, generated a new one");
-        }
-      }
-
-      // Extract files from images array (files that haven't been uploaded yet)
-      const filesToUpload = images.map((img) => img.file).filter(Boolean);
-
-      const uploadedImageUrls = [];
-      for (const file of filesToUpload) {
-        const fileName = `${Date.now()}-${uuidv4()}-${file.name}`;
-        const { data, error } = await supabase.storage
-          .from("product-images")
-          .upload(fileName, file);
-
-        if (error) {
-          console.error("Image upload error:", error);
-          throw new Error("Image upload failed: " + error.message);
-        }
-
-        const { data: publicUrlData } = supabase.storage
-          .from("product-images")
-          .getPublicUrl(fileName);
-
-        if (!publicUrlData?.publicUrl) {
-          throw new Error("Failed to get public URL for uploaded image");
-        }
-
-        uploadedImageUrls.push(publicUrlData.publicUrl);
-      }
-
-      const allImages = [
-        ...existingImages.map((img) => img.url),
-        ...uploadedImageUrls,
-      ];
-
-      const location = await getLocationFromIP();
-
-      const safeArray = (arr) => (Array.isArray(arr) ? arr : []);
-
-      const finalColorVariants = safeArray(colorVariants);
-      const finalSizeVariants = safeArray(sizeVariants);
-      const finalStorageOptions = safeArray(storageOptions);
-      const finalMemoryOptions = safeArray(memoryOptions);
-      const finalSimTypes = safeArray(simTypes);
-
-      const productData = {
-        name: formData.name,
-        slug: formData.slug,
-        description: formData.description,
-        short_description: formData.short_description || null,
-        sku: formData.sku,
-        brand: formData.brand || null,
-        condition: formData.condition,
-        location: location || null,
-        supplier_id: authUser.id,
-        price: parseFloat(formData.price),
-        originalprice: formData.originalprice
-          ? parseFloat(formData.originalprice)
-          : null,
-        discount: formData.discount ? parseInt(formData.discount, 10) : null,
-        rating: formData.rating ? parseInt(formData.rating, 10) : null,
-        stock_quantity: parseInt(formData.stock_quantity, 10),
-        category_id: formData.category_id
-          ? parseInt(formData.category_id, 10)
-          : null,
-        is_active: formData.is_active,
-        is_featured: formData.is_featured,
-        images: allImages,
-        colors: finalColorVariants.map((c) => c.name),
-        sizes: finalSizeVariants.map((s) => s.name),
-        color_variants: finalColorVariants,
-        size_variants: finalSizeVariants,
-        storage_options: finalStorageOptions,
-        memory_options: finalMemoryOptions,
-        sim_types: finalSimTypes,
+      // Prepare FormData for server action
+      const submitData = {
+        ...formData,
+        images: imageFiles, // Array of File objects
+        existingImages: existingImages.map((img) => img.url),
+        colorVariants,
+        sizeVariants,
+        storageOptions,
+        memoryOptions,
+        simTypes,
       };
 
       let result;
       if (isEditMode) {
-        const { data, error } = await supabase
-          .from("products")
-          .update(productData)
-          .eq("id", productToEdit.id)
-          .select();
-
-        if (error) {
-          console.error("❌ Update error:", error);
-          throw new Error("Failed to update product: " + error.message);
-        }
-
-        result = data;
+        // Extract only new images that need to be uploaded
+        const newImageFiles = images
+          .filter((img) => img.isNew)
+          .map((img) => img.file);
+        result = await updateCharityProduct(productToEdit.id, {
+          ...submitData,
+          newImages: newImageFiles,
+        });
       } else {
-        const { data, error } = await supabase
-          .from("products")
-          .insert([productData])
-          .select();
-
-        if (error) {
-          console.error("❌ Insert error:", error);
-          throw new Error("Failed to add product: " + error.message);
-        }
-
-        result = data;
+        result = await createCharityProduct(submitData);
       }
 
+      if (!result.success) {
+        throw new Error(result.error);
+      }
+
+      // Clear autosave
       try {
         localStorage.removeItem(AUTOSAVE_KEY);
       } catch (err) {
         console.error("Failed to clear autosave:", err);
       }
 
-      setSuccess(`Product ${isEditMode ? "updated" : "added"} successfully!`);
+      setSuccess(result.message);
 
       setTimeout(() => {
         onClose();
         resetForm();
       }, 2000);
     } catch (err) {
-      console.error("💥 Submit error:", err);
+      console.error("Submit error:", err);
       setError(
-        err.message || `Failed to ${isEditMode ? "update" : "add"} product`
+        err.message ||
+          `Failed to ${isEditMode ? "update" : "add"} charity product`
       );
     } finally {
       setIsLoading(false);
     }
   };
 
+  // ... (copy remaining helper functions from original ProductForm)
+
+  if (!isOpen) return null;
   const resetForm = () => {
     imagePreviewURLs.current.forEach((url) => {
       if (url.startsWith("blob:")) {
@@ -1040,8 +915,7 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
       slug: "",
       description: "",
       short_description: "",
-      price: "",
-      originalprice: "",
+
       sku: "",
       brand: "",
       stock_quantity: "",
@@ -1060,11 +934,11 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
     setStorageOptions([]);
     setMemoryOptions([]);
     setSimTypes([]);
-    setColorInput({ name: "", hex: "#000000", priceAdjustment: "" });
-    setSizeInput({ name: "", priceAdjustment: "" });
-    setStorageInput({ value: "", priceAdjustment: "" });
-    setMemoryInput({ value: "", priceAdjustment: "" });
-    setSimInput({ value: "", priceAdjustment: "" });
+    setColorInput({ name: "", hex: "#000000" });
+    setSizeInput({ name: "" });
+    setStorageInput({ value: "" });
+    setMemoryInput({ value: "" });
+    setSimInput({ value: "" });
     setSelectedCategory(null);
     setError("");
     setSuccess("");
@@ -1087,8 +961,6 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
     }
   };
 
-  if (!isOpen) return null;
-
   return (
     <div className="fixed inset-0 z-50">
       <div
@@ -1097,17 +969,18 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
       />
       <div className="flex min-h-full items-center justify-center p-4">
         <div className="relative bg-white rounded-3xl shadow-2xl w-full max-w-6xl max-h-[95vh] overflow-y-auto">
-          {/* Header - keep same */}
-          <div className="bg-gradient-to-r from-orange-500 to-orange-600 px-8 py-6 sticky top-0 z-10">
+          {/* Header */}
+          <div className="bg-gradient-to-r from-orange-500 to-rose-600 px-8 py-6 sticky top-0 z-10">
             <div className="flex items-center justify-between">
               <div>
-                <h2 className="text-3xl font-bold text-white">
-                  {isEditMode ? "Edit Product" : "Add New Product"}
+                <h2 className="text-3xl font-bold text-white flex items-center gap-2">
+                  <Heart className="w-8 h-8" />
+                  {isEditMode ? "Edit Charity Product" : "Add Charity Product"}
                 </h2>
                 <p className="text-orange-100 mt-1">
                   {isEditMode
-                    ? "Update this product in your catalog"
-                    : "Create a new product for your catalog"}
+                    ? "Update this charitable item"
+                    : "Create a new item for charity"}
                 </p>
                 {lastSaved && !isEditMode && (
                   <p className="text-orange-200 text-sm mt-2 flex items-center gap-1">
@@ -1126,14 +999,7 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
             </div>
           </div>
 
-          <form
-            onSubmit={handleSubmit}
-            method="POST"
-            action=""
-            className="p-6 space-y-6"
-          >
-            {/* Keep all form sections the same until Product Images */}
-
+          <form onSubmit={handleSubmit} className="p-6 space-y-6">
             {error && (
               <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md">
                 {error}
@@ -1365,78 +1231,11 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
               </div>
             </div>
 
-            {/* Pricing */}
             <div className="border-b pb-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                Pricing & Stock
+                Stock
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Base Price <span className="text-orange-500">*</span>
-                  </label>
-                  <div className="relative">
-                    <span className="absolute left-3 top-2 text-gray-500">
-                      €
-                    </span>
-                    <input
-                      type="number"
-                      name="price"
-                      value={formData.price}
-                      onChange={handleInputChange}
-                      placeholder="99.99"
-                      step="0.01"
-                      min="0"
-                      className="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                      disabled={isLoading}
-                      required
-                    />
-                  </div>
-                  <p className="text-xs text-gray-500 mt-1">
-                    Variants may adjust this price
-                  </p>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Original Price{" "}
-                    <span className="text-gray-400">(Optional)</span>
-                  </label>
-                  <div className="relative">
-                    <span className="absolute left-3 top-2 text-gray-500">
-                      €
-                    </span>
-                    <input
-                      type="number"
-                      name="originalprice"
-                      value={formData.originalprice}
-                      onChange={handleInputChange}
-                      placeholder="149.99"
-                      step="0.01"
-                      min="0"
-                      className="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                      disabled={isLoading}
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Discount % <span className="text-gray-400">(Optional)</span>
-                  </label>
-                  <input
-                    type="number"
-                    name="discount"
-                    value={formData.discount}
-                    onChange={handleInputChange}
-                    placeholder="25"
-                    min="0"
-                    max="100"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                    disabled={isLoading}
-                  />
-                </div>
-
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Stock Quantity <span className="text-orange-500">*</span>
@@ -1455,8 +1254,6 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
                 </div>
               </div>
             </div>
-
-            {/* ... Keep all other form sections until Product Images ... */}
 
             {/* Enhanced Product Images Section */}
             <div className="border-b pb-6">
@@ -1604,8 +1401,7 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
                 </span>
               </h3>
               <p className="text-sm text-gray-600 mb-4">
-                Add color options with visual preview and optional price
-                adjustments
+                Add color options with visual preview
               </p>
 
               <div className="space-y-4">
@@ -1657,35 +1453,6 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
                         <Palette size={20} />
                       </button>
                     </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Price Adjustment{" "}
-                      <span className="text-gray-400">(€)</span>
-                    </label>
-                    <div className="relative">
-                      <span className="absolute left-3 top-2 text-gray-500">
-                        €
-                      </span>
-                      <input
-                        type="number"
-                        value={colorInput.priceAdjustment}
-                        onChange={(e) =>
-                          setColorInput((prev) => ({
-                            ...prev,
-                            priceAdjustment: e.target.value,
-                          }))
-                        }
-                        placeholder="0.00"
-                        step="0.01"
-                        className="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
-                        disabled={isLoading}
-                      />
-                    </div>
-                    <p className="text-xs text-gray-500 mt-1">
-                      +/- amount from base price
-                    </p>
                   </div>
                 </div>
 
@@ -1740,12 +1507,7 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
                         <span className="text-sm font-medium">
                           {color.name}
                         </span>
-                        {color.priceAdjustment !== 0 && (
-                          <span className="text-xs text-gray-600 bg-gray-100 px-2 py-0.5 rounded">
-                            {color.priceAdjustment > 0 ? "+" : ""}€
-                            {color.priceAdjustment.toFixed(2)}
-                          </span>
-                        )}
+
                         <button
                           type="button"
                           onClick={() => removeColorVariant(index)}
@@ -1770,9 +1532,7 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
                   (Optional)
                 </span>
               </h3>
-              <p className="text-sm text-gray-600 mb-4">
-                Add size options with optional price adjustments
-              </p>
+              <p className="text-sm text-gray-600 mb-4">Add size options</p>
 
               <div className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1798,39 +1558,6 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
                       }
                     />
                   </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Price Adjustment{" "}
-                      <span className="text-gray-400">(€)</span>
-                    </label>
-                    <div className="relative">
-                      <span className="absolute left-3 top-2 text-gray-500">
-                        €
-                      </span>
-                      <input
-                        type="number"
-                        value={sizeInput.priceAdjustment}
-                        onChange={(e) =>
-                          setSizeInput((prev) => ({
-                            ...prev,
-                            priceAdjustment: e.target.value,
-                          }))
-                        }
-                        placeholder="0.00"
-                        step="0.01"
-                        className="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
-                        disabled={isLoading}
-                        onKeyPress={(e) =>
-                          e.key === "Enter" &&
-                          (e.preventDefault(), addSizeVariant())
-                        }
-                      />
-                    </div>
-                    <p className="text-xs text-gray-500 mt-1">
-                      +/- amount from base price
-                    </p>
-                  </div>
                 </div>
 
                 <button
@@ -1851,12 +1578,7 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
                         className="inline-flex items-center gap-2 px-3 py-2 bg-white border border-gray-200 rounded-lg"
                       >
                         <span className="text-sm font-medium">{size.name}</span>
-                        {size.priceAdjustment !== 0 && (
-                          <span className="text-xs text-gray-600 bg-gray-100 px-2 py-0.5 rounded">
-                            {size.priceAdjustment > 0 ? "+" : ""}€
-                            {size.priceAdjustment.toFixed(2)}
-                          </span>
-                        )}
+
                         <button
                           type="button"
                           onClick={() => removeSizeVariant(index)}
@@ -1883,8 +1605,7 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
                   </span>
                 </h3>
                 <p className="text-sm text-gray-600 mb-4">
-                  Add technical specs for mobile devices and computers with
-                  optional price adjustments
+                  Add technical specs for mobile devices and computers
                 </p>
 
                 {/* Storage Options */}
@@ -1916,35 +1637,6 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
                         }
                       />
                     </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Price Adjustment{" "}
-                        <span className="text-gray-400">(€)</span>
-                      </label>
-                      <div className="relative">
-                        <span className="absolute left-3 top-2 text-gray-500">
-                          €
-                        </span>
-                        <input
-                          type="number"
-                          value={storageInput.priceAdjustment}
-                          onChange={(e) =>
-                            setStorageInput((prev) => ({
-                              ...prev,
-                              priceAdjustment: e.target.value,
-                            }))
-                          }
-                          placeholder="0.00"
-                          step="0.01"
-                          className="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
-                          disabled={isLoading}
-                          onKeyPress={(e) =>
-                            e.key === "Enter" &&
-                            (e.preventDefault(), addStorageOption())
-                          }
-                        />
-                      </div>
-                    </div>
                   </div>
                   <button
                     type="button"
@@ -1964,12 +1656,7 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
                         >
                           <HardDrive className="w-4 h-4" />
                           <span className="font-medium">{storage.value}</span>
-                          {storage.priceAdjustment !== 0 && (
-                            <span className="text-xs text-blue-700 bg-blue-100 px-2 py-0.5 rounded">
-                              {storage.priceAdjustment > 0 ? "+" : ""}€
-                              {storage.priceAdjustment.toFixed(2)}
-                            </span>
-                          )}
+
                           <button
                             type="button"
                             onClick={() => removeStorageOption(index)}
@@ -2013,35 +1700,6 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
                         }
                       />
                     </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Price Adjustment{" "}
-                        <span className="text-gray-400">(€)</span>
-                      </label>
-                      <div className="relative">
-                        <span className="absolute left-3 top-2 text-gray-500">
-                          €
-                        </span>
-                        <input
-                          type="number"
-                          value={memoryInput.priceAdjustment}
-                          onChange={(e) =>
-                            setMemoryInput((prev) => ({
-                              ...prev,
-                              priceAdjustment: e.target.value,
-                            }))
-                          }
-                          placeholder="0.00"
-                          step="0.01"
-                          className="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
-                          disabled={isLoading}
-                          onKeyPress={(e) =>
-                            e.key === "Enter" &&
-                            (e.preventDefault(), addMemoryOption())
-                          }
-                        />
-                      </div>
-                    </div>
                   </div>
                   <button
                     type="button"
@@ -2061,12 +1719,7 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
                         >
                           <Cpu className="w-4 h-4" />
                           <span className="font-medium">{memory.value}</span>
-                          {memory.priceAdjustment !== 0 && (
-                            <span className="text-xs text-blue-700 bg-blue-100 px-2 py-0.5 rounded">
-                              {memory.priceAdjustment > 0 ? "+" : ""}€
-                              {memory.priceAdjustment.toFixed(2)}
-                            </span>
-                          )}
+
                           <button
                             type="button"
                             onClick={() => removeMemoryOption(index)}
@@ -2110,35 +1763,6 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
                         }
                       />
                     </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Price Adjustment{" "}
-                        <span className="text-gray-400">(€)</span>
-                      </label>
-                      <div className="relative">
-                        <span className="absolute left-3 top-2 text-gray-500">
-                          €
-                        </span>
-                        <input
-                          type="number"
-                          value={simInput.priceAdjustment}
-                          onChange={(e) =>
-                            setSimInput((prev) => ({
-                              ...prev,
-                              priceAdjustment: e.target.value,
-                            }))
-                          }
-                          placeholder="0.00"
-                          step="0.01"
-                          className="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
-                          disabled={isLoading}
-                          onKeyPress={(e) =>
-                            e.key === "Enter" &&
-                            (e.preventDefault(), addSimType())
-                          }
-                        />
-                      </div>
-                    </div>
                   </div>
                   <button
                     type="button"
@@ -2158,12 +1782,7 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
                         >
                           <Antenna className="w-4 h-4" />
                           <span className="font-medium">{sim.value}</span>
-                          {sim.priceAdjustment !== 0 && (
-                            <span className="text-xs text-blue-700 bg-blue-100 px-2 py-0.5 rounded">
-                              {sim.priceAdjustment > 0 ? "+" : ""}€
-                              {sim.priceAdjustment.toFixed(2)}
-                            </span>
-                          )}
+
                           <button
                             type="button"
                             onClick={() => removeSimType(index)}
@@ -2238,9 +1857,6 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
               </div>
             </div>
 
-            {/* Keep all other form sections (variants, etc.) */}
-            {/* ... rest of the form ... */}
-
             {/* Form Actions */}
             <div className="flex justify-end gap-4 pt-6 border-t border-gray-200 sticky bottom-0 bg-white">
               <button
@@ -2254,17 +1870,20 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="px-6 py-2 bg-orange-500 text-white rounded-md hover:bg-orange-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                className="px-6 py-2 bg-gradient-to-r from-orange-500 to-rose-600 text-white rounded-md hover:from-orange-600 hover:to-rose-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
               >
                 {isLoading ? (
                   <>
                     <Loader2 className="animate-spin" size={16} />
                     {isEditMode ? "Updating..." : "Adding..."}
                   </>
-                ) : isEditMode ? (
-                  "Update Product"
                 ) : (
-                  "Add Product"
+                  <>
+                    <Heart size={16} />
+                    {isEditMode
+                      ? "Update Charity Product"
+                      : "Add Charity Product"}
+                  </>
                 )}
               </button>
             </div>
@@ -2272,18 +1891,15 @@ export default function ProductForm({ isOpen, onClose, productToEdit, user }) {
         </div>
       </div>
 
-      {/* Confirmation Modal */}
       <ConfirmationModal
         isOpen={showDeleteConfirm}
-        onClose={cancelImageRemoval}
+        onClose={() => setShowDeleteConfirm(false)}
         onConfirm={confirmImageRemoval}
         isLoading={isDeletingImage}
         title="Delete Image?"
         message={`Are you sure you want to ${
           imageToDelete?.isNew ? "remove" : "permanently delete"
-        } "${imageToDelete?.name}"? ${
-          !imageToDelete?.isNew ? "This action cannot be undone." : ""
-        }`}
+        } "${imageToDelete?.name}"?`}
       />
     </div>
   );

@@ -72,6 +72,7 @@ const ProductDashboard = () => {
       `
         )
         .eq("is_active", true)
+        .eq("product_type", "regular")
         .order("created_at", { ascending: false });
 
       if (error) {

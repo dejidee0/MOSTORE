@@ -1,7 +1,15 @@
 import React, { useState } from "react";
 import Image from "next/image";
 import { motion } from "framer-motion";
-import { Star, Heart, Share2, Eye, MapPin } from "lucide-react";
+import {
+  Star,
+  Heart,
+  Share2,
+  Eye,
+  MapPin,
+  Gift,
+  ShoppingCart,
+} from "lucide-react";
 import Link from "next/link";
 import { useCart } from "@/lib/cart";
 import { useWishlist } from "@/hooks/useWishlist";
@@ -19,6 +27,7 @@ export const ProductCard = ({ product }) => {
   } = useWishlist();
 
   const isWishlisted = isInWishlist(product.id);
+  const isCharity = product.product_type === "charity";
 
   const discountedPrice =
     product?.originalprice != null
@@ -41,7 +50,7 @@ export const ProductCard = ({ product }) => {
     const wishlistProduct = {
       id: product.id,
       name: product.name,
-      price: parseFloat(discountedPrice),
+      price: isCharity ? 0 : parseFloat(discountedPrice),
       images: product.images,
       slug: product.slug,
       category: product.category,
@@ -50,8 +59,36 @@ export const ProductCard = ({ product }) => {
       rating: product.rating,
       review_count: product.review_count,
       original_price: product.originalprice,
+      product_type: product.product_type,
     };
     await toggleWishlist(wishlistProduct);
+  };
+
+  const handleAddToCart = async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (isCharity) {
+      // For charity items, redirect to product page or show request modal
+      window.location.href = `/products/${product.slug}`;
+      return;
+    }
+
+    setIsAddingToCart(true);
+    try {
+      await addItem({
+        id: product.id,
+        name: product.name,
+        price: parseFloat(discountedPrice),
+        image: product.images?.[0],
+        slug: product.slug,
+        stock_quantity: product.stock_quantity,
+      });
+    } catch (error) {
+      console.error("Error adding to cart:", error);
+    } finally {
+      setIsAddingToCart(false);
+    }
   };
 
   return (
@@ -79,15 +116,23 @@ export const ProductCard = ({ product }) => {
 
         {/* Badges */}
         <div className="absolute top-3 left-3 flex flex-col gap-2 z-20">
-          {product.discount && (
-            <div className="bg-orange-500 text-white px-2 py-1 rounded-md text-xs font-bold shadow-lg">
-              -{product.discount}%
+          {isCharity ? (
+            <div className="bg-green-500 text-white px-2 py-1 rounded-md text-xs font-bold shadow-lg flex items-center gap-1">
+              <Gift className="w-3 h-3" /> Charity
             </div>
-          )}
-          {product.isNew && (
-            <div className="bg-green-500 text-white px-2 py-1 rounded-md text-xs font-bold shadow-lg">
-              NEW
-            </div>
+          ) : (
+            <>
+              {product.discount > 0 && (
+                <div className="bg-orange-500 text-white px-2 py-1 rounded-md text-xs font-bold shadow-lg">
+                  -{product.discount}%
+                </div>
+              )}
+              {product.isNew && (
+                <div className="bg-blue-500 text-white px-2 py-1 rounded-md text-xs font-bold shadow-lg">
+                  NEW
+                </div>
+              )}
+            </>
           )}
         </div>
 
@@ -102,17 +147,63 @@ export const ProductCard = ({ product }) => {
             }`}
             title={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
           >
-            <Heart className="w-4 h-4" />
+            <Heart
+              className="w-4 h-4"
+              fill={isWishlisted ? "currentColor" : "none"}
+            />
           </button>
 
           <Link href={`/products/${product.slug}`}>
-            <button className="w-9 h-9 bg-white/90 text-gray-700 hover:text-orange-500 rounded-full flex items-center justify-center shadow-lg">
+            <button
+              className={`w-9 h-9 bg-white/90 rounded-full flex items-center justify-center shadow-lg transition-colors ${
+                isCharity
+                  ? "text-gray-700 hover:text-green-500"
+                  : "text-gray-700 hover:text-orange-500"
+              }`}
+            >
               <Eye className="w-4 h-4" />
             </button>
           </Link>
 
-          <button className="w-9 h-9 bg-white/90 text-gray-700 hover:text-orange-500 rounded-full flex items-center justify-center shadow-lg">
+          <button
+            className={`w-9 h-9 bg-white/90 rounded-full flex items-center justify-center shadow-lg transition-colors ${
+              isCharity
+                ? "text-gray-700 hover:text-green-500"
+                : "text-gray-700 hover:text-orange-500"
+            }`}
+          >
             <Share2 className="w-4 h-4" />
+          </button>
+        </div>
+
+        {/* Quick Add/Request Button (appears on hover at bottom) */}
+        <div className="absolute bottom-0 left-0 right-0 p-3 translate-y-full group-hover:translate-y-0 transition-transform duration-300 z-20">
+          <button
+            onClick={handleAddToCart}
+            disabled={
+              isAddingToCart || (!isCharity && product.stock_quantity <= 0)
+            }
+            className={`w-full py-2 px-4 rounded-lg font-medium text-sm shadow-lg transition-all duration-300 flex items-center justify-center gap-2 ${
+              isCharity
+                ? "bg-green-500 hover:bg-green-600 text-white"
+                : "bg-orange-500 hover:bg-orange-600 text-white disabled:bg-gray-300 disabled:cursor-not-allowed"
+            }`}
+          >
+            {isAddingToCart ? (
+              <span>Processing...</span>
+            ) : isCharity ? (
+              <>
+                <Gift className="w-4 h-4" />
+                Request Item
+              </>
+            ) : product.stock_quantity <= 0 ? (
+              "Out of Stock"
+            ) : (
+              <>
+                <ShoppingCart className="w-4 h-4" />
+                Add to Cart
+              </>
+            )}
           </button>
         </div>
       </div>
@@ -121,9 +212,13 @@ export const ProductCard = ({ product }) => {
       <div className="px-3 py-2 flex flex-col flex-1 justify-between space-y-2">
         <div className="overflow-hidden">
           <div className="flex items-center justify-between text-xs truncate">
-            {product.category && (
-              <span className="text-orange-600 font-semibold truncate">
-                {product.category}
+            {product.categories?.name && (
+              <span
+                className={`font-semibold truncate ${
+                  isCharity ? "text-green-600" : "text-orange-600"
+                }`}
+              >
+                {product.categories.name}
               </span>
             )}
             {product.brand && (
@@ -132,7 +227,13 @@ export const ProductCard = ({ product }) => {
           </div>
 
           <Link href={`/products/${product.slug}`}>
-            <h3 className="font-semibold text-gray-800 line-clamp-2 text-sm sm:text-base cursor-pointer group-hover:text-orange-600">
+            <h3
+              className={`font-semibold text-gray-800 line-clamp-2 text-sm sm:text-base cursor-pointer transition-colors ${
+                isCharity
+                  ? "group-hover:text-green-600"
+                  : "group-hover:text-orange-600"
+              }`}
+            >
               {product.name}
             </h3>
           </Link>
@@ -140,7 +241,7 @@ export const ProductCard = ({ product }) => {
           {product.location && (
             <div className="flex items-center gap-1 text-gray-500 text-xs mt-1">
               <MapPin className="w-3 h-3" />
-              <span>{product.location}</span>
+              <span className="truncate">{product.location}</span>
             </div>
           )}
 
@@ -154,23 +255,44 @@ export const ProductCard = ({ product }) => {
           )}
         </div>
 
-        {/* Price */}
+        {/* Price or Charity Label */}
         <div className="flex items-end gap-2">
-          {product.originalprice && product.discount ? (
-            <>
-              <span className="text-sm font-bold text-gray-900">
-                {formatPrice(discountedPrice)}
+          {isCharity ? (
+            <div className="flex items-center gap-1">
+              <Gift className="w-4 h-4 text-green-600" />
+              <span className="text-sm font-bold text-green-600">
+                Free to Good Home
               </span>
-              <span className="text-xs line-through text-gray-400">
-                {formatPrice(product.originalprice)}
-              </span>
-            </>
+            </div>
           ) : (
-            <span className="text-sm font-bold text-gray-900">
-              {formatPrice(product.price)}
-            </span>
+            <>
+              {product.originalprice && product.discount > 0 ? (
+                <>
+                  <span className="text-sm font-bold text-gray-900">
+                    {formatPrice(discountedPrice)}
+                  </span>
+                  <span className="text-xs line-through text-gray-400">
+                    {formatPrice(product.originalprice)}
+                  </span>
+                </>
+              ) : (
+                <span className="text-sm font-bold text-gray-900">
+                  {formatPrice(product.price)}
+                </span>
+              )}
+            </>
           )}
         </div>
+
+        {/* Stock indicator for regular products */}
+        {!isCharity &&
+          product.stock_quantity != null &&
+          product.stock_quantity <= 5 &&
+          product.stock_quantity > 0 && (
+            <div className="text-xs text-orange-600 font-medium">
+              Only {product.stock_quantity} left!
+            </div>
+          )}
       </div>
     </motion.div>
   );

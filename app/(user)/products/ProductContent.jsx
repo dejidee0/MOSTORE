@@ -1,12 +1,5 @@
 "use client";
-import React, {
-  useState,
-  useEffect,
-  useMemo,
-  useCallback,
-  memo,
-  Suspense,
-} from "react";
+import React, { useState, useEffect, useMemo, useCallback, memo } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   Search,
@@ -21,14 +14,14 @@ import {
   ChevronDown,
   ChevronUp,
   Package,
+  Gift,
 } from "lucide-react";
-import { getAllProducts, getAllCategories } from "@/lib/data/products";
-import { ProductCard } from "@/components/ProductCard";
-import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { MapPin } from "lucide-react";
+import { getAllCategories, getAllProducts } from "@/lib/data/products";
+import { ProductCard } from "@/components/ProductCard";
 
-// Debounce hook for search optimization
+// Debounce hook
 const useDebounce = (value, delay) => {
   const [debouncedValue, setDebouncedValue] = useState(value);
 
@@ -36,10 +29,7 @@ const useDebounce = (value, delay) => {
     const handler = setTimeout(() => {
       setDebouncedValue(value);
     }, delay);
-
-    return () => {
-      clearTimeout(handler);
-    };
+    return () => clearTimeout(handler);
   }, [value, delay]);
 
   return debouncedValue;
@@ -51,12 +41,11 @@ const isValidProduct = (product) => {
     product &&
     product.id &&
     product.name &&
-    product.price != null &&
-    typeof product.price === "number"
+    (product.product_type === "charity" || product.price != null)
   );
 };
 
-// Memoized star rating component
+// Star Rating Component
 const StarRating = memo(({ rating = 0 }) => {
   const validRating = Math.min(Math.max(0, rating), 5);
   return (
@@ -76,10 +65,11 @@ const StarRating = memo(({ rating = 0 }) => {
 });
 StarRating.displayName = "StarRating";
 
-// Memoized List View Product Card Component
-
+// List View Product Card
 const ListViewProductCard = memo(({ product }) => {
   if (!product) return null;
+
+  const isCharity = product.product_type === "charity";
 
   return (
     <div className="bg-white rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 border border-gray-100 overflow-hidden">
@@ -96,7 +86,12 @@ const ListViewProductCard = memo(({ product }) => {
               <span className="text-gray-400">No Image</span>
             </div>
           )}
-          {product.discount > 0 && (
+          {isCharity && (
+            <div className="absolute top-2 left-2 bg-green-500 text-white px-2 py-1 rounded-md text-xs font-semibold flex items-center gap-1">
+              <Gift className="w-3 h-3" /> Charity
+            </div>
+          )}
+          {!isCharity && product.discount > 0 && (
             <div className="absolute top-2 left-2 bg-red-500 text-white px-2 py-1 rounded-md text-xs font-semibold">
               -{product.discount}%
             </div>
@@ -135,31 +130,49 @@ const ListViewProductCard = memo(({ product }) => {
           </div>
 
           <div className="flex flex-col sm:items-end gap-3 mt-4 sm:mt-0">
-            <div className="flex items-center gap-2">
-              <span className="text-xl font-bold text-gray-900">
-                {product.price.toLocaleString()}€
-              </span>
-              {product.originalprice &&
-                product.originalprice > product.price && (
-                  <span className="text-sm text-gray-500 line-through">
-                    {product.originalprice.toLocaleString()}€
-                  </span>
-                )}
-            </div>
+            {!isCharity ? (
+              <div className="flex items-center gap-2">
+                <span className="text-xl font-bold text-gray-900">
+                  {product.price.toLocaleString()}€
+                </span>
+                {product.originalprice &&
+                  product.originalprice > product.price && (
+                    <span className="text-sm text-gray-500 line-through">
+                      {product.originalprice.toLocaleString()}€
+                    </span>
+                  )}
+              </div>
+            ) : (
+              <div className="text-sm font-medium text-green-600">
+                Free to Good Home
+              </div>
+            )}
 
             <div className="flex items-center gap-2">
               <button className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors">
                 <Heart className="w-4 h-4" />
               </button>
 
-              <Link href={`/products/${product.id}`}>
-                <button className="p-2 text-gray-400 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition-colors">
-                  <Eye className="w-4 h-4" />
-                </button>
-              </Link>
+              <button className="p-2 text-gray-400 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition-colors">
+                <Eye className="w-4 h-4" />
+              </button>
 
-              <button className="bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600 transition-colors flex items-center gap-2">
-                <ShoppingCart className="w-4 h-4" /> Add
+              <button
+                className={`${
+                  isCharity
+                    ? "bg-green-500 hover:bg-green-600"
+                    : "bg-orange-500 hover:bg-orange-600"
+                } text-white px-4 py-2 rounded-lg transition-colors flex items-center gap-2`}
+              >
+                {isCharity ? (
+                  <>
+                    <Gift className="w-4 h-4" /> Request
+                  </>
+                ) : (
+                  <>
+                    <ShoppingCart className="w-4 h-4" /> Add
+                  </>
+                )}
               </button>
             </div>
           </div>
@@ -170,7 +183,7 @@ const ListViewProductCard = memo(({ product }) => {
 });
 ListViewProductCard.displayName = "ListViewProductCard";
 
-// Loading skeleton component
+// Loading Skeleton
 const LoadingSkeleton = memo(() => (
   <div className="bg-white rounded-xl shadow-sm overflow-hidden animate-pulse">
     <div className="w-full h-64 bg-gray-200"></div>
@@ -190,11 +203,16 @@ LoadingSkeleton.displayName = "LoadingSkeleton";
 // Main Products Content Component
 const ProductsContent = ({ categoryParam, searchQuery }) => {
   const router = useRouter();
+  const searchParams = useSearchParams();
+
+  // Get tab from URL params, default to 'all'
+  const tabParam = searchParams.get("tab") || "all";
 
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchInput, setSearchInput] = useState(searchQuery || "");
+  const [activeTab, setActiveTab] = useState(tabParam);
 
   const debouncedSearch = useDebounce(searchInput, 300);
 
@@ -257,6 +275,10 @@ const ProductsContent = ({ categoryParam, searchQuery }) => {
   }, [debouncedSearch]);
 
   useEffect(() => {
+    setActiveTab(tabParam);
+  }, [tabParam]);
+
+  useEffect(() => {
     const newFilters = {
       category: categoryParam || "all",
     };
@@ -267,15 +289,46 @@ const ProductsContent = ({ categoryParam, searchQuery }) => {
     }));
   }, [categoryParam]);
 
+  // Handle tab change with URL update
+  const handleTabChange = useCallback((tab) => {
+    setActiveTab(tab);
+    setCurrentPage(1);
+
+    const newSearchParams = new URLSearchParams(window.location.search);
+    if (tab === "all") {
+      newSearchParams.delete("tab");
+    } else {
+      newSearchParams.set("tab", tab);
+    }
+
+    const newUrl = `${window.location.pathname}?${newSearchParams}`;
+    window.history.replaceState({}, "", newUrl);
+  }, []);
+
   const availableBrands = useMemo(() => {
     const brands = [...new Set(products.map((p) => p.brand).filter(Boolean))];
     return brands.sort();
   }, [products]);
 
-  const filteredProducts = useMemo(() => {
+  // Filter products by tab first
+  const tabFilteredProducts = useMemo(() => {
     if (!products.length) return [];
 
-    return products.filter((product) => {
+    if (activeTab === "charity") {
+      return products.filter((p) => p.product_type === "charity");
+    } else if (activeTab === "regular") {
+      return products.filter(
+        (p) => p.product_type === "regular" || !p.product_type
+      );
+    }
+
+    return products;
+  }, [products, activeTab]);
+
+  const filteredProducts = useMemo(() => {
+    if (!tabFilteredProducts.length) return [];
+
+    return tabFilteredProducts.filter((product) => {
       if (!isValidProduct(product)) return false;
 
       if (filters.search) {
@@ -299,11 +352,14 @@ const ProductsContent = ({ categoryParam, searchQuery }) => {
         }
       }
 
-      if (
-        product.price < filters.priceRange[0] ||
-        product.price > filters.priceRange[1]
-      ) {
-        return false;
+      // Price filter only for regular products
+      if (product.product_type !== "charity") {
+        if (
+          product.price < filters.priceRange[0] ||
+          product.price > filters.priceRange[1]
+        ) {
+          return false;
+        }
       }
 
       if (filters.rating > 0 && (product.rating || 0) < filters.rating) {
@@ -322,13 +378,18 @@ const ProductsContent = ({ categoryParam, searchQuery }) => {
         return false;
       }
 
-      if (filters.discount && !(product.discount > 0)) {
+      // Discount filter only for regular products
+      if (
+        filters.discount &&
+        product.product_type !== "charity" &&
+        !(product.discount > 0)
+      ) {
         return false;
       }
 
       return true;
     });
-  }, [products, filters]);
+  }, [tabFilteredProducts, filters]);
 
   const sortedProducts = useMemo(() => {
     if (!filteredProducts.length) return [];
@@ -398,7 +459,14 @@ const ProductsContent = ({ categoryParam, searchQuery }) => {
     });
     setSearchInput("");
     setCurrentPage(1);
-    window.history.replaceState({}, "", window.location.pathname);
+    const newSearchParams = new URLSearchParams(window.location.search);
+    newSearchParams.delete("q");
+    newSearchParams.delete("category");
+    window.history.replaceState(
+      {},
+      "",
+      `${window.location.pathname}?${newSearchParams}`
+    );
   }, []);
 
   const toggleSection = useCallback((section) => {
@@ -411,6 +479,17 @@ const ProductsContent = ({ categoryParam, searchQuery }) => {
   const selectedCategory = useMemo(() => {
     return categories.find((c) => String(c.id) === String(filters.category));
   }, [categories, filters.category]);
+
+  // Count products by type
+  const productCounts = useMemo(() => {
+    return {
+      all: products.length,
+      regular: products.filter(
+        (p) => p.product_type === "regular" || !p.product_type
+      ).length,
+      charity: products.filter((p) => p.product_type === "charity").length,
+    };
+  }, [products]);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -450,12 +529,69 @@ const ProductsContent = ({ categoryParam, searchQuery }) => {
                 )}
               </div>
             </div>
+
+            {/* Tab Switcher */}
+            <div className="flex gap-2 border-b border-gray-200 overflow-x-auto">
+              <button
+                onClick={() => handleTabChange("all")}
+                className={`px-6 py-3 text-sm font-medium whitespace-nowrap transition-colors relative ${
+                  activeTab === "all"
+                    ? "text-orange-600"
+                    : "text-gray-600 hover:text-gray-900"
+                }`}
+              >
+                All Products
+                <span className="ml-2 text-xs bg-gray-100 px-2 py-1 rounded-full">
+                  {productCounts.all}
+                </span>
+                {activeTab === "all" && (
+                  <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-orange-600" />
+                )}
+              </button>
+
+              <button
+                onClick={() => handleTabChange("regular")}
+                className={`px-6 py-3 text-sm font-medium whitespace-nowrap transition-colors relative ${
+                  activeTab === "regular"
+                    ? "text-orange-600"
+                    : "text-gray-600 hover:text-gray-900"
+                }`}
+              >
+                <Package className="w-4 h-4 inline mr-2" />
+                Regular Products
+                <span className="ml-2 text-xs bg-gray-100 px-2 py-1 rounded-full">
+                  {productCounts.regular}
+                </span>
+                {activeTab === "regular" && (
+                  <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-orange-600" />
+                )}
+              </button>
+
+              <button
+                onClick={() => handleTabChange("charity")}
+                className={`px-6 py-3 text-sm font-medium whitespace-nowrap transition-colors relative ${
+                  activeTab === "charity"
+                    ? "text-green-600"
+                    : "text-gray-600 hover:text-gray-900"
+                }`}
+              >
+                <Gift className="w-4 h-4 inline mr-2" />
+                Charity Items
+                <span className="ml-2 text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full">
+                  {productCounts.charity}
+                </span>
+                {activeTab === "charity" && (
+                  <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-green-600" />
+                )}
+              </button>
+            </div>
           </div>
         </div>
       </div>
 
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex flex-col lg:flex-row gap-6">
+          {/* Mobile Filter Toggle */}
           <div className="flex items-center justify-between lg:hidden mb-4">
             <motion.button
               onClick={() => setShowFilters(!showFilters)}
@@ -509,6 +645,7 @@ const ProductsContent = ({ categoryParam, searchQuery }) => {
             </div>
           </div>
 
+          {/* Filters Sidebar - Only show price filter for non-charity tabs */}
           <AnimatePresence>
             {showFilters && (
               <motion.div
@@ -533,6 +670,7 @@ const ProductsContent = ({ categoryParam, searchQuery }) => {
                     </motion.button>
                   </div>
 
+                  {/* Category Filter */}
                   <div className="mb-6">
                     <label className="block text-sm font-medium text-gray-700 mb-3">
                       Category
@@ -553,29 +691,27 @@ const ProductsContent = ({ categoryParam, searchQuery }) => {
                     </select>
                   </div>
 
-                  <div className="mb-6">
-                    <motion.button
-                      onClick={() => toggleSection("price")}
-                      className="flex items-center justify-between w-full text-sm font-medium text-gray-700 mb-3"
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                    >
-                      Price Range
-                      {expandedSections.price ? (
-                        <ChevronUp className="w-4 h-4" />
-                      ) : (
-                        <ChevronDown className="w-4 h-4" />
-                      )}
-                    </motion.button>
-                    <AnimatePresence>
-                      {expandedSections.price && (
-                        <motion.div
-                          initial={{ height: 0, opacity: 0 }}
-                          animate={{ height: "auto", opacity: 1 }}
-                          exit={{ height: 0, opacity: 0 }}
-                          transition={{ duration: 0.2 }}
-                        >
-                          <div className="space-y-3">
+                  {/* Price Range - Hide for charity tab */}
+                  {activeTab !== "charity" && (
+                    <div className="mb-6">
+                      <motion.button
+                        onClick={() => toggleSection("price")}
+                        className="flex items-center justify-between w-full text-sm font-medium text-gray-700 mb-3"
+                      >
+                        Price Range
+                        {expandedSections.price ? (
+                          <ChevronUp className="w-4 h-4" />
+                        ) : (
+                          <ChevronDown className="w-4 h-4" />
+                        )}
+                      </motion.button>
+                      <AnimatePresence>
+                        {expandedSections.price && (
+                          <motion.div
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: "auto", opacity: 1 }}
+                            exit={{ height: 0, opacity: 0 }}
+                          >
                             <div className="flex items-center gap-2">
                               <input
                                 type="number"
@@ -587,7 +723,7 @@ const ProductsContent = ({ categoryParam, searchQuery }) => {
                                     filters.priceRange[1],
                                   ])
                                 }
-                                className="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-orange-500"
+                                className="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm"
                               />
                               <span className="text-gray-400">-</span>
                               <input
@@ -600,21 +736,20 @@ const ProductsContent = ({ categoryParam, searchQuery }) => {
                                     parseInt(e.target.value) || 2000,
                                   ])
                                 }
-                                className="flex-1 px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500"
+                                className="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm"
                               />
                             </div>
-                          </div>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
+                  )}
 
+                  {/* Rating Filter */}
                   <div className="mb-6">
                     <motion.button
                       onClick={() => toggleSection("rating")}
                       className="flex items-center justify-between w-full text-sm font-medium text-gray-700 mb-3"
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
                     >
                       Minimum Rating
                       {expandedSections.rating ? (
@@ -629,7 +764,6 @@ const ProductsContent = ({ categoryParam, searchQuery }) => {
                           initial={{ height: 0, opacity: 0 }}
                           animate={{ height: "auto", opacity: 1 }}
                           exit={{ height: 0, opacity: 0 }}
-                          transition={{ duration: 0.2 }}
                         >
                           <div className="space-y-2">
                             {[4, 3, 2, 1].map((rating) => (
@@ -644,7 +778,7 @@ const ProductsContent = ({ categoryParam, searchQuery }) => {
                                   onChange={() =>
                                     handleFilterChange("rating", rating)
                                   }
-                                  className="text-orange-500 focus:ring-orange-500"
+                                  className="text-orange-500"
                                 />
                                 <div className="flex items-center gap-1">
                                   <StarRating rating={rating} />
@@ -660,12 +794,11 @@ const ProductsContent = ({ categoryParam, searchQuery }) => {
                     </AnimatePresence>
                   </div>
 
+                  {/* Features */}
                   <div className="mb-6">
                     <motion.button
                       onClick={() => toggleSection("features")}
                       className="flex items-center justify-between w-full text-sm font-medium text-gray-700 mb-3"
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
                     >
                       Features
                       {expandedSections.features ? (
@@ -680,7 +813,6 @@ const ProductsContent = ({ categoryParam, searchQuery }) => {
                           initial={{ height: 0, opacity: 0 }}
                           animate={{ height: "auto", opacity: 1 }}
                           exit={{ height: 0, opacity: 0 }}
-                          transition={{ duration: 0.2 }}
                         >
                           <div className="space-y-3">
                             <label className="flex items-center gap-2 cursor-pointer">
@@ -693,7 +825,7 @@ const ProductsContent = ({ categoryParam, searchQuery }) => {
                                     e.target.checked
                                   )
                                 }
-                                className="text-orange-500 focus:ring-orange-500 rounded"
+                                className="text-orange-500 rounded"
                               />
                               <span className="text-sm text-gray-700">
                                 In Stock Only
@@ -709,28 +841,30 @@ const ProductsContent = ({ categoryParam, searchQuery }) => {
                                     e.target.checked
                                   )
                                 }
-                                className="text-orange-500 focus:ring-orange-500 rounded"
+                                className="text-orange-500 rounded"
                               />
                               <span className="text-sm text-gray-700">
                                 Featured Products
                               </span>
                             </label>
-                            <label className="flex items-center gap-2 cursor-pointer">
-                              <input
-                                type="checkbox"
-                                checked={filters.discount}
-                                onChange={(e) =>
-                                  handleFilterChange(
-                                    "discount",
-                                    e.target.checked
-                                  )
-                                }
-                                className="text-orange-500 focus:ring-orange-500 rounded"
-                              />
-                              <span className="text-sm text-gray-700">
-                                On Sale
-                              </span>
-                            </label>
+                            {activeTab !== "charity" && (
+                              <label className="flex items-center gap-2 cursor-pointer">
+                                <input
+                                  type="checkbox"
+                                  checked={filters.discount}
+                                  onChange={(e) =>
+                                    handleFilterChange(
+                                      "discount",
+                                      e.target.checked
+                                    )
+                                  }
+                                  className="text-orange-500 rounded"
+                                />
+                                <span className="text-sm text-gray-700">
+                                  On Sale
+                                </span>
+                              </label>
+                            )}
                           </div>
                         </motion.div>
                       )}
@@ -741,6 +875,7 @@ const ProductsContent = ({ categoryParam, searchQuery }) => {
             )}
           </AnimatePresence>
 
+          {/* Desktop Filters - Similar structure */}
           <motion.div
             className="hidden lg:block lg:w-80"
             initial={{ opacity: 0, x: -20 }}
@@ -750,211 +885,170 @@ const ProductsContent = ({ categoryParam, searchQuery }) => {
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 sticky top-8">
               <div className="flex items-center justify-between mb-6">
                 <h3 className="text-lg font-semibold text-gray-900">Filters</h3>
-                <motion.button
+                <button
                   onClick={clearAllFilters}
                   className="text-sm text-orange-600 hover:text-orange-700 font-medium"
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
                 >
                   Clear All
-                </motion.button>
+                </button>
               </div>
 
-              <div className="mb-6">
-                <label className="block text-sm font-medium text-gray-700 mb-3">
-                  Category
-                </label>
-                <select
-                  value={filters.category}
-                  onChange={(e) =>
-                    handleFilterChange("category", e.target.value)
-                  }
-                  className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm"
-                >
-                  <option value="all">All Categories</option>
-                  {categories.map((category) => (
-                    <option key={category.id} value={category.id}>
-                      {category.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              <div className="space-y-6">
+                {/* Category */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-3">
+                    Category
+                  </label>
+                  <select
+                    value={filters.category}
+                    onChange={(e) =>
+                      handleFilterChange("category", e.target.value)
+                    }
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm"
+                  >
+                    <option value="all">All Categories</option>
+                    {categories.map((cat) => (
+                      <option key={cat.id} value={cat.id}>
+                        {cat.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
 
-              <div className="mb-6">
-                <motion.button
-                  onClick={() => toggleSection("price")}
-                  className="flex items-center justify-between w-full text-sm font-medium text-gray-700 mb-3"
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                >
-                  Price Range
-                  {expandedSections.price ? (
-                    <ChevronUp className="w-4 h-4" />
-                  ) : (
-                    <ChevronDown className="w-4 h-4" />
-                  )}
-                </motion.button>
-                <AnimatePresence>
-                  {expandedSections.price && (
-                    <motion.div
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: "auto", opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
-                      transition={{ duration: 0.2 }}
+                {/* Price - Hide for charity */}
+                {activeTab !== "charity" && (
+                  <div>
+                    <button
+                      onClick={() => toggleSection("price")}
+                      className="flex items-center justify-between w-full text-sm font-medium text-gray-700 mb-3"
                     >
-                      <div className="space-y-3">
-                        <div className="flex items-center gap-2">
-                          <input
-                            type="number"
-                            placeholder="Min"
-                            value={filters.priceRange[0]}
-                            onChange={(e) =>
-                              handleFilterChange("priceRange", [
-                                parseInt(e.target.value) || 0,
-                                filters.priceRange[1],
-                              ])
-                            }
-                            className="max-w-1/2 px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-orange-500"
-                          />
-                          <span className="text-gray-400">-</span>
-                          <input
-                            type="number"
-                            placeholder="Max"
-                            value={filters.priceRange[1]}
-                            onChange={(e) =>
-                              handleFilterChange("priceRange", [
-                                filters.priceRange[0],
-                                parseInt(e.target.value) || 2000,
-                              ])
-                            }
-                            className="max-w-1/2 px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-orange-500"
-                          />
-                        </div>
+                      Price Range
+                      {expandedSections.price ? (
+                        <ChevronUp className="w-4 h-4" />
+                      ) : (
+                        <ChevronDown className="w-4 h-4" />
+                      )}
+                    </button>
+                    {expandedSections.price && (
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="number"
+                          placeholder="Min"
+                          value={filters.priceRange[0]}
+                          onChange={(e) =>
+                            handleFilterChange("priceRange", [
+                              parseInt(e.target.value) || 0,
+                              filters.priceRange[1],
+                            ])
+                          }
+                          className="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm"
+                        />
+                        <span>-</span>
+                        <input
+                          type="number"
+                          placeholder="Max"
+                          value={filters.priceRange[1]}
+                          onChange={(e) =>
+                            handleFilterChange("priceRange", [
+                              filters.priceRange[0],
+                              parseInt(e.target.value) || 2000,
+                            ])
+                          }
+                          className="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm"
+                        />
                       </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
+                    )}
+                  </div>
+                )}
 
-              <div className="mb-6">
-                <motion.button
-                  onClick={() => toggleSection("rating")}
-                  className="flex items-center justify-between w-full text-sm font-medium text-gray-700 mb-3"
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                >
-                  Minimum Rating
-                  {expandedSections.rating ? (
-                    <ChevronUp className="w-4 h-4" />
-                  ) : (
-                    <ChevronDown className="w-4 h-4" />
-                  )}
-                </motion.button>
-                <AnimatePresence>
+                {/* Rating */}
+                <div>
+                  <button
+                    onClick={() => toggleSection("rating")}
+                    className="flex items-center justify-between w-full text-sm font-medium text-gray-700 mb-3"
+                  >
+                    Minimum Rating
+                    {expandedSections.rating ? (
+                      <ChevronUp className="w-4 h-4" />
+                    ) : (
+                      <ChevronDown className="w-4 h-4" />
+                    )}
+                  </button>
                   {expandedSections.rating && (
-                    <motion.div
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: "auto", opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
-                      transition={{ duration: 0.2 }}
-                    >
-                      <div className="space-y-2">
-                        {[4, 3, 2, 1].map((rating) => (
-                          <label
-                            key={rating}
-                            className="flex items-center gap-2 cursor-pointer"
-                          >
-                            <input
-                              type="radio"
-                              name="rating"
-                              checked={filters.rating === rating}
-                              onChange={() =>
-                                handleFilterChange("rating", rating)
-                              }
-                              className="text-orange-500 focus:ring-orange-500"
-                            />
-                            <div className="flex items-center gap-1">
-                              <StarRating rating={rating} />
-                              <span className="text-sm text-gray-600">
-                                & up
-                              </span>
-                            </div>
-                          </label>
-                        ))}
-                      </div>
-                    </motion.div>
+                    <div className="space-y-2">
+                      {[4, 3, 2, 1].map((rating) => (
+                        <label key={rating} className="flex items-center gap-2">
+                          <input
+                            type="radio"
+                            name="rating"
+                            checked={filters.rating === rating}
+                            onChange={() =>
+                              handleFilterChange("rating", rating)
+                            }
+                          />
+                          <StarRating rating={rating} />
+                          <span className="text-sm">& up</span>
+                        </label>
+                      ))}
+                    </div>
                   )}
-                </AnimatePresence>
-              </div>
+                </div>
 
-              <div className="mb-6">
-                <motion.button
-                  onClick={() => toggleSection("features")}
-                  className="flex items-center justify-between w-full text-sm font-medium text-gray-700 mb-3"
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                >
-                  Features
-                  {expandedSections.features ? (
-                    <ChevronUp className="w-4 h-4" />
-                  ) : (
-                    <ChevronDown className="w-4 h-4" />
-                  )}
-                </motion.button>
-                <AnimatePresence>
+                {/* Features */}
+                <div>
+                  <button
+                    onClick={() => toggleSection("features")}
+                    className="flex items-center justify-between w-full text-sm font-medium text-gray-700 mb-3"
+                  >
+                    Features
+                    {expandedSections.features ? (
+                      <ChevronUp className="w-4 h-4" />
+                    ) : (
+                      <ChevronDown className="w-4 h-4" />
+                    )}
+                  </button>
                   {expandedSections.features && (
-                    <motion.div
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: "auto", opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
-                      transition={{ duration: 0.2 }}
-                    >
-                      <div className="space-y-3">
-                        <label className="flex items-center gap-2 cursor-pointer">
-                          <input
-                            type="checkbox"
-                            checked={filters.inStock}
-                            onChange={(e) =>
-                              handleFilterChange("inStock", e.target.checked)
-                            }
-                            className="text-orange-500 focus:ring-orange-500 rounded"
-                          />
-                          <span className="text-sm text-gray-700">
-                            In Stock Only
-                          </span>
-                        </label>
-                        <label className="flex items-center gap-2 cursor-pointer">
-                          <input
-                            type="checkbox"
-                            checked={filters.featured}
-                            onChange={(e) =>
-                              handleFilterChange("featured", e.target.checked)
-                            }
-                            className="text-orange-500 focus:ring-orange-500 rounded"
-                          />
-                          <span className="text-sm text-gray-700">
-                            Featured Products
-                          </span>
-                        </label>
-                        <label className="flex items-center gap-2 cursor-pointer">
+                    <div className="space-y-3">
+                      <label className="flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          checked={filters.inStock}
+                          onChange={(e) =>
+                            handleFilterChange("inStock", e.target.checked)
+                          }
+                        />
+                        <span className="text-sm">In Stock Only</span>
+                      </label>
+                      <label className="flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          checked={filters.featured}
+                          onChange={(e) =>
+                            handleFilterChange("featured", e.target.checked)
+                          }
+                        />
+                        <span className="text-sm">Featured Products</span>
+                      </label>
+                      {activeTab !== "charity" && (
+                        <label className="flex items-center gap-2">
                           <input
                             type="checkbox"
                             checked={filters.discount}
                             onChange={(e) =>
                               handleFilterChange("discount", e.target.checked)
                             }
-                            className="text-orange-500 focus:ring-orange-500 rounded"
                           />
-                          <span className="text-sm text-gray-700">On Sale</span>
+                          <span className="text-sm">On Sale</span>
                         </label>
-                      </div>
-                    </motion.div>
+                      )}
+                    </div>
                   )}
-                </AnimatePresence>
+                </div>
               </div>
             </div>
           </motion.div>
 
+          {/* Products Grid */}
           <div className="flex-1">
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-6">
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -962,113 +1056,86 @@ const ProductsContent = ({ categoryParam, searchQuery }) => {
                   <span className="text-sm text-gray-600">
                     {sortedProducts.length} products found
                   </span>
-                  {(filters.search || filters.category !== "all") && (
-                    <motion.button
-                      onClick={clearAllFilters}
-                      className="text-sm text-orange-600 hover:text-orange-700 font-medium"
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                    >
-                      Clear filters
-                    </motion.button>
-                  )}
                 </div>
 
                 <div className="flex items-center gap-4">
                   <div className="hidden lg:flex items-center gap-2">
-                    <motion.button
+                    <button
                       onClick={() => setViewMode("grid")}
                       className={`p-2 rounded-lg ${
                         viewMode === "grid"
                           ? "bg-orange-100 text-orange-600"
-                          : "text-gray-400 hover:text-gray-600"
+                          : "text-gray-400"
                       }`}
-                      whileHover={{ scale: 1.1 }}
-                      whileTap={{ scale: 0.9 }}
                     >
                       <Grid3X3 className="w-4 h-4" />
-                    </motion.button>
-                    <motion.button
+                    </button>
+                    <button
                       onClick={() => setViewMode("list")}
                       className={`p-2 rounded-lg ${
                         viewMode === "list"
                           ? "bg-orange-100 text-orange-600"
-                          : "text-gray-400 hover:text-gray-600"
+                          : "text-gray-400"
                       }`}
-                      whileHover={{ scale: 1.1 }}
-                      whileTap={{ scale: 0.9 }}
                     >
                       <List className="w-4 h-4" />
-                    </motion.button>
+                    </button>
                   </div>
 
                   <select
                     value={sortBy}
                     onChange={(e) => setSortBy(e.target.value)}
-                    className="px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm"
+                    className="px-3 py-2 border border-gray-200 rounded-lg text-sm"
                   >
                     <option value="newest">Newest First</option>
-                    <option value="price-low">Price: Low to High</option>
-                    <option value="price-high">Price: High to Low</option>
+                    {activeTab !== "charity" && (
+                      <>
+                        <option value="price-low">Price: Low to High</option>
+                        <option value="price-high">Price: High to Low</option>
+                        <option value="discount">Biggest Discount</option>
+                      </>
+                    )}
                     <option value="rating">Highest Rated</option>
                     <option value="name">Name A-Z</option>
-                    <option value="discount">Biggest Discount</option>
                   </select>
                 </div>
               </div>
             </div>
 
             {loading ? (
-              <motion.div
+              <div
                 className={`grid gap-6 ${
                   viewMode === "grid"
-                    ? "grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4"
+                    ? "grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4"
                     : "grid-cols-1"
                 }`}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.3 }}
               >
                 {Array.from({ length: 6 }).map((_, i) => (
                   <LoadingSkeleton key={i} />
                 ))}
-              </motion.div>
+              </div>
             ) : sortedProducts.length === 0 ? (
-              <motion.div
-                className="text-center py-16"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.3 }}
-              >
-                <div className="text-gray-400 mb-4">
-                  <Search className="w-16 h-16 mx-auto" />
-                </div>
+              <div className="text-center py-16">
+                <Search className="w-16 h-16 mx-auto text-gray-400 mb-4" />
                 <h3 className="text-xl font-semibold text-gray-900 mb-2">
                   No products found
                 </h3>
-                <p className="text-gray-600 mb-6">
-                  Try adjusting your search or filter criteria
-                </p>
-                <motion.button
+                <p className="text-gray-600 mb-6">Try adjusting your filters</p>
+                <button
                   onClick={clearAllFilters}
-                  className="bg-orange-500 text-white px-6 py-3 rounded-lg hover:bg-orange-600 transition-colors font-medium"
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
+                  className="bg-orange-500 text-white px-6 py-3 rounded-lg"
                 >
-                  Clear All Filters
-                </motion.button>
-              </motion.div>
+                  Clear Filters
+                </button>
+              </div>
             ) : (
               <>
-                <motion.div
+                <div
                   className={`grid gap-6 ${
                     viewMode === "grid"
                       ? "grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4"
                       : "grid-cols-1"
                   }`}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ duration: 0.3 }}
                 >
                   {paginatedProducts.map((product) =>
                     viewMode === "grid" ? (
@@ -1077,68 +1144,56 @@ const ProductsContent = ({ categoryParam, searchQuery }) => {
                       <ListViewProductCard key={product.id} product={product} />
                     )
                   )}
-                </motion.div>
+                </div>
 
                 {totalPages > 1 && (
                   <div className="mt-12 flex justify-center">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <motion.button
+                    <div className="flex items-center gap-2">
+                      <button
                         onClick={() =>
-                          setCurrentPage((prev) => Math.max(1, prev - 1))
+                          setCurrentPage((p) => Math.max(1, p - 1))
                         }
                         disabled={currentPage === 1}
-                        className="px-4 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
+                        className="px-4 py-2 text-sm border rounded-lg disabled:opacity-50"
                       >
                         Previous
-                      </motion.button>
+                      </button>
 
                       {Array.from(
                         { length: Math.min(5, totalPages) },
                         (_, i) => {
                           let pageNum;
-                          if (totalPages <= 5) {
-                            pageNum = i + 1;
-                          } else if (currentPage <= 3) {
-                            pageNum = i + 1;
-                          } else if (currentPage >= totalPages - 2) {
+                          if (totalPages <= 5) pageNum = i + 1;
+                          else if (currentPage <= 3) pageNum = i + 1;
+                          else if (currentPage >= totalPages - 2)
                             pageNum = totalPages - 4 + i;
-                          } else {
-                            pageNum = currentPage - 2 + i;
-                          }
+                          else pageNum = currentPage - 2 + i;
 
                           return (
-                            <motion.button
+                            <button
                               key={pageNum}
                               onClick={() => setCurrentPage(pageNum)}
-                              className={`px-4 py-2 text-sm font-medium rounded-lg ${
+                              className={`px-4 py-2 text-sm rounded-lg ${
                                 currentPage === pageNum
                                   ? "bg-orange-500 text-white"
-                                  : "text-gray-500 bg-white border border-gray-300 hover:bg-gray-50"
+                                  : "border"
                               }`}
-                              whileHover={{ scale: 1.05 }}
-                              whileTap={{ scale: 0.95 }}
                             >
                               {pageNum}
-                            </motion.button>
+                            </button>
                           );
                         }
                       )}
 
-                      <motion.button
+                      <button
                         onClick={() =>
-                          setCurrentPage((prev) =>
-                            Math.min(totalPages, prev + 1)
-                          )
+                          setCurrentPage((p) => Math.min(totalPages, p + 1))
                         }
                         disabled={currentPage === totalPages}
-                        className="px-4 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
+                        className="px-4 py-2 text-sm border rounded-lg disabled:opacity-50"
                       >
                         Next
-                      </motion.button>
+                      </button>
                     </div>
                   </div>
                 )}

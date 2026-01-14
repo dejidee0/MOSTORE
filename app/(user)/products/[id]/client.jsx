@@ -5,15 +5,13 @@ import { useToast } from "@/lib/toast";
 import { useCart } from "@/lib/cart";
 import { useWishlist } from "@/hooks/useWishlist";
 import { supabase } from "@/lib/supabase-client";
-import { Heart, ShoppingCart, Zap, HardDrive, Cpu } from "lucide-react";
+import { Heart, ShoppingCart, HardDrive, Cpu, Gift, Send } from "lucide-react";
 import { motion } from "framer-motion";
 import ProductReviews, { StarRating } from "./reviews";
 import { getProductAverageRating, getProductReviewCount } from "@/lib/reviews";
 import { useRouter } from "next/navigation";
-import { ShoppingBag } from "lucide-react";
-import { Antenna } from "lucide-react";
+import { ShoppingBag, Antenna, MessageCircle } from "lucide-react";
 import RichContentRenderer from "@/components/rich-text-renderer";
-import { MessageCircle } from "lucide-react";
 import { chatApi } from "@/lib/chat/api";
 
 export default function ProductDetailsClient({ productId }) {
@@ -44,41 +42,35 @@ export default function ProductDetailsClient({ productId }) {
     isAuthenticated,
   } = useWishlist();
 
+  // Check if product is charity
+  const isCharity = product?.product_type === "charity";
+
   // Check if product is in wishlist
   const isWishlisted = product ? isInWishlist(product.id) : false;
 
   // Calculate variant adjustments sum
   const calculateVariantAdjustments = () => {
+    if (isCharity) return 0; // No price adjustments for charity items
+
     let adjustments = 0;
 
-    // Add color variant price adjustment
-    if (
-      selectedColorVariant &&
-      selectedColorVariant.priceAdjustment !== undefined
-    ) {
+    if (selectedColorVariant?.priceAdjustment !== undefined) {
       adjustments += parseFloat(selectedColorVariant.priceAdjustment) || 0;
     }
 
-    // Add size variant price adjustment
-    if (
-      selectedSizeVariant &&
-      selectedSizeVariant.priceAdjustment !== undefined
-    ) {
+    if (selectedSizeVariant?.priceAdjustment !== undefined) {
       adjustments += parseFloat(selectedSizeVariant.priceAdjustment) || 0;
     }
 
-    // Add storage price adjustment
-    if (selectedStorage && selectedStorage.priceAdjustment !== undefined) {
+    if (selectedStorage?.priceAdjustment !== undefined) {
       adjustments += parseFloat(selectedStorage.priceAdjustment) || 0;
     }
 
-    // Add memory price adjustment
-    if (selectedMemory && selectedMemory.priceAdjustment !== undefined) {
+    if (selectedMemory?.priceAdjustment !== undefined) {
       adjustments += parseFloat(selectedMemory.priceAdjustment) || 0;
     }
 
-    // Add SIM type price adjustment
-    if (selectedSimType && selectedSimType.priceAdjustment !== undefined) {
+    if (selectedSimType?.priceAdjustment !== undefined) {
       adjustments += parseFloat(selectedSimType.priceAdjustment) || 0;
     }
 
@@ -87,50 +79,18 @@ export default function ProductDetailsClient({ productId }) {
 
   // Calculate final price based on all selected variants
   const calculateFinalPrice = () => {
-    if (!product) return 0;
+    if (!product || isCharity) return 0;
     return parseFloat(product.price) + calculateVariantAdjustments();
   };
 
   // Calculate original price with variant adjustments (for strikethrough)
   const calculateOriginalPriceWithVariants = () => {
-    if (!product || !product.originalprice) return null;
+    if (!product || !product.originalprice || isCharity) return null;
     return parseFloat(product.originalprice) + calculateVariantAdjustments();
   };
 
   const finalPrice = calculateFinalPrice();
   const originalPriceWithVariants = calculateOriginalPriceWithVariants();
-
-  // Debug: Log price calculations in real-time
-  useEffect(() => {
-    if (product) {
-      console.log("💰 Price Calculation Update:");
-      console.log("Base Price:", parseFloat(product.price));
-      console.log("Original Price:", product.originalprice);
-      console.log("Quantity:", quantity);
-      console.log("Selected Variants:", {
-        color: selectedColorVariant,
-        size: selectedSizeVariant,
-        storage: selectedStorage,
-        memory: selectedMemory,
-        sim: selectedSimType,
-      });
-      console.log("Variant Adjustments:", calculateVariantAdjustments());
-      console.log("Price per unit:", finalPrice);
-      console.log("Original price with variants:", originalPriceWithVariants);
-      console.log("Total Price (with quantity):", finalPrice * quantity);
-      console.log("---");
-    }
-  }, [
-    selectedColorVariant,
-    selectedSizeVariant,
-    selectedStorage,
-    selectedMemory,
-    selectedSimType,
-    quantity,
-    finalPrice,
-    originalPriceWithVariants,
-    product,
-  ]);
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -181,7 +141,6 @@ export default function ProductDetailsClient({ productId }) {
           }
 
           setProduct(productBySlug);
-          initializeDefaultSelections(productBySlug);
 
           if (
             productBySlug.related_products &&
@@ -191,7 +150,6 @@ export default function ProductDetailsClient({ productId }) {
           }
         } else {
           setProduct(productData);
-          initializeDefaultSelections(productData);
 
           if (
             productData.related_products &&
@@ -205,11 +163,6 @@ export default function ProductDetailsClient({ productId }) {
       } finally {
         setLoading(false);
       }
-    };
-
-    const initializeDefaultSelections = (productData) => {
-      // Don't auto-select anything - let user choose
-      // This ensures intentional selection and prevents confusion
     };
 
     const fetchRelatedProducts = async (relatedProductIds) => {
@@ -289,16 +242,37 @@ export default function ProductDetailsClient({ productId }) {
   };
 
   const handleAddToCart = () => {
+    if (isCharity) {
+      addToast("Please use 'Request Item' to claim this charity item", "info");
+      return;
+    }
+
     const cartItem = buildCartItem(product);
     addItem(cartItem, quantity);
     addToast(`${product.name} added to cart!`, "success");
   };
 
   const handleBuyNow = () => {
+    if (isCharity) {
+      addToast("Please use 'Request Item' to claim this charity item", "info");
+      return;
+    }
+
     const cartItem = buildCartItem(product);
     addItem(cartItem, quantity);
     addToast("Proceeding to checkout...", "success");
     router.push("/checkout");
+  };
+
+  const handleRequestItem = async () => {
+    if (!isAuthenticated) {
+      addToast("Please sign in to request charity items", "error");
+      router.push("/signin");
+      return;
+    }
+
+    // Open chat with seller for charity item request
+    handleMessageVendor();
   };
 
   const handleWishlist = async () => {
@@ -309,10 +283,11 @@ export default function ProductDetailsClient({ productId }) {
 
     if (!product) return;
 
-    const discountedPrice =
-      product.originalprice && product.discount
-        ? (product.originalprice * (1 - product.discount / 100)).toFixed(2)
-        : product.price;
+    const discountedPrice = isCharity
+      ? 0
+      : product.originalprice && product.discount
+      ? (product.originalprice * (1 - product.discount / 100)).toFixed(2)
+      : product.price;
 
     const wishlistProduct = {
       id: product.id,
@@ -327,6 +302,7 @@ export default function ProductDetailsClient({ productId }) {
       review_count: product.total_reviews,
       original_price: product.originalprice,
       discount: product.discount,
+      product_type: product.product_type,
     };
 
     await toggleWishlist(wishlistProduct);
@@ -344,6 +320,7 @@ export default function ProductDetailsClient({ productId }) {
       currency: "EUR",
     }).format(price);
   };
+
   const handleMessageVendor = async () => {
     if (!product.supplier_id) {
       addToast("Vendor information not available", "error");
@@ -353,13 +330,11 @@ export default function ProductDetailsClient({ productId }) {
     setIsLoadingChat(true);
 
     try {
-      // Get or create conversation directly
       const conversation = await chatApi.getOrCreateConversation(
         product.id,
         product.supplier_id
       );
 
-      // Navigate directly to the conversation
       router.push(`/messages?id=${conversation.id}`);
     } catch (error) {
       console.error("Failed to open chat:", error);
@@ -368,6 +343,7 @@ export default function ProductDetailsClient({ productId }) {
       setIsLoadingChat(false);
     }
   };
+
   if (loading) {
     return (
       <div className="flex justify-center items-center min-h-screen">
@@ -419,6 +395,7 @@ export default function ProductDetailsClient({ productId }) {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* Breadcrumb */}
       <div className="bg-white border-b">
         <div className="container mx-auto px-4 py-3">
           <nav className="text-sm text-gray-500">
@@ -428,10 +405,7 @@ export default function ProductDetailsClient({ productId }) {
             <span className="mx-2">/</span>
             {product.categories && (
               <>
-                <Link
-                  href={`/category/${product.categories.id}`}
-                  className="hover:text-gray-700"
-                >
+                <Link href={`/products`} className="hover:text-gray-700">
                   {product.categories.name}
                 </Link>
                 <span className="mx-2">/</span>
@@ -446,7 +420,13 @@ export default function ProductDetailsClient({ productId }) {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Left Column - Images */}
           <div className="space-y-4">
-            <div className="border border-gray-200 rounded-lg p-4 bg-white">
+            <div className="border border-gray-200 rounded-lg p-4 bg-white relative">
+              {isCharity && (
+                <div className="absolute top-6 left-6 z-10 bg-green-500 text-white px-3 py-2 rounded-lg shadow-lg flex items-center gap-2 font-semibold">
+                  <Gift className="w-5 h-5" />
+                  Charity Item
+                </div>
+              )}
               <img
                 src={
                   hasImages
@@ -465,7 +445,9 @@ export default function ProductDetailsClient({ productId }) {
                     onClick={() => setSelectedImage(index)}
                     className={`border-2 rounded-lg p-2 ${
                       selectedImage === index
-                        ? "border-orange-500"
+                        ? isCharity
+                          ? "border-green-500"
+                          : "border-orange-500"
                         : "border-gray-200"
                     }`}
                   >
@@ -479,7 +461,11 @@ export default function ProductDetailsClient({ productId }) {
               </div>
             )}
             <div className="text-gray-800 text-xl leading-relaxed hidden md:block">
-              <h1 className="font-bold text-primary text-2xl">
+              <h1
+                className={`font-bold text-2xl ${
+                  isCharity ? "text-green-600" : "text-primary"
+                }`}
+              >
                 Product Description
               </h1>
               <RichContentRenderer
@@ -496,16 +482,23 @@ export default function ProductDetailsClient({ productId }) {
                 <h1 className="text-2xl font-bold text-gray-800">
                   {product.name}
                 </h1>
-                {product.condition && (
-                  <span
-                    className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                      product.condition === "new"
-                        ? "bg-green-100 text-green-700"
-                        : "bg-blue-100 text-blue-700"
-                    }`}
-                  >
-                    {product.condition === "new" ? "Brand New" : "Pre-Owned"}
+                {isCharity ? (
+                  <span className="px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700 flex items-center gap-1">
+                    <Gift className="w-3 h-3" />
+                    Free Item
                   </span>
+                ) : (
+                  product.condition && (
+                    <span
+                      className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                        product.condition === "new"
+                          ? "bg-green-100 text-green-700"
+                          : "bg-blue-100 text-blue-700"
+                      }`}
+                    >
+                      {product.condition === "new" ? "Brand New" : "Pre-Owned"}
+                    </span>
+                  )
                 )}
               </div>
               <StarRating
@@ -529,24 +522,46 @@ export default function ProductDetailsClient({ productId }) {
             </div>
 
             {/* Price Display */}
-            <div className="bg-gray-50 border border-gray-200 rounded-lg py-4 px-0">
-              <div className="flex items-baseline gap-3 mb-2">
-                <div className="text-3xl font-bold text-gray-800">
-                  {formatPrice(finalPrice * quantity)}
-                </div>
-
-                {originalPriceWithVariants && quantity === 1 && (
-                  <div className="text-lg text-gray-400 line-through">
-                    {formatPrice(originalPriceWithVariants)}
+            {isCharity ? (
+              <div
+                className={`border rounded-lg py-6 px-4 text-center ${
+                  isCharity
+                    ? "bg-green-50 border-green-200"
+                    : "bg-gray-50 border-gray-200"
+                }`}
+              >
+                <div className="flex items-center justify-center gap-3">
+                  <Gift className="w-8 h-8 text-green-600" />
+                  <div>
+                    <div className="text-2xl font-bold text-green-600">
+                      Free to Good Home
+                    </div>
+                    <p className="text-sm text-green-700 mt-1">
+                      This item is being offered for free as a charity donation
+                    </p>
                   </div>
-                )}
-                {product.discount && (
-                  <span className="bg-red-100 text-red-800 text-sm px-2 py-1 rounded">
-                    {product.discount}% OFF
-                  </span>
-                )}
+                </div>
               </div>
-            </div>
+            ) : (
+              <div className="bg-gray-50 border border-gray-200 rounded-lg py-4 px-0">
+                <div className="flex items-baseline gap-3 mb-2">
+                  <div className="text-3xl font-bold text-gray-800">
+                    {formatPrice(finalPrice * quantity)}
+                  </div>
+
+                  {originalPriceWithVariants && quantity === 1 && (
+                    <div className="text-lg text-gray-400 line-through">
+                      {formatPrice(originalPriceWithVariants)}
+                    </div>
+                  )}
+                  {product.discount && (
+                    <span className="bg-red-100 text-red-800 text-sm px-2 py-1 rounded">
+                      {product.discount}% OFF
+                    </span>
+                  )}
+                </div>
+              </div>
+            )}
 
             {/* Color Variants */}
             {hasColorVariants && (
@@ -561,7 +576,9 @@ export default function ProductDetailsClient({ productId }) {
                       onClick={() => setSelectedColorVariant(colorVariant)}
                       className={`relative flex items-center gap-2 px-4 py-2 border-2 rounded-lg transition-all ${
                         selectedColorVariant?.name === colorVariant.name
-                          ? "border-orange-500 bg-orange-50"
+                          ? isCharity
+                            ? "border-green-500 bg-green-50"
+                            : "border-orange-500 bg-orange-50"
                           : "border-gray-300 hover:border-gray-400"
                       }`}
                       title={colorVariant.name}
@@ -589,7 +606,9 @@ export default function ProductDetailsClient({ productId }) {
                       onClick={() => setSelectedSizeVariant(sizeVariant)}
                       className={`px-4 py-2 border-2 rounded ${
                         selectedSizeVariant?.name === sizeVariant.name
-                          ? "bg-orange-500 text-white border-orange-500"
+                          ? isCharity
+                            ? "bg-green-500 text-white border-green-500"
+                            : "bg-orange-500 text-white border-orange-500"
                           : "border-gray-300 text-gray-700 hover:border-gray-400"
                       }`}
                     >
@@ -600,10 +619,9 @@ export default function ProductDetailsClient({ productId }) {
               </div>
             )}
 
-            {/* Technical Specifications */}
+            {/* Technical Specifications - Hide price adjustments for charity */}
             {hasTechSpecs && (
               <div className="space-y-4">
-                {/* Storage Options */}
                 {hasStorageOptions && (
                   <div>
                     <label className="text-sm font-medium text-gray-700 mb-2 block flex items-center gap-2">
@@ -617,7 +635,11 @@ export default function ProductDetailsClient({ productId }) {
                           onClick={() => setSelectedStorage(storage)}
                           className={`px-3 py-2 text-sm border-2 rounded ${
                             selectedStorage?.value === storage.value
-                              ? "bg-orange-500 text-white border-orange-500"
+                              ? isCharity
+                                ? "bg-green-500 text-white border-green-500"
+                                : "bg-orange-500 text-white border-orange-500"
+                              : isCharity
+                              ? "border-green-200 text-gray-700 hover:border-green-400"
                               : "border-orange-200 text-gray-700 hover:border-orange-400"
                           }`}
                         >
@@ -628,7 +650,6 @@ export default function ProductDetailsClient({ productId }) {
                   </div>
                 )}
 
-                {/* Memory Options */}
                 {hasMemoryOptions && (
                   <div>
                     <label className="text-sm font-medium text-gray-700 mb-2 block flex items-center gap-2">
@@ -642,7 +663,11 @@ export default function ProductDetailsClient({ productId }) {
                           onClick={() => setSelectedMemory(memory)}
                           className={`px-3 py-2 text-sm border-2 rounded ${
                             selectedMemory?.value === memory.value
-                              ? "bg-orange-500 text-white border-orange-500"
+                              ? isCharity
+                                ? "bg-green-500 text-white border-green-500"
+                                : "bg-orange-500 text-white border-orange-500"
+                              : isCharity
+                              ? "border-green-200 text-gray-700 hover:border-green-400"
                               : "border-orange-200 text-gray-700 hover:border-orange-400"
                           }`}
                         >
@@ -653,7 +678,6 @@ export default function ProductDetailsClient({ productId }) {
                   </div>
                 )}
 
-                {/* SIM Type Options */}
                 {hasSimTypes && (
                   <div>
                     <label className="text-sm font-medium text-gray-700 mb-2 block flex items-center gap-2">
@@ -667,17 +691,15 @@ export default function ProductDetailsClient({ productId }) {
                           onClick={() => setSelectedSimType(simType)}
                           className={`px-3 py-2 text-sm border-2 rounded ${
                             selectedSimType?.value === simType.value
-                              ? "bg-orange-500 text-white border-orange-500"
+                              ? isCharity
+                                ? "bg-green-500 text-white border-green-500"
+                                : "bg-orange-500 text-white border-orange-500"
+                              : isCharity
+                              ? "border-green-200 text-gray-700 hover:border-green-400"
                               : "border-orange-200 text-gray-700 hover:border-orange-400"
                           }`}
                         >
                           {simType.value}
-                          {simType.priceAdjustment !== 0 && (
-                            <span className="text-xs ml-1">
-                              ({simType.priceAdjustment > 0 ? "+" : ""}
-                              {formatPrice(simType.priceAdjustment)})
-                            </span>
-                          )}
                         </button>
                       ))}
                     </div>
@@ -686,345 +708,192 @@ export default function ProductDetailsClient({ productId }) {
               </div>
             )}
 
-            {/* Quantity and Actions */}
+            {/* Quantity and Actions - Different for charity */}
             <div className="space-y-3">
-              <div className="flex items-center gap-4">
-                <div className="flex items-center border border-gray-300 rounded">
-                  <button
-                    onClick={() => handleQuantityChange("decrement")}
-                    className="px-3 py-2 text-gray-600 hover:bg-gray-100"
-                    disabled={quantity <= 1}
-                  >
-                    −
-                  </button>
-                  <span className="px-4 py-2 border-l border-r border-gray-300">
-                    {quantity}
-                  </span>
-                  <button
-                    onClick={() => handleQuantityChange("increment")}
-                    className="px-3 py-2 text-gray-600 hover:bg-gray-100"
-                    disabled={quantity >= product.stock_quantity}
-                  >
-                    +
-                  </button>
+              {!isCharity && (
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center border border-gray-300 rounded">
+                    <button
+                      onClick={() => handleQuantityChange("decrement")}
+                      className="px-3 py-2 text-gray-600 hover:bg-gray-100"
+                      disabled={quantity <= 1}
+                    >
+                      −
+                    </button>
+                    <span className="px-4 py-2 border-l border-r border-gray-300">
+                      {quantity}
+                    </span>
+                    <button
+                      onClick={() => handleQuantityChange("increment")}
+                      className="px-3 py-2 text-gray-600 hover:bg-gray-100"
+                      disabled={quantity >= product.stock_quantity}
+                    >
+                      +
+                    </button>
+                  </div>
                 </div>
-              </div>
+              )}
 
               {/* Action Buttons */}
-              <div className="flex w-full gap-3">
-                <button
-                  className={`px-6 py-3 rounded font-semibold flex items-center justify-center gap-2 ${
-                    isInStock
-                      ? "bg-white border-2 border-orange-500 text-orange-500 hover:bg-orange-50"
-                      : "bg-gray-400 text-white cursor-not-allowed"
-                  }`}
-                  onClick={() => isInStock && handleAddToCart()}
-                  disabled={!isInStock}
-                >
-                  <ShoppingCart size={20} />
-                  Add to Cart
-                </button>
-
-                <button
-                  className={`px-6 py-3 rounded font-semibold flex items-center justify-center gap-2 ${
-                    isInStock
-                      ? "bg-orange-500 text-white hover:bg-orange-600"
-                      : "bg-gray-400 text-white cursor-not-allowed"
-                  }`}
-                  onClick={() => isInStock && handleBuyNow()}
-                  disabled={!isInStock}
-                >
-                  <ShoppingBag size={20} />
-                  Buy Now
-                </button>
-                <button
-                  onClick={handleWishlist}
-                  className={`border p-3 rounded transition-all duration-300 ${
-                    isWishlisted
-                      ? "bg-red-500 border-red-500 text-white hover:bg-red-600"
-                      : "border-gray-300 text-gray-600 hover:bg-gray-100 hover:border-gray-400"
-                  }`}
-                  title={
-                    isWishlisted ? "Remove from wishlist" : "Add to wishlist"
-                  }
-                >
-                  <Heart
-                    className={`w-5 h-5 transition-all duration-200 ${
-                      isWishlisted ? "fill-current" : ""
+              {isCharity ? (
+                <div className="space-y-3">
+                  <button
+                    className={`w-full px-6 py-4 rounded-lg font-semibold flex items-center justify-center gap-2 ${
+                      isInStock
+                        ? "bg-green-500 text-white hover:bg-green-600 shadow-lg"
+                        : "bg-gray-400 text-white cursor-not-allowed"
                     }`}
-                  />
-                </button>
-              </div>
-              <button
-                className={`w-full px-6 py-4 rounded-lg font-semibold flex items-center justify-center gap-3 transition-all ${
-                  isInStock
-                    ? "bg-orange-500 text-white hover:bg-orange-600 shadow-lg hover:shadow-xl"
-                    : "bg-gray-400 text-white cursor-not-allowed"
-                }`}
-                onClick={() => isInStock && handleMessageVendor()}
-                disabled={!isInStock}
-              >
-                <MessageCircle size={22} />
-                Chat with Seller About This Product
-              </button>
-            </div>
-
-            {/* Product Details */}
-            <div className="border border-gray-200 rounded-lg p-4">
-              <h4 className="font-semibold text-gray-800 mb-3">
-                Product Details
-              </h4>
-              <div className="text-sm text-gray-600 space-y-2">
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3, delay: 0.1 }}
-                  className="flex items-center justify-between py-2 border-b border-gray-100"
-                >
-                  <span className="font-medium">SKU:</span>
-                  <span>{product.sku}</span>
-                </motion.div>
-                {product.brand && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.3, delay: 0.2 }}
-                    className="flex items-center justify-between py-2 border-b border-gray-100"
+                    onClick={handleRequestItem}
+                    disabled={!isInStock || isLoadingChat}
                   >
-                    <span className="font-medium">Brand:</span>
-                    <span>{product.brand}</span>
-                  </motion.div>
-                )}
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3, delay: 0.3 }}
-                  className="flex items-center justify-between py-2 border-b border-gray-100"
-                >
-                  <span className="font-medium">Condition:</span>
-                  <span
-                    className={`font-semibold ${
-                      product.condition === "new"
-                        ? "text-green-600"
-                        : "text-blue-600"
+                    <Send size={20} />
+                    {isLoadingChat ? "Opening Chat..." : "Request This Item"}
+                  </button>
+
+                  <button
+                    onClick={handleWishlist}
+                    className={`w-full border-2 px-6 py-3 rounded-lg font-semibold transition-all duration-300 flex items-center justify-center gap-2 ${
+                      isWishlisted
+                        ? "bg-red-500 border-red-500 text-white hover:bg-red-600"
+                        : "border-green-500 text-green-600 hover:bg-green-50"
                     }`}
                   >
-                    {product.condition === "new" ? "Brand New" : "Pre-Owned"}
-                  </span>
-                </motion.div>
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3, delay: 0.4 }}
-                  className="flex items-center justify-between py-2 border-b border-gray-100"
-                >
-                  <span className="font-medium">Stock:</span>
-                  <span>{product.stock_quantity} units</span>
-                </motion.div>
-                {product.location && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.3, delay: 0.5 }}
-                    className="flex items-center justify-between py-2"
-                  >
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium">Location:</span>
-                    </div>
-                    <span className="text-orange-500 font-semibold">
-                      {product.location}
-                    </span>
-                  </motion.div>
-                )}
-                {product?.profiles?.full_name && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.3, delay: 0.5 }}
-                    className="flex items-center justify-between py-2"
-                  >
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium">Uploaded By:</span>
-                    </div>
-                    <span className="text-black font-semibold">
-                      {product?.profiles.full_name}
-                    </span>
-                  </motion.div>
-                )}
-              </div>
-            </div>
+                    <Heart
+                      className={`w-5 h-5 ${
+                        isWishlisted ? "fill-current" : ""
+                      }`}
+                    />
+                    {isWishlisted ? "Remove from Wishlist" : "Add to Wishlist"}
+                  </button>
 
-            {/* Delivery Information */}
-            <div className="border border-gray-200 rounded-lg p-4 space-y-3 hidden md:block">
-              <div className="flex items-start gap-3">
-                <svg
-                  className="w-5 h-5 text-gray-600 mt-1"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"
-                  />
-                </svg>
-                <div>
-                  <h4 className="font-semibold text-gray-800">Free Delivery</h4>
-                  <p className="text-sm text-gray-600">
-                    Enter your postal code to check delivery availability
+                  <p className="text-sm text-green-700 text-center bg-green-50 p-3 rounded-lg">
+                    💚 This item is free! Request it to start a conversation
+                    with the donor.
                   </p>
                 </div>
-              </div>
-              <div className="flex items-start gap-3">
-                <svg
-                  className="w-5 h-5 text-gray-600 mt-1"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"
-                  />
-                </svg>
-                <div>
-                  <h4 className="font-semibold text-gray-800">
-                    Return Delivery
-                  </h4>
-                  <p className="text-sm text-gray-600">
-                    Free 30-days Delivery Returns{" "}
-                    <Link href="#" className="text-blue-500 underline">
-                      Details
-                    </Link>
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div className="text-gray-800 text-base leading-relaxed flex flex-col md:flex-row gap-4 md:hidden">
-            <RichContentRenderer content={product.description} />
-            <div className="border border-gray-200 rounded-lg p-4 space-y-3 block md:hidden pt-3">
-              <div className="flex items-start gap-3">
-                <svg
-                  className="w-5 h-5 text-gray-600 mt-1"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"
-                  />
-                </svg>
-                <div>
-                  <h4 className="font-semibold text-gray-800">Free Delivery</h4>
-                  <p className="text-sm text-gray-600">
-                    Enter your postal code to check delivery availability
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-start gap-3">
-                <svg
-                  className="w-5 h-5 text-gray-600 mt-1"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"
-                  />
-                </svg>
-                <div>
-                  <h4 className="font-semibold text-gray-800">
-                    Return Delivery
-                  </h4>
-                  <p className="text-sm text-gray-600">
-                    Free 30-days Delivery Returns{" "}
-                    <Link href="#" className="text-blue-500 underline">
-                      Details
-                    </Link>
-                  </p>
-                </div>
-              </div>
+              ) : (
+                <>
+                  <div className="flex w-full gap-3">
+                    <button
+                      className={`px-6 py-3 rounded font-semibold flex items-center justify-center gap-2 ${
+                        isInStock
+                          ? "bg-white border-2 border-orange-500 text-orange-500 hover:bg-orange-50"
+                          : "bg-gray-400 text-white cursor-not-allowed"
+                      }`}
+                      onClick={handleAddToCart}
+                      disabled={!isInStock}
+                    >
+                      <ShoppingCart size={20} />
+                      Add to Cart
+                    </button>
+
+                    <button
+                      className={`px-6 py-3 rounded font-semibold flex items-center justify-center gap-2 ${
+                        isInStock
+                          ? "bg-orange-500 text-white hover:bg-orange-600"
+                          : "bg-gray-400 text-white cursor-not-allowed"
+                      }`}
+                      onClick={handleBuyNow}
+                      disabled={!isInStock}
+                    >
+                      <ShoppingBag size={20} />
+                      Buy Now
+                    </button>
+
+                    <button
+                      onClick={handleWishlist}
+                      className={`border p-3 rounded transition-all duration-300 ${
+                        isWishlisted
+                          ? "bg-red-500 border-red-500 text-white hover:bg-red-600"
+                          : "border-gray-300 text-gray-600 hover:bg-gray-100 hover:border-gray-400"
+                      }`}
+                      title={
+                        isWishlisted
+                          ? "Remove from wishlist"
+                          : "Add to wishlist"
+                      }
+                    >
+                      <Heart
+                        className={`w-5 h-5 transition-all duration-200 ${
+                          isWishlisted ? "fill-current" : ""
+                        }`}
+                      />
+                    </button>
+                  </div>
+
+                  {/* Message Vendor */}
+                  <button
+                    onClick={handleMessageVendor}
+                    disabled={isLoadingChat}
+                    className="w-full mt-3 border border-gray-300 px-6 py-3 rounded-lg font-medium flex items-center justify-center gap-2 hover:bg-gray-50"
+                  >
+                    <MessageCircle size={20} />
+                    {isLoadingChat ? "Opening chat..." : "Message Seller"}
+                  </button>
+                </>
+              )}
             </div>
           </div>
         </div>
 
-        {/* Reviews Section */}
-        <ProductReviews productId={product.id} />
+        {/* Mobile Description */}
+        <div className="mt-10 md:hidden bg-white p-4 rounded-lg border">
+          <h2
+            className={`font-bold text-xl mb-3 ${
+              isCharity ? "text-green-600" : "text-gray-800"
+            }`}
+          >
+            Product Description
+          </h2>
+          <RichContentRenderer content={product.description} />
+        </div>
 
-        {/* Related Products */}
-        {relatedProducts.length > 0 && (
-          <div className="mt-16">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
-                <div className="w-4 h-6 bg-orange-500 rounded"></div>
-                Related Items
-              </h2>
+        {!isCharity && (
+          <>
+            <div className="mt-14">
+              <ProductReviews productId={product.id} />
             </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-              {relatedProducts.map((relatedProduct) => (
-                <Link
-                  key={relatedProduct.id}
-                  href={`/product/${relatedProduct.id}`}
-                  className="bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-lg transition-shadow"
-                >
-                  <div className="relative">
-                    <img
-                      src={
-                        relatedProduct.images?.[0] || "/placeholder-image.jpg"
-                      }
-                      alt={relatedProduct.name}
-                      className="w-full h-40 object-cover"
-                    />
-                    {relatedProduct.discount && (
-                      <span className="absolute top-2 left-2 bg-orange-500 text-white text-xs px-2 py-1 rounded">
-                        {relatedProduct.discount}%
-                      </span>
-                    )}
-                    {relatedProduct.condition && (
-                      <span
-                        className={`absolute top-2 right-2 text-white text-xs px-2 py-1 rounded ${
-                          relatedProduct.condition === "new"
-                            ? "bg-green-500"
-                            : "bg-blue-500"
-                        }`}
-                      >
-                        {relatedProduct.condition === "new" ? "New" : "Used"}
-                      </span>
-                    )}
-                  </div>
-                  <div className="p-3 space-y-2">
-                    <h3 className="font-medium text-gray-800 text-sm truncate">
-                      {relatedProduct.name}
-                    </h3>
-                    <div className="flex items-center gap-2">
-                      <span className="text-orange-500 font-bold">
-                        €{relatedProduct.price}
-                      </span>
-                      {relatedProduct.originalprice &&
-                        relatedProduct.originalprice > relatedProduct.price && (
-                          <span className="text-gray-400 line-through text-sm">
-                            €{relatedProduct.originalprice}
-                          </span>
-                        )}
-                    </div>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          </div>
+            {/* Related Products */}
+            {relatedProducts.length > 0 && (
+              <div className="mt-14">
+                <h2 className="text-2xl font-bold text-gray-800 mb-6">
+                  Related Products
+                </h2>
+
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  {relatedProducts.map((item) => (
+                    <Link
+                      key={item.id}
+                      href={`/product/${item.slug || item.id}`}
+                      className="bg-white border rounded-lg p-3 hover:shadow-lg transition"
+                    >
+                      <img
+                        src={item.images?.[0] || "/placeholder-image.jpg"}
+                        alt={item.name}
+                        className="w-full h-40 object-contain mb-3"
+                      />
+                      <h3 className="font-medium text-sm text-gray-800 truncate">
+                        {item.name}
+                      </h3>
+
+                      {item.product_type === "charity" ? (
+                        <p className="text-green-600 font-semibold mt-1">
+                          Free
+                        </p>
+                      ) : (
+                        <p className="text-orange-600 font-semibold mt-1">
+                          {formatPrice(item.price)}
+                        </p>
+                      )}
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
+          </>
         )}
+        {/* Reviews Section */}
       </div>
     </div>
   );

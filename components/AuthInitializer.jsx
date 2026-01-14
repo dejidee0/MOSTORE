@@ -20,7 +20,7 @@ export function AuthInitializer({ children }) {
       const currentPath = window.location.pathname;
 
       const validPaths = {
-        admin: ["/admin/dashboard", "/admin/dashboard/"],
+        admin: ["/admin/dashboard/products", "/admin/dashboard/products"],
         supplier: ["/supplier/dashboard", "/supplier/dashboard/"],
         customer: ["/"],
       };
@@ -31,7 +31,7 @@ export function AuthInitializer({ children }) {
 
       if (!isValidPath) {
         const redirectTo = {
-          admin: "/admin/dashboard",
+          admin: "/admin/dashboard/products",
           supplier: "/supplier/dashboard",
           customer: "/",
         }[role];

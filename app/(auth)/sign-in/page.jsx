@@ -50,7 +50,7 @@ const SignInPage = () => {
 
       switch (role) {
         case "admin":
-          router.push("/admin/dashboard");
+          router.push("/admin/dashboard/products");
           break;
         case "supplier":
           router.push("/supplier/dashboard/");

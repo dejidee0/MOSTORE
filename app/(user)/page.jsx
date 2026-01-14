@@ -17,6 +17,7 @@ import { FaWhatsapp } from "react-icons/fa";
 import FeaturedAdsSection from "@/components/shared/Home/ads";
 import PremiumAdsSection from "@/components/shared/Home/ads";
 import SponsoredProductsSection from "@/components/shared/Home/ads";
+import CharityProductsSection from "@/components/shared/Home/charity";
 
 // Lazy-load heavy sections
 const ProductShowcaseSection = dynamic(() =>
@@ -123,6 +124,8 @@ const HomePage = () => {
       <ProductShowcaseSection />
       {/* <ProductSections /> */}
       <AutomotiveHeroSection />
+      <CharityProductsSection />
+
       <BusinessPartners />
       <BlogLandingSection />
 

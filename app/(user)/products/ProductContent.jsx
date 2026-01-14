@@ -316,7 +316,7 @@ const ProductsContent = ({ categoryParam, searchQuery }) => {
 
     if (activeTab === "charity") {
       return products.filter((p) => p.product_type === "charity");
-    } else if (activeTab === "regular") {
+    } else {
       return products.filter(
         (p) => p.product_type === "regular" || !p.product_type
       );

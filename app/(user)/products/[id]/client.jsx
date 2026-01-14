@@ -267,7 +267,7 @@ export default function ProductDetailsClient({ productId }) {
   const handleRequestItem = async () => {
     if (!isAuthenticated) {
       addToast("Please sign in to request charity items", "error");
-      router.push("/signin");
+      router.push("/sign-in");
       return;
     }
 

@@ -119,14 +119,6 @@ export default function CharityProductsSection() {
                         />
                       )}
 
-                      {/* Sponsored Badge */}
-                      <div className="absolute top-2 left-2">
-                        <div className="bg-gradient-to-r from-orange-500 to-amber-500 text-white text-[10px] font-semibold px-2 py-0.5 rounded flex items-center gap-1">
-                          <Megaphone className="w-2.5 h-2.5" />
-                          Ad
-                        </div>
-                      </div>
-
                       {/* Wishlist */}
                       <button
                         onClick={(e) => handleWishlistClick(product, e)}

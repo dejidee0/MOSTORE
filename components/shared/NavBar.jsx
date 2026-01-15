@@ -272,16 +272,17 @@ const NavBar = () => {
             label: "My Account",
             href: "/my-account?tab=profile",
           },
-        user && {
-          label: "My Messages",
-          href: "/messages",
-          badge: unreadCount > 0 ? unreadCount : null, // Add badge
-        },
         user &&
           role !== "customer" && {
             label: "My Account",
             href: `/${role}/dashboard${role === "supplier" ? "/products" : ""}`,
           },
+        user && {
+          label: "Inbox",
+          href: "/messages",
+          badge: unreadCount > 0 ? unreadCount : null, // Add badge
+        },
+
         user && role === "customer" && { label: "Wishlist", href: "/wishlist" },
       ].filter(Boolean),
     [user, role, unreadCount] // Add unreadCount to dependencies
@@ -437,13 +438,15 @@ const NavBar = () => {
               </div>
             </div>
             <div className="flex items-center space-x-2 lg:space-x-4">
-              {!user && role !== "supplier" && role !== "admin" && (
-                <Link href="/supplier-sign">
-                  <button className="hidden lg:flex items-center text-white font-medium hover:text-orange-300 transition-colors duration-200 ml-2">
-                    Sell Now
-                  </button>
-                </Link>
-              )}
+              <Link
+                href={
+                  !user ? "/supplier-sign" : role ? `/${role}/dashboard` : "/"
+                }
+              >
+                <button className="hidden lg:flex items-center text-white font-medium hover:text-orange-300 transition-colors duration-200 ml-2">
+                  Sell Now
+                </button>
+              </Link>
 
               <Link href="/products">
                 <button className="hidden lg:flex items-center text-white font-medium hover:text-orange-300 transition-colors duration-200 ml-2">
@@ -678,18 +681,6 @@ const NavBar = () => {
                 >
                   <Search className="w-5 h-5" />
                 </button>
-                <button
-                  onClick={() => router.push("/wishlist")}
-                  className="relative p-3 text-white hover:text-orange-300 hover:bg-gray-700 rounded-xl transition-all duration-200 group"
-                  title="Wishlist"
-                >
-                  <Heart className="w-5 h-5 group-hover:scale-110 transition-transform" />
-                  {wishlistCount > 0 && (
-                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center animate-pulse shadow-lg">
-                      {wishlistCount}
-                    </span>
-                  )}
-                </button>
                 {user && (
                   <button
                     onClick={() => router.push("/messages")}
@@ -705,6 +696,18 @@ const NavBar = () => {
                     )}
                   </button>
                 )}
+                <button
+                  onClick={() => router.push("/wishlist")}
+                  className="relative p-3 text-white hover:text-orange-300 hover:bg-gray-700 rounded-xl transition-all duration-200 group"
+                  title="Wishlist"
+                >
+                  <Heart className="w-5 h-5 group-hover:scale-110 transition-transform" />
+                  {wishlistCount > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center animate-pulse shadow-lg">
+                      {wishlistCount}
+                    </span>
+                  )}
+                </button>
 
                 <button
                   onClick={() => router.push("/cart")}

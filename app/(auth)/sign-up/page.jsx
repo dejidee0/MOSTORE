@@ -253,8 +253,9 @@ const SignUpPage = () => {
                     Welcome to Mostore!
                   </h3>
                   <p className="text-gray-600 mb-4">
-                    A verification email has been sent to {form.email}. Please
-                    verify your account before logging in.
+                    We’ve sent a verification email to {form.email}. If you
+                    don’t see it in your inbox, please check your spam or junk
+                    folder before logging in.
                   </p>
                   <button
                     onClick={() => router.push("/sign-in")}

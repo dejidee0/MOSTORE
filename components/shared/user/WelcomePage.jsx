@@ -2,7 +2,7 @@ import React from "react";
 import { motion } from "framer-motion";
 import { LogOut, User, ShoppingBag, Heart } from "lucide-react";
 
-const WelcomePage = ({ fullName, recentOrders, handleLogout }) => {
+const WelcomePage = ({ fullName, recentOrders, handleLogout, user }) => {
   return (
     <motion.div
       className="bg-white rounded-xl shadow-md p-6"
@@ -41,7 +41,11 @@ const WelcomePage = ({ fullName, recentOrders, handleLogout }) => {
             <div className="flex justify-between text-sm">
               <span className="text-gray-900 font-bold">Join Date:</span>
               <span className="text-gray-500 font-medium">
-                September 23, 2025
+                {new Date(user.created_at).toLocaleDateString("en-FR", {
+                  day: "2-digit",
+                  month: "long",
+                  year: "numeric",
+                })}
               </span>
             </div>
             <a
@@ -79,22 +83,6 @@ const WelcomePage = ({ fullName, recentOrders, handleLogout }) => {
       </div>
 
       {/* Logout Button at Bottom */}
-      <motion.div
-        className="mt-6 pt-6 border-t border-gray-200"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.6, duration: 0.5 }}
-      >
-        <motion.button
-          onClick={handleLogout}
-          className="flex items-center gap-2 px-6 py-3 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors duration-200 shadow-sm"
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-        >
-          <LogOut size={18} />
-          Logout
-        </motion.button>
-      </motion.div>
     </motion.div>
   );
 };

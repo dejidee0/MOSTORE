@@ -43,6 +43,7 @@ import { PiSecurityCameraDuotone } from "react-icons/pi";
 import Link from "next/link";
 import { useWishlist } from "@/hooks/useWishlist";
 import { Gift, HeartPulse, Laptop, Ship, Baby } from "lucide-react";
+import { motion } from "framer-motion";
 import { FaChildDress, FaOilCan } from "react-icons/fa6";
 import { BsGear } from "react-icons/bs";
 import { IoPhonePortraitSharp } from "react-icons/io5";
@@ -283,7 +284,7 @@ const NavBar = () => {
           badge: unreadCount > 0 ? unreadCount : null, // Add badge
         },
 
-        user && role === "customer" && { label: "Wishlist", href: "/wishlist" },
+        // user && role === "customer" && { label: "Wishlist", href: "/wishlist" },
       ].filter(Boolean),
     [user, role, unreadCount] // Add unreadCount to dependencies
   );
@@ -841,7 +842,7 @@ const NavBar = () => {
                           </li>
                         </ul>
                       </div>
-                      <div className="mb-2">
+                      <div className="mb-2 flex justify-between items-center">
                         <a
                           href="/blog"
                           onClick={() => setIsDrawerOpen(false)}
@@ -849,6 +850,16 @@ const NavBar = () => {
                         >
                           Blog
                         </a>
+
+                        <motion.button
+                          onClick={handleSignOut}
+                          className="flex items-center gap-2 px-4 py-1.5 cursor-pointer bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors duration-200 shadow-sm"
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                        >
+                          <LogOut size={12} />
+                          Logout
+                        </motion.button>
                       </div>
                     </nav>
                   </DrawerContent>

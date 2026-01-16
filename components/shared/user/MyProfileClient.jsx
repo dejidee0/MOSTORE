@@ -384,6 +384,7 @@ const MyProfileClient = () => {
                 transition={{ duration: 0.3 }}
               >
                 <WelcomePage
+                  user={user}
                   fullName={profileForm.fullName || "Guest"}
                   recentOrders={[]}
                   handleLogout={handleLogout}

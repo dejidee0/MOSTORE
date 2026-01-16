@@ -850,7 +850,7 @@ const NavBar = () => {
                         >
                           Blog
                         </a>
-                        {!user && (
+                        {user && (
                           <motion.button
                             onClick={handleSignOut}
                             className="flex items-center gap-2 px-4 py-1.5 cursor-pointer bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors duration-200 shadow-sm"

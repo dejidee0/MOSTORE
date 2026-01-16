@@ -850,16 +850,17 @@ const NavBar = () => {
                         >
                           Blog
                         </a>
-
-                        <motion.button
-                          onClick={handleSignOut}
-                          className="flex items-center gap-2 px-4 py-1.5 cursor-pointer bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors duration-200 shadow-sm"
-                          whileHover={{ scale: 1.05 }}
-                          whileTap={{ scale: 0.95 }}
-                        >
-                          <LogOut size={12} />
-                          Logout
-                        </motion.button>
+                        {!user && (
+                          <motion.button
+                            onClick={handleSignOut}
+                            className="flex items-center gap-2 px-4 py-1.5 cursor-pointer bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors duration-200 shadow-sm"
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                          >
+                            <LogOut size={12} />
+                            Logout
+                          </motion.button>
+                        )}
                       </div>
                     </nav>
                   </DrawerContent>

@@ -29,9 +29,9 @@ import {
   useDeleteCharityProduct,
   useCharityProductsSubscription,
 } from "@/lib/queries/charityQueries";
+import { useCurrentUser, useCurrentVendor } from "@/hooks/use-auth";
 
 const CharityProductsDashboard = () => {
-  const { user } = useUserStore();
   const [showForm, setShowForm] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
   const [selectedProduct, setSelectedProduct] = useState(null);
@@ -43,17 +43,36 @@ const CharityProductsDashboard = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
 
+  const {
+    data: user,
+    isLoading: userLoading,
+    error: userError,
+  } = useCurrentUser();
+
+  const userId = user?.id;
+
+  const {
+    data: vendor,
+    isLoading: vendorLoading,
+    error: vendorError,
+  } = useCurrentVendor({ userId });
+
+  const vendorId = vendor?.id;
+
   // React Query hooks
   const {
     data: products = [],
     isLoading,
     error,
     refetch,
-  } = useCharityProducts({
-    searchTerm,
-    category_id: filterCategory,
-    condition: filterCondition,
-  });
+  } = useCharityProducts(
+    {
+      searchTerm,
+      category_id: filterCategory,
+      condition: filterCondition,
+    },
+    vendorId,
+  );
 
   const deleteProductMutation = useDeleteCharityProduct();
 
@@ -142,7 +161,7 @@ const CharityProductsDashboard = () => {
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
   const currentItems = filteredProducts.slice(
     indexOfFirstItem,
-    indexOfLastItem
+    indexOfLastItem,
   );
 
   // Product Detail Modal Component
@@ -152,7 +171,7 @@ const CharityProductsDashboard = () => {
     const stockStatus = getStockStatus(product.stock_quantity);
     const progress = calculateProgress(
       product.current_donations,
-      product.donation_goal
+      product.donation_goal,
     );
     const expired = isExpired(product.charity_end_date);
 
@@ -263,7 +282,7 @@ const CharityProductsDashboard = () => {
                       <span className="font-medium">
                         Campaign {expired ? "Ended" : "Ends"}:{" "}
                         {new Date(
-                          product.charity_end_date
+                          product.charity_end_date,
                         ).toLocaleDateString()}
                       </span>
                     </div>
@@ -412,7 +431,7 @@ const CharityProductsDashboard = () => {
     const stockStatus = getStockStatus(product.stock_quantity);
     const progress = calculateProgress(
       product.current_donations,
-      product.donation_goal
+      product.donation_goal,
     );
 
     return (
@@ -872,12 +891,12 @@ const CharityProductsDashboard = () => {
                                 {pageNum}
                               </button>
                             );
-                          }
+                          },
                         )}
                         <button
                           onClick={() =>
                             setCurrentPage((prev) =>
-                              Math.min(prev + 1, totalPages)
+                              Math.min(prev + 1, totalPages),
                             )
                           }
                           disabled={currentPage === totalPages}

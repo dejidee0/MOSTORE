@@ -81,7 +81,7 @@ const SignUpPage = () => {
       !passwordCriteria.specialChar
     ) {
       setError(
-        "Password must be at least 6 characters long and include an uppercase letter, a lowercase letter, a number, and a special character."
+        "Password must be at least 6 characters long and include an uppercase letter, a lowercase letter, a number, and a special character.",
       );
       return false;
     }
@@ -93,7 +93,7 @@ const SignUpPage = () => {
     const usernameRegex = /^[a-zA-Z0-9_]{3,20}$/;
     if (!usernameRegex.test(form.username)) {
       setError(
-        "Username must be 3-20 characters long and contain only letters, numbers, and underscores."
+        "Username must be 3-20 characters long and contain only letters, numbers, and underscores.",
       );
       return false;
     }
@@ -130,7 +130,7 @@ const SignUpPage = () => {
 
     try {
       const isUsernameAvailable = await checkUsernameAvailability(
-        form.username
+        form.username,
       );
       if (!isUsernameAvailable) {
         setError("Username is already taken. Please choose another one.");
@@ -157,7 +157,7 @@ const SignUpPage = () => {
 
       if (error) throw error;
       setSuccess(
-        "Account created successfully! Please check your email to verify your account."
+        "Account created successfully! Please check your email to verify your account.",
       );
       setTimeout(() => router.push("/sign-in"), 5000);
     } catch (err) {

@@ -181,7 +181,7 @@ const NavBar = () => {
       setIsProfileDropdownOpen(false);
       router.push(`/${role}/dashboard${role === "supplier" ? "" : ""}`);
     },
-    [router]
+    [router],
   );
 
   const handleSignOut = useCallback(async () => {
@@ -215,7 +215,7 @@ const NavBar = () => {
       setIsCategoryDropdownOpen(false);
       setIsDrawerOpen(false);
     },
-    [router]
+    [router],
   );
 
   const handleSearch = useCallback(
@@ -226,7 +226,7 @@ const NavBar = () => {
         setSearchQuery("");
       }
     },
-    [router]
+    [router],
   );
 
   const handleSearchKeyDown = useCallback(
@@ -240,7 +240,7 @@ const NavBar = () => {
         setIsSearchOpen(false);
       }
     },
-    [handleSearch, searchQuery]
+    [handleSearch, searchQuery],
   );
 
   const CategoryItem = ({ category, onClick, getIcon, formatItems }) => {
@@ -286,7 +286,7 @@ const NavBar = () => {
 
         // user && role === "customer" && { label: "Wishlist", href: "/wishlist" },
       ].filter(Boolean),
-    [user, role, unreadCount] // Add unreadCount to dependencies
+    [user, role, unreadCount], // Add unreadCount to dependencies
   );
 
   if (!isClient) return null;
@@ -750,7 +750,7 @@ const NavBar = () => {
                             key={link.label}
                             href={link.href}
                             onClick={() => setIsDrawerOpen(false)}
-                            className="block py-2 hover:text-blue-600 flex items-center justify-between"
+                            className="py-2 hover:text-blue-600 flex items-center justify-between"
                           >
                             <span>{link.label}</span>
                             {link.badge && (
@@ -805,7 +805,7 @@ const NavBar = () => {
                                 onClick={() => {
                                   handleCategoryClick(
                                     category.id,
-                                    category.name
+                                    category.name,
                                   );
                                   setIsDrawerOpen(false);
                                 }}

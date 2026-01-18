@@ -126,7 +126,7 @@ const SupplierSignUpPage = () => {
 
     try {
       const isUsernameAvailable = await checkUsernameAvailability(
-        form.username
+        form.username,
       );
       if (!isUsernameAvailable) {
         setError("Storename is already taken. Please choose another one.");
@@ -156,13 +156,13 @@ const SupplierSignUpPage = () => {
 
       if (error) throw error;
       setSuccess(
-        "Supplier account created successfully! Please check your email to verify your account."
+        "Supplier account created successfully! Please check your email to verify your account.",
       );
       setTimeout(() => router.push("/sign-in"), 5000);
     } catch (err) {
       console.error("Supplier sign-up error:", err);
       setError(
-        err.message || "Supplier account creation failed. Please try again."
+        err.message || "Supplier account creation failed. Please try again.",
       );
     } finally {
       setIsLoading(false);
@@ -469,35 +469,77 @@ const SupplierSignUpPage = () => {
             {success && (
               <motion.div
                 key="success-modal"
-                className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+                className="fixed inset-0 flex items-center justify-center z-50 p-4"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
               >
+                {/* Glossy backdrop with blur */}
                 <motion.div
-                  className="bg-white rounded-lg p-8 max-w-md w-full text-center shadow-2xl"
+                  className="absolute inset-0 bg-gradient-to-br from-orange-500/20 via-white/10 to-orange-600/20 backdrop-blur-md"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  onClick={() => router.push("/sign-in")}
+                />
+
+                {/* Modal content */}
+                <motion.div
+                  className="relative bg-white/90 backdrop-blur-xl rounded-2xl p-6 sm:p-8 max-w-md w-full text-center shadow-2xl border border-white/20"
                   variants={successVariants}
                   initial="hidden"
                   animate="visible"
                   exit="exit"
+                  onClick={(e) => e.stopPropagation()}
                 >
-                  <motion.div className="w-16 h-16 mx-auto mb-4">
-                    <CheckCircle className="w-full h-full text-green-500" />
+                  {/* Success icon with gradient background */}
+                  <motion.div
+                    className="w-16 h-16 sm:w-20 sm:h-20 mx-auto mb-4 sm:mb-6 relative"
+                    initial={{ scale: 0, rotate: -180 }}
+                    animate={{ scale: 1, rotate: 0 }}
+                    transition={{ type: "spring", duration: 0.6, delay: 0.2 }}
+                  >
+                    <div className="absolute inset-0 bg-gradient-to-br from-green-400 to-emerald-500 rounded-full opacity-20 blur-xl" />
+                    <CheckCircle className="w-full h-full text-green-500 relative z-10" />
                   </motion.div>
-                  <h3 className="text-2xl font-bold text-gray-800 mb-2">
+
+                  {/* Title */}
+                  <motion.h3
+                    className="text-2xl sm:text-3xl font-bold text-gray-800 mb-2 sm:mb-3"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.3 }}
+                  >
                     Welcome to Mostore!
-                  </h3>
-                  <p className="text-gray-600 mb-4">
+                  </motion.h3>
+
+                  {/* Description */}
+                  <motion.p
+                    className="text-sm sm:text-base text-gray-600 mb-6 sm:mb-8 leading-relaxed"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.4 }}
+                  >
                     Your supplier account has been created. A verification email
-                    has been sent to {form.email}. Please verify your account
-                    before logging in.
-                  </p>
-                  <button
+                    has been sent to{" "}
+                    <span className="font-semibold text-orange-600">
+                      {form.email}
+                    </span>
+                    . Please verify your account before logging in.
+                  </motion.p>
+
+                  {/* CTA Button */}
+                  <motion.button
                     onClick={() => router.push("/sign-in")}
-                    className="bg-orange-500 text-white py-2 px-6 rounded-md hover:bg-orange-600 transition-colors"
+                    className="w-full sm:w-auto bg-gradient-to-r from-orange-500 to-orange-600 text-white py-3 px-8 rounded-lg hover:from-orange-600 hover:to-orange-700 transition-all duration-300 shadow-lg hover:shadow-xl font-semibold"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.5 }}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
                   >
                     Go to Sign In
-                  </button>
+                  </motion.button>
                 </motion.div>
               </motion.div>
             )}

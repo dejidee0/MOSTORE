@@ -110,7 +110,7 @@ export default function ProductDetailsClient({ productId }) {
             profiles(
               full_name
             )
-          `
+          `,
           )
           .eq("id", productId)
           .eq("is_active", true)
@@ -130,7 +130,7 @@ export default function ProductDetailsClient({ productId }) {
               profiles(
                 full_name
               )
-            `
+            `,
             )
             .eq("slug", productId)
             .eq("is_active", true)
@@ -286,8 +286,8 @@ export default function ProductDetailsClient({ productId }) {
     const discountedPrice = isCharity
       ? 0
       : product.originalprice && product.discount
-      ? (product.originalprice * (1 - product.discount / 100)).toFixed(2)
-      : product.price;
+        ? (product.originalprice * (1 - product.discount / 100)).toFixed(2)
+        : product.price;
 
     const wishlistProduct = {
       id: product.id,
@@ -332,7 +332,7 @@ export default function ProductDetailsClient({ productId }) {
     try {
       const conversation = await chatApi.getOrCreateConversation(
         product.id,
-        product.supplier_id
+        product.supplier_id,
       );
 
       router.push(`/messages?id=${conversation.id}`);
@@ -639,8 +639,8 @@ export default function ProductDetailsClient({ productId }) {
                                 ? "bg-green-500 text-white border-green-500"
                                 : "bg-orange-500 text-white border-orange-500"
                               : isCharity
-                              ? "border-green-200 text-gray-700 hover:border-green-400"
-                              : "border-orange-200 text-gray-700 hover:border-orange-400"
+                                ? "border-green-200 text-gray-700 hover:border-green-400"
+                                : "border-orange-200 text-gray-700 hover:border-orange-400"
                           }`}
                         >
                           {storage.value}
@@ -667,8 +667,8 @@ export default function ProductDetailsClient({ productId }) {
                                 ? "bg-green-500 text-white border-green-500"
                                 : "bg-orange-500 text-white border-orange-500"
                               : isCharity
-                              ? "border-green-200 text-gray-700 hover:border-green-400"
-                              : "border-orange-200 text-gray-700 hover:border-orange-400"
+                                ? "border-green-200 text-gray-700 hover:border-green-400"
+                                : "border-orange-200 text-gray-700 hover:border-orange-400"
                           }`}
                         >
                           {memory.value}
@@ -695,8 +695,8 @@ export default function ProductDetailsClient({ productId }) {
                                 ? "bg-green-500 text-white border-green-500"
                                 : "bg-orange-500 text-white border-orange-500"
                               : isCharity
-                              ? "border-green-200 text-gray-700 hover:border-green-400"
-                              : "border-orange-200 text-gray-700 hover:border-orange-400"
+                                ? "border-green-200 text-gray-700 hover:border-green-400"
+                                : "border-orange-200 text-gray-700 hover:border-orange-400"
                           }`}
                         >
                           {simType.value}
@@ -819,6 +819,93 @@ export default function ProductDetailsClient({ productId }) {
                         }`}
                       />
                     </button>
+                  </div>
+                  <div className="border border-gray-200 rounded-lg p-4">
+                    <h4 className="font-semibold text-gray-800 mb-3">
+                      Product Details
+                    </h4>
+
+                    <div className="text-sm text-gray-600 space-y-2">
+                      <motion.div
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.3 }}
+                        className="flex items-center justify-between py-2 border-b border-gray-100"
+                      >
+                        <span className="font-medium">SKU:</span>
+                        <span>{product.sku}</span>
+                      </motion.div>
+
+                      {product.brand && (
+                        <motion.div
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ duration: 0.3, delay: 0.1 }}
+                          className="flex items-center justify-between py-2 border-b border-gray-100"
+                        >
+                          <span className="font-medium">Brand:</span>
+                          <span>{product.brand}</span>
+                        </motion.div>
+                      )}
+
+                      <motion.div
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.3, delay: 0.2 }}
+                        className="flex items-center justify-between py-2 border-b border-gray-100"
+                      >
+                        <span className="font-medium">Condition:</span>
+                        <span
+                          className={`font-semibold ${
+                            product.condition === "new"
+                              ? "text-green-600"
+                              : "text-blue-600"
+                          }`}
+                        >
+                          {product.condition === "new"
+                            ? "Brand New"
+                            : "Pre-Owned"}
+                        </span>
+                      </motion.div>
+
+                      <motion.div
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.3, delay: 0.3 }}
+                        className="flex items-center justify-between py-2 border-b border-gray-100"
+                      >
+                        <span className="font-medium">Stock:</span>
+                        <span>{product.stock_quantity} units</span>
+                      </motion.div>
+
+                      {product.location && (
+                        <motion.div
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ duration: 0.3, delay: 0.4 }}
+                          className="flex items-center justify-between py-2"
+                        >
+                          <span className="font-medium">Location:</span>
+                          <span className="text-orange-500 font-semibold">
+                            {product.location}
+                          </span>
+                        </motion.div>
+                      )}
+
+                      {product?.profiles?.full_name && (
+                        <motion.div
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ duration: 0.3, delay: 0.5 }}
+                          className="flex items-center justify-between py-2"
+                        >
+                          <span className="font-medium">Uploaded By:</span>
+                          <span className="font-semibold">
+                            {product.profiles.full_name}
+                          </span>
+                        </motion.div>
+                      )}
+                    </div>
                   </div>
 
                   {/* Message Vendor */}

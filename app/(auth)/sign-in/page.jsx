@@ -45,19 +45,7 @@ const SignInPage = () => {
     });
 
     if (initialized && !loading && isAuthenticated() && user) {
-      const role = user.user_metadata?.role || "customer";
-      console.log("User role detected:", role);
-
-      switch (role) {
-        case "admin":
-          router.push("/admin/dashboard/products");
-          break;
-        case "supplier":
-          router.push("/supplier/dashboard/");
-          break;
-        default: // customer
-          router.push("/");
-      }
+      router.push("/");
     }
   }, [user, isAuthenticated, router, initialized, loading]);
 
@@ -84,7 +72,7 @@ const SignInPage = () => {
       console.log("Attempting sign in with:", { email: form.email });
       const { data, error: signInError } = await signIn(
         form.email,
-        form.password
+        form.password,
       );
 
       if (signInError) {

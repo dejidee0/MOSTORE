@@ -4,7 +4,11 @@ import { useRouter, usePathname } from "next/navigation";
 import { useEffect } from "react";
 
 import { supabase } from "@/lib/supabase-client";
-import { useCurrentUser, useCurrentVendor } from "@/hooks/use-auth";
+import {
+  useCurrentUser,
+  useCurrentVendor,
+  useCurrentAdmin,
+} from "@/hooks/use-auth";
 
 export default function ProtectedRoute({ allowedRoles = [], children }) {
   const router = useRouter();
@@ -20,6 +24,7 @@ export default function ProtectedRoute({ allowedRoles = [], children }) {
   } = useCurrentUser();
 
   const userId = user?.id;
+  const role = user?.user_metadata?.role;
 
   const {
     data: vendor,
@@ -27,12 +32,20 @@ export default function ProtectedRoute({ allowedRoles = [], children }) {
     error: vendorError,
   } = useCurrentVendor({ userId });
 
-  const isLoading = userLoading || vendorLoading;
+  const {
+    data: admin,
+    isLoading: adminLoading,
+    error: adminError,
+  } = useCurrentAdmin({ userId });
+
+  const profile = role === "admin" ? admin : vendor;
+  const isLoading = userLoading || vendorLoading || adminLoading;
 
   /** =======================
    * Error Handling
    ======================= */
-  if (userError || vendorError) {
+  if (userError || vendorError || adminError) {
+    console.error(userError, vendorError, adminError);
     throw new Error("Authentication failed");
   }
 
@@ -77,7 +90,6 @@ export default function ProtectedRoute({ allowedRoles = [], children }) {
   useEffect(() => {
     if (isLoading) return;
 
-    // Not logged in
     if (!user) {
       if (pathname !== "/sign-in") {
         router.push("/sign-in");
@@ -85,38 +97,35 @@ export default function ProtectedRoute({ allowedRoles = [], children }) {
       return;
     }
 
-    if (!vendor) return;
+    if (!profile) return;
 
-    const role = vendor.role || "customer";
+    const profileRole = profile.role || "customer";
 
-    // Account disabled
-    if (!vendor.is_active && vendor.has_approved) {
+    if (!profile.is_active && profile.has_approved) {
       router.push("/supplier/account-disabled");
       return;
     }
 
-    // Account pending
-    if (!vendor.has_approved && !vendor.is_active) {
+    if (!profile.has_approved && !profile.is_active) {
       router.push("/supplier/account-pending");
       return;
     }
 
-    // Role not allowed
-    if (allowedRoles.length && !allowedRoles.includes(role)) {
+    if (allowedRoles.length && !allowedRoles.includes(profileRole)) {
       router.push("/");
     }
-  }, [isLoading, user, vendor, pathname, router, allowedRoles]);
+  }, [isLoading, user, profile, pathname, router, allowedRoles]);
 
   /** =======================
    * Access Check
    ======================= */
   const hasAccess =
     user &&
-    vendor &&
-    vendor.is_active &&
-    vendor.has_approved &&
+    profile &&
+    profile.is_active &&
+    profile.has_approved &&
     (allowedRoles.length === 0 ||
-      allowedRoles.includes(vendor.role || "customer"));
+      allowedRoles.includes(profile.role || "customer"));
 
   /** =======================
    * Loading State

@@ -5,7 +5,7 @@ import Link from "next/link";
 
 const AutomotiveHeroSection = () => {
   return (
-    <section className="relative h-[25vh] min-h-[400px] w-full overflow-hidden bg-black">
+    <section className="relative h-[25vh] min-h-[400px] w-full overflow-hidden bg-black ">
       {/* Video Background */}
       <div className="absolute inset-0 z-0">
         <video
@@ -29,7 +29,7 @@ const AutomotiveHeroSection = () => {
       </div>
 
       {/* Content - Using responsive container matching your blog sections */}
-      <div className="relative z-10 flex h-full items-center">
+      <div className="relative z-10 flex h-full items-center ">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
           <div className="max-w-3xl">
             {/* Sale Badge */}
@@ -62,7 +62,8 @@ const AutomotiveHeroSection = () => {
               transition={{ duration: 0.6, delay: 0.6 }}
               className="mb-6 text-base text-gray-300 sm:text-lg lg:text-xl"
             >
-              Plakrore maheten. Astronens ultranirad. Dod.
+              Having the right automotive parts and car accessories will help
+              you to boost your travel comfort
             </motion.p>
 
             {/* CTA Button */}

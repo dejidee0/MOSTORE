@@ -8,7 +8,7 @@ import {
   DrawerClose,
   DrawerTitle,
 } from "@/components/ui/drawer";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import useUserStore from "@/lib/stores/useUserStore";
 
 import {
@@ -55,7 +55,7 @@ import { Mail } from "lucide-react";
 import { useCategories } from "@/hooks/use-product";
 import { useCurrentUser, useCurrentVendor } from "@/hooks/use-auth";
 
-const MenuButton = ({ onClick, icon, label, className = "" }) => {
+const MenuButton = memo(({ onClick, icon, label, className = "" }) => {
   return (
     <button
       onClick={onClick}
@@ -67,13 +67,38 @@ const MenuButton = ({ onClick, icon, label, className = "" }) => {
       <span className="font-semibold text-sm">{label}</span>
     </button>
   );
-};
+});
+
+MenuButton.displayName = "MenuButton";
+
+const CategoryItem = memo(({ category, onClick, getIcon, formatItems }) => {
+  return (
+    <button
+      onClick={onClick}
+      className="w-full flex items-center gap-3 px-6 py-4 text-left hover:bg-orange-50 transition-all duration-200 text-gray-700"
+    >
+      <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center">
+        {getIcon(category.name)}
+      </div>
+      <div className="flex-1">
+        <p className="font-semibold text-sm text-gray-900">{category.name}</p>
+        {formatItems(category.description).map((item, index) => (
+          <p key={index} className="text-xs text-gray-500">
+            {item}
+          </p>
+        ))}
+      </div>
+    </button>
+  );
+});
+
+CategoryItem.displayName = "CategoryItem";
 
 const NavBar = () => {
   const router = useRouter();
+  const pathname = usePathname();
   const { signOut } = useUserStore();
   const { totalItems: cartItemCount } = useCart();
-  const [isClient, setIsClient] = useState(false);
   const { totalItems: wishlistCount } = useWishlist();
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -81,7 +106,6 @@ const NavBar = () => {
   const [isCategoryDropdownOpen, setIsCategoryDropdownOpen] = useState(false);
   const [isHelpDropdownOpen, setIsHelpDropdownOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-
   const [searchFocused, setSearchFocused] = useState(false);
 
   const {
@@ -98,30 +122,29 @@ const NavBar = () => {
     isLoading: vendorLoading,
   } = useCurrentVendor({ userId });
   const {
-    data: categories,
+    data: categories = [],
     error,
     isLoading: categoriesLoading,
   } = useCategories();
   const role = vendor?.role;
 
   const userInfo = useMemo(() => {
-    if (!user) return null;
-    const email = vendor?.email;
+    if (!user || !vendor?.email) return null;
     return {
-      initial: email?.charAt(0).toUpperCase() || "U",
-      displayName: email?.split("@")[0] || "User",
+      initial: vendor.email.charAt(0).toUpperCase(),
+      displayName: vendor.email.split("@")[0],
     };
-  }, [user]);
+  }, [user, vendor?.email]);
 
+  // Close drawer on route change
   useEffect(() => {
-    const handleRouteChangeComplete = () => {
-      setIsDrawerOpen(false);
-    };
-    router.events?.on("routeChangeComplete", handleRouteChangeComplete);
-    return () => {
-      router.events?.off("routeChangeComplete", handleRouteChangeComplete);
-    };
-  }, [router]);
+    setIsDrawerOpen(false);
+    setIsSearchOpen(false);
+    // Close all dropdowns on navigation
+    setIsProfileDropdownOpen(false);
+    setIsCategoryDropdownOpen(false);
+    setIsHelpDropdownOpen(false);
+  }, [pathname]);
 
   const getIconForCategory = useCallback((categoryName) => {
     const name = categoryName.toLowerCase();
@@ -129,7 +152,6 @@ const NavBar = () => {
     if (name.includes("electric") || name.includes("motorcycle"))
       return <Bike className="w-4 h-4" />;
     if (name.includes("fitters")) return <FaOilCan className="w-4 h-4" />;
-
     if (name.includes("used")) return <Monitor className="w-4 h-4" />;
     if (name.includes("accessories"))
       return <IoPhonePortraitSharp className="w-4 h-4" />;
@@ -151,31 +173,54 @@ const NavBar = () => {
       .slice(0, 4);
   }, []);
 
+  // Close dropdowns when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (!event.target.closest(".profile-dropdown"))
+      if (!event.target.closest(".profile-dropdown")) {
         setIsProfileDropdownOpen(false);
-      if (!event.target.closest(".category-dropdown"))
+      }
+      if (!event.target.closest(".category-dropdown")) {
         setIsCategoryDropdownOpen(false);
-      if (!event.target.closest(".help-dropdown")) setIsHelpDropdownOpen(false);
+      }
+      if (!event.target.closest(".help-dropdown")) {
+        setIsHelpDropdownOpen(false);
+      }
     };
+
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []); // Empty dependency array is correct here
+
+  // Close dropdowns on Escape key
+  useEffect(() => {
+    const handleEscape = (e) => {
+      if (e.key === "Escape") {
+        setIsProfileDropdownOpen(false);
+        setIsCategoryDropdownOpen(false);
+        setIsHelpDropdownOpen(false);
+        setIsSearchOpen(false);
+        setSearchFocused(false);
+      }
+    };
+
+    document.addEventListener("keydown", handleEscape);
+    return () => document.removeEventListener("keydown", handleEscape);
   }, []);
 
   const handleProfileClick = useCallback(() => {
-    console.log("User");
     if (!user) {
       router.push("/sign-in");
     } else {
-      setIsProfileDropdownOpen(!isProfileDropdownOpen);
+      setIsProfileDropdownOpen((prev) => !prev);
     }
-  }, [isProfileDropdownOpen, router]);
+  }, [user, router]);
 
   const navigateToDashboard = useCallback(
     (role) => {
       setIsProfileDropdownOpen(false);
-      router.push(`/${role}/dashboard${role === "supplier" ? "" : ""}`);
+      router.push(
+        `/${role}/dashboard${role === "supplier" ? "/products" : ""}`,
+      );
     },
     [router],
   );
@@ -239,55 +284,37 @@ const NavBar = () => {
     [handleSearch, searchQuery],
   );
 
-  const CategoryItem = ({ category, onClick, getIcon, formatItems }) => {
-    return (
-      <button
-        onClick={onClick}
-        className="w-full flex items-center gap-3 px-6 py-4 text-left hover:bg-orange-50 transition-all duration-200 text-gray-700"
-      >
-        <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center">
-          {getIcon(category.name)}
-        </div>
-        <div className="flex-1">
-          <p className="font-semibold text-sm text-gray-900">{category.name}</p>
-          {formatItems(category.description).map((item, index) => (
-            <p key={index} className="text-xs text-gray-500">
-              {item}
-            </p>
-          ))}
-        </div>
-      </button>
-    );
-  };
+  const navigationLinks = useMemo(() => {
+    const links = [];
 
-  const navigationLinks = useMemo(
-    () =>
-      [
-        !user && { label: "Sign in", href: "/sign-in" },
-        user &&
-          role === "customer" && {
-            label: "My Account",
-            href: "/my-account?tab=profile",
-          },
-        user &&
-          role !== "customer" && {
-            label: "My Account",
-            href: `/${role}/dashboard${role === "supplier" ? "/products" : ""}`,
-          },
-        user && {
-          label: "Inbox",
-          href: "/messages",
-          badge: unreadCount > 0 ? unreadCount : null, // Add badge
-        },
+    if (!user) {
+      links.push({ label: "Sign in", href: "/sign-in" });
+    } else {
+      if (role === "customer") {
+        links.push({ label: "My Account", href: "/my-account?tab=profile" });
+      } else if (role) {
+        links.push({
+          label: "My Account",
+          href: `/${role}/dashboard${role === "supplier" ? "/products" : ""}`,
+        });
+      }
 
-        // user && role === "customer" && { label: "Wishlist", href: "/wishlist" },
-      ].filter(Boolean),
-    [user, role, unreadCount], // Add unreadCount to dependencies
-  );
+      links.push({
+        label: "Inbox",
+        href: "/messages",
+        badge: unreadCount > 0 ? unreadCount : null,
+      });
+    }
 
-  if (userLoading || vendorLoading) return <p>Loading...</p>;
+    return links;
+  }, [user, role, unreadCount]);
+
+  // Show loading skeleton instead of blocking render
+  const isLoading = userLoading || vendorLoading;
+
   return (
     <>
+      {/* Top Banner */}
       <div className="bg-gradient-to-r from-orange-500 to-orange-600 text-white text-xs py-2 hidden lg:block shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between">
@@ -326,9 +353,12 @@ const NavBar = () => {
           </div>
         </div>
       </div>
+
+      {/* Main Navigation */}
       <nav className="sticky top-0 z-50 bg-gray-900 backdrop-blur-md border-b border-gray-200 shadow-sm">
         <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16 lg:h-18">
+            {/* Logo */}
             <div
               className="flex-shrink-0 flex items-center cursor-pointer group transition-all duration-300"
               onClick={() => router.push("/")}
@@ -341,13 +371,18 @@ const NavBar = () => {
                 />
               </div>
             </div>
+
+            {/* Center Section - Categories & Search */}
             <div className="flex-1 flex items-center justify-center lg:justify-between ml-4 lg:ml-8">
+              {/* Categories Dropdown */}
               <div className="relative category-dropdown hidden lg:block">
                 <button
                   onClick={() =>
                     setIsCategoryDropdownOpen(!isCategoryDropdownOpen)
                   }
                   className="flex items-center gap-3 px-6 py-3 rounded-xl bg-gradient-to-r from-orange-500 to-orange-600 text-white font-semibold hover:from-orange-600 hover:to-orange-700 transition-all duration-200 focus:outline-none shadow-sm hover:shadow-md"
+                  aria-label="Toggle categories menu"
+                  aria-expanded={isCategoryDropdownOpen}
                 >
                   <Package className="w-5 h-5" />
                   <span>All Categories</span>
@@ -366,7 +401,9 @@ const NavBar = () => {
                       </h3>
                     </div>
                     {categoriesLoading ? (
-                      <div>Loading...</div>
+                      <div className="px-6 py-4 text-center text-gray-500">
+                        Loading...
+                      </div>
                     ) : (
                       <div className="max-h-96 overflow-y-auto custom-scrollbar">
                         {categories.map((category) => (
@@ -397,6 +434,8 @@ const NavBar = () => {
                   </div>
                 )}
               </div>
+
+              {/* Search Bar */}
               <div className="hidden lg:flex items-center flex-1 max-w-2xl mx-8">
                 <div className="relative w-full group">
                   <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
@@ -415,11 +454,13 @@ const NavBar = () => {
                     onFocus={() => setSearchFocused(true)}
                     onBlur={() => setSearchFocused(false)}
                     className="w-full pl-12 pr-4 py-3.5 bg-gray-50 border-2 border-transparent rounded-l-xl rounded-r-xl text-sm placeholder-gray-500 focus:bg-white focus:border-orange-200 focus:ring-4 focus:ring-orange-100 focus:outline-none transition-all duration-200 shadow-sm hover:shadow-md hover:bg-white"
+                    aria-label="Search products"
                   />
                   {searchQuery && (
                     <button
                       onClick={() => setSearchQuery("")}
                       className="absolute inset-y-0 right-24 flex items-center text-gray-400 hover:text-gray-600 transition-colors"
+                      aria-label="Clear search"
                     >
                       <X className="h-4 w-4" />
                     </button>
@@ -427,13 +468,17 @@ const NavBar = () => {
                   <button
                     onClick={() => handleSearch(searchQuery)}
                     className="absolute right-0 inset-y-0 px-6 bg-gradient-to-r from-orange-500 to-orange-600 text-white font-semibold rounded-r-xl hover:from-orange-600 hover:to-orange-700 transition-all duration-200 shadow-sm hover:shadow-md"
+                    aria-label="Submit search"
                   >
                     Search
                   </button>
                 </div>
               </div>
             </div>
+
+            {/* Right Section - Actions */}
             <div className="flex items-center space-x-2 lg:space-x-4">
+              {/* Sell Now Link */}
               <Link
                 href={
                   !user
@@ -448,15 +493,20 @@ const NavBar = () => {
                 </button>
               </Link>
 
+              {/* Shop Link */}
               <Link href="/products">
                 <button className="hidden lg:flex items-center text-white font-medium hover:text-orange-300 transition-colors duration-200 ml-2">
                   Shop
                 </button>
               </Link>
+
+              {/* Help Dropdown */}
               <div className="relative help-dropdown hidden lg:block">
                 <button
                   onClick={() => setIsHelpDropdownOpen(!isHelpDropdownOpen)}
                   className="flex items-center gap-1 text-white font-medium hover:text-orange-300 transition-colors duration-200 ml-2 py-2 px-3 rounded-lg hover:bg-gray-800"
+                  aria-label="Help menu"
+                  aria-expanded={isHelpDropdownOpen}
                 >
                   Help
                   <ChevronDown
@@ -534,9 +584,6 @@ const NavBar = () => {
                             </span>
                           </div>
                         </div>
-                        <div className="absolute -top-10 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white text-xs px-3 py-2 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
-                          Coming Soon
-                        </div>
                       </div>
                     </div>
                     <div className="px-4 py-2 border-t border-gray-100 bg-gray-50 rounded-b-xl">
@@ -553,15 +600,18 @@ const NavBar = () => {
                   </div>
                 )}
               </div>
+
+              {/* Desktop Icons */}
               <div className="hidden lg:flex items-center space-x-1 ml-4">
+                {/* Messages */}
                 {user && (
                   <button
                     onClick={() => router.push("/messages")}
                     className="relative p-2.5 text-gray-300 hover:text-white hover:bg-gray-700 rounded-lg transition-all duration-200"
                     title="Messages"
+                    aria-label={`Messages${unreadCount > 0 ? ` - ${unreadCount} unread` : ""}`}
                   >
                     <Mail className="w-5 h-5" />
-
                     {unreadCount > 0 && (
                       <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold rounded-full min-w-[16px] h-4 px-1 flex items-center justify-center">
                         {unreadCount > 9 ? "9+" : unreadCount}
@@ -569,10 +619,13 @@ const NavBar = () => {
                     )}
                   </button>
                 )}
+
+                {/* Wishlist */}
                 <Link href="/wishlist">
                   <button
                     className="relative p-3 text-white hover:text-orange-300 hover:bg-gray-700 rounded-xl transition-all duration-200 group"
                     title="Wishlist"
+                    aria-label={`Wishlist - ${wishlistCount} items`}
                   >
                     <Heart className="w-5 h-5 group-hover:scale-110 transition-transform" />
                     {wishlistCount > 0 && (
@@ -580,27 +633,30 @@ const NavBar = () => {
                         {wishlistCount}
                       </span>
                     )}
-                    <span className="absolute -bottom-10 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white text-xs px-3 py-2 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap shadow-lg">
+                    <span className="absolute -bottom-10 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white text-xs px-3 py-2 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap shadow-lg pointer-events-none">
                       Wishlist
                     </span>
                   </button>
                 </Link>
 
+                {/* Profile Dropdown */}
                 <div className="relative profile-dropdown">
                   <button
                     onClick={handleProfileClick}
-                    disabled={userLoading}
+                    disabled={isLoading}
                     className="relative p-3 text-white hover:text-orange-300 hover:bg-gray-700 rounded-xl transition-all duration-200 group disabled:opacity-50 disabled:cursor-not-allowed"
                     title={user ? "Account Menu" : "Sign In"}
+                    aria-label={user ? "Account menu" : "Sign in"}
+                    aria-expanded={isProfileDropdownOpen}
                   >
                     <User className="w-5 h-5 group-hover:scale-110 transition-transform" />
                     {user && (
                       <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-500 border-2 border-gray-800 rounded-full shadow-sm"></div>
                     )}
-                    {userLoading && (
+                    {isLoading && (
                       <div className="absolute -top-1 -right-1 w-3 h-3 border-2 border-orange-300 border-t-orange-600 rounded-full animate-spin"></div>
                     )}
-                    <span className="absolute -bottom-10 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white text-xs px-3 py-2 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap shadow-lg">
+                    <span className="absolute -bottom-10 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white text-xs px-3 py-2 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap shadow-lg pointer-events-none">
                       {user ? "Account" : "Sign In"}
                     </span>
                   </button>
@@ -609,14 +665,14 @@ const NavBar = () => {
                       <div className="px-6 py-4 border-b border-gray-100">
                         <div className="flex items-center gap-4">
                           <div className="w-12 h-12 bg-gradient-to-r from-orange-400 to-orange-600 rounded-full flex items-center justify-center text-white font-bold text-lg shadow-lg">
-                            {userInfo?.initial}
+                            {userInfo?.initial || "U"}
                           </div>
                           <div className="flex-1 min-w-0">
                             <p className="text-sm font-semibold text-gray-900 truncate">
-                              {vendor?.full_name}
+                              {vendor?.full_name || "User"}
                             </p>
-                            {role !== "customer" && (
-                              <p className="text-xs text-orange-600 font-medium bg-orange-50 px-2 py-1 rounded-full inline-block mt-1">
+                            {role && role !== "customer" && (
+                              <p className="text-xs text-orange-600 font-medium bg-orange-50 px-2 py-1 rounded-full inline-block mt-1 capitalize">
                                 {role} Account
                               </p>
                             )}
@@ -627,21 +683,23 @@ const NavBar = () => {
                         {role !== "admin" && role !== "supplier" && (
                           <MenuButton
                             onClick={navigateToOrders}
-                            icon={<Package className="w-5 h-5" />}
+                            icon={
+                              <Package className="w-5 h-5 text-orange-600" />
+                            }
                             label="My Orders"
                           />
                         )}
                         {(role === "supplier" || role === "admin") && (
                           <MenuButton
                             onClick={() => navigateToDashboard(role)}
-                            icon={<Home className="w-5 h-5" />}
-                            label="My Account"
+                            icon={<Home className="w-5 h-5 text-orange-600" />}
+                            label="Dashboard"
                           />
                         )}
                         {role !== "supplier" && role !== "admin" && (
                           <MenuButton
                             onClick={() => router.push("/my-account")}
-                            icon={<Home className="w-5 h-5" />}
+                            icon={<Home className="w-5 h-5 text-orange-600" />}
                             label="My Account"
                           />
                         )}
@@ -649,7 +707,7 @@ const NavBar = () => {
                       <div className="border-t border-gray-100 pt-2">
                         <MenuButton
                           onClick={handleSignOut}
-                          icon={<LogOut className="w-5 h-5" />}
+                          icon={<LogOut className="w-5 h-5 text-red-600" />}
                           label="Sign Out"
                           className="text-red-600 hover:bg-red-50"
                         />
@@ -658,10 +716,12 @@ const NavBar = () => {
                   )}
                 </div>
 
+                {/* Cart */}
                 <button
                   onClick={() => router.push("/cart")}
                   className="relative p-3 text-white hover:text-orange-300 hover:bg-gray-700 rounded-xl transition-all duration-200 group"
                   title="Shopping Cart"
+                  aria-label={`Shopping cart - ${cartItemCount} items`}
                 >
                   <ShoppingCart className="w-5 h-5 group-hover:scale-110 transition-transform" />
                   {cartItemCount > 0 && (
@@ -669,26 +729,32 @@ const NavBar = () => {
                       {cartItemCount}
                     </span>
                   )}
-                  <span className="absolute -bottom-10 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white text-xs px-3 py-2 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap shadow-lg">
+                  <span className="absolute -bottom-10 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white text-xs px-3 py-2 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap shadow-lg pointer-events-none">
                     Cart
                   </span>
                 </button>
               </div>
+
+              {/* Mobile Icons */}
               <div className="flex lg:hidden items-center space-x-2">
+                {/* Mobile Search */}
                 <button
                   onClick={() => setIsSearchOpen(!isSearchOpen)}
                   className="p-2.5 text-gray-300 hover:text-white hover:bg-gray-700 rounded-lg transition-all duration-200"
+                  aria-label="Toggle search"
                 >
                   <Search className="w-5 h-5" />
                 </button>
+
+                {/* Mobile Messages */}
                 {user && (
                   <button
                     onClick={() => router.push("/messages")}
                     className="relative p-2.5 text-gray-300 hover:text-white hover:bg-gray-700 rounded-lg transition-all duration-200"
                     title="Messages"
+                    aria-label={`Messages${unreadCount > 0 ? ` - ${unreadCount} unread` : ""}`}
                   >
                     <Mail className="w-5 h-5" />
-
                     {unreadCount > 0 && (
                       <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold rounded-full min-w-[16px] h-4 px-1 flex items-center justify-center">
                         {unreadCount > 9 ? "9+" : unreadCount}
@@ -696,10 +762,13 @@ const NavBar = () => {
                     )}
                   </button>
                 )}
+
+                {/* Mobile Wishlist */}
                 <button
                   onClick={() => router.push("/wishlist")}
                   className="relative p-3 text-white hover:text-orange-300 hover:bg-gray-700 rounded-xl transition-all duration-200 group"
                   title="Wishlist"
+                  aria-label={`Wishlist - ${wishlistCount} items`}
                 >
                   <Heart className="w-5 h-5 group-hover:scale-110 transition-transform" />
                   {wishlistCount > 0 && (
@@ -709,9 +778,11 @@ const NavBar = () => {
                   )}
                 </button>
 
+                {/* Mobile Cart */}
                 <button
                   onClick={() => router.push("/cart")}
                   className="relative p-2.5 text-gray-300 hover:text-white hover:bg-gray-700 rounded-lg transition-all duration-200"
+                  aria-label={`Shopping cart - ${cartItemCount} items`}
                 >
                   <ShoppingCart className="w-5 h-5" />
                   {cartItemCount > 0 && (
@@ -720,6 +791,8 @@ const NavBar = () => {
                     </span>
                   )}
                 </button>
+
+                {/* Mobile Menu Drawer */}
                 <Drawer
                   direction="left"
                   open={isDrawerOpen}
@@ -727,7 +800,10 @@ const NavBar = () => {
                 >
                   <DrawerTitle className="sr-only">Navigation Menu</DrawerTitle>
                   <DrawerTrigger asChild>
-                    <button className="p-2.5 text-gray-300 hover:text-white hover:bg-gray-700 rounded-lg transition-all duration-200">
+                    <button
+                      className="p-2.5 text-gray-300 hover:text-white hover:bg-gray-700 rounded-lg transition-all duration-200"
+                      aria-label="Open menu"
+                    >
                       <Menu className="w-5 h-5" />
                     </button>
                   </DrawerTrigger>
@@ -737,12 +813,16 @@ const NavBar = () => {
                         Menu
                       </span>
                       <DrawerClose asChild>
-                        <button className="p-2 text-gray-500 hover:text-gray-700">
+                        <button
+                          className="p-2 text-gray-500 hover:text-gray-700"
+                          aria-label="Close menu"
+                        >
                           <X className="w-6 h-6" />
                         </button>
                       </DrawerClose>
                     </div>
                     <nav className="flex-1 flex flex-col gap-2 px-4 py-0 overflow-y-auto text-gray-700">
+                      {/* Navigation Links */}
                       <div className="border-b border-gray-200 pb-2 mb-2">
                         {navigationLinks.map((link) => (
                           <Link
@@ -759,15 +839,17 @@ const NavBar = () => {
                             )}
                           </Link>
                         ))}
-                      </div>{" "}
+                      </div>
+
+                      {/* Sell on Mostore */}
                       {!user && role !== "supplier" && role !== "admin" && (
                         <div className="border-b border-gray-200 pb-2 mb-2">
                           <Link
                             href="/supplier-sign"
                             className="flex justify-between items-center"
-                            prefetch
+                            onClick={() => setIsDrawerOpen(false)}
                           >
-                            <span className=" text-black font-bold">
+                            <span className="text-black font-bold">
                               Sell on{" "}
                               <span className="font-bold text-orange-500">
                                 Mostore
@@ -779,6 +861,8 @@ const NavBar = () => {
                           </Link>
                         </div>
                       )}
+
+                      {/* Categories */}
                       <div className="border-b border-gray-200 pb-2 mb-2">
                         <div className="flex justify-between items-center">
                           <span className="font-bold text-sm uppercase text-black">
@@ -786,7 +870,6 @@ const NavBar = () => {
                           </span>
                           <Link
                             href="/products"
-                            prefetch
                             onClick={() => setIsDrawerOpen(false)}
                           >
                             <span className="text-orange-500">See all</span>
@@ -816,19 +899,21 @@ const NavBar = () => {
                           )}
                         </div>
                       </div>
+
+                      {/* Help Center */}
                       <div className="border-b border-gray-200 pb-2 mb-2">
                         <span className="font-bold text-sm uppercase text-black">
                           Help Center
                         </span>
                         <ul className="mt-2 pl-2 space-y-2">
                           <li className="py-1">
-                            <a
+                            <article
                               href="/help"
                               onClick={() => setIsDrawerOpen(false)}
                               className="hover:text-orange-600"
                             >
                               Need Help?
-                            </a>
+                            </article>
                           </li>
                           <li className="py-1">
                             <a
@@ -841,6 +926,8 @@ const NavBar = () => {
                           </li>
                         </ul>
                       </div>
+
+                      {/* Blog & Logout */}
                       <div className="mb-2 flex justify-between items-center">
                         <a
                           href="/blog"
@@ -851,7 +938,10 @@ const NavBar = () => {
                         </a>
                         {user && (
                           <motion.button
-                            onClick={handleSignOut}
+                            onClick={() => {
+                              handleSignOut();
+                              setIsDrawerOpen(false);
+                            }}
                             className="flex items-center gap-2 px-4 py-1.5 cursor-pointer bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors duration-200 shadow-sm"
                             whileHover={{ scale: 1.05 }}
                             whileTap={{ scale: 0.95 }}
@@ -867,6 +957,8 @@ const NavBar = () => {
               </div>
             </div>
           </div>
+
+          {/* Mobile Search Expandable */}
           {isSearchOpen && (
             <div className="lg:hidden border-t border-gray-100 bg-white animate-in slide-in-from-top-2 duration-200 shadow-sm">
               <div className="px-4 py-4">
@@ -882,6 +974,7 @@ const NavBar = () => {
                     onKeyDown={handleSearchKeyDown}
                     className="w-full pl-12 pr-4 py-4 bg-gray-50 border-2 border-transparent rounded-xl text-sm placeholder-gray-500 focus:bg-white focus:border-orange-200 focus:ring-4 focus:ring-orange-100 focus:outline-none transition-all duration-200"
                     autoFocus
+                    aria-label="Search products"
                   />
                 </div>
               </div>

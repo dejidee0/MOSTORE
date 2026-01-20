@@ -103,17 +103,17 @@ function MessagesContent() {
       (c) =>
         c.product_id === Number(productId) &&
         c.vendor_id === vendorId &&
-        (c.customer_id === user.userId || c.vendor_id === user.userId)
+        (c.customer_id === user.userId || c.vendor_id === user.userId),
     );
 
     if (existing) {
-      router.replace(`/messages?id=${existing.id}`);
+      router.replace(`/admin/dashboard/messages?id=${existing.id}`);
     } else {
       setIsMigrating(true);
       chatApi
         .getOrCreateConversation(Number(productId), vendorId)
         .then((conv) => {
-          router.replace(`/messages?id=${conv.id}`);
+          router.replace(`/admin/dashboard/messages?id=${conv.id}`);
         })
         .catch((error) => {
           console.error("Migration error:", error);
@@ -139,11 +139,11 @@ function MessagesContent() {
     (conv) => {
       router.push(`/admin/dashboard/messages?id=${conv.id}`);
     },
-    [router]
+    [router],
   );
 
   const handleBackToList = useCallback(() => {
-    router.push("/messages");
+    router.push("/admin/dashboard/messages");
   }, [router]);
 
   // Loading states

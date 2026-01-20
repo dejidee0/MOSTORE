@@ -164,6 +164,7 @@ const NavBar = () => {
   }, []);
 
   const handleProfileClick = useCallback(() => {
+    console.log("User");
     if (!user) {
       router.push("/sign-in");
     } else {

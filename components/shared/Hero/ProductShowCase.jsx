@@ -7,31 +7,38 @@ import { useWishlist } from "@/hooks/useWishlist";
 import { supabase } from "@/lib/supabase-client";
 import Link from "next/link";
 import Image from "next/image";
+import { useQuery } from "@tanstack/react-query";
+
+const fetchProducts = async () => {
+  try {
+    const { data, error } = await supabase
+      .from("products")
+      .select("*")
+      .eq("is_active", true)
+      .eq("product_type", "regular")
+      .order("created_at", { ascending: false })
+      .limit(8);
+
+    return data;
+  } catch (error) {
+    throw new Error(error);
+  }
+};
 
 export default function ProductShowcaseSection() {
   const router = useRouter();
   const { isInWishlist, toggleItem } = useWishlist();
-  const [products, setProducts] = useState([]);
 
-  useEffect(() => {
-    const fetchProducts = async () => {
-      const { data, error } = await supabase
-        .from("products")
-        .select("*")
-        .eq("is_active", true)
-        .order("created_at", { ascending: false })
-        .limit(8);
-
-      if (error) {
-        console.error("Error fetching products:", error);
-        return;
-      }
-      setProducts(data);
-    };
-
-    fetchProducts();
-  }, []);
-
+  const {
+    data: products,
+    error,
+    isLoading,
+  } = useQuery({
+    queryKey: ["showcase-products"],
+    queryFn: fetchProducts,
+    staleTime: 1000 * 6 * 5,
+  });
+  if (isLoading) return <p>Fetching products...</p>;
   const formatPrice = (price) => `€${parseFloat(price).toLocaleString()}`;
 
   const handleWishlistClick = async (product, e) => {

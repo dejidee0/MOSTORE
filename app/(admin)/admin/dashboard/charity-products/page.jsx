@@ -29,6 +29,7 @@ import {
   useDeleteCharityProduct,
   useCharityProductsSubscription,
 } from "@/lib/queries/charityQueries";
+import RichContentRenderer from "@/components/rich-text-renderer";
 
 const CharityProductsDashboard = () => {
   const { user } = useUserStore();
@@ -142,7 +143,7 @@ const CharityProductsDashboard = () => {
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
   const currentItems = filteredProducts.slice(
     indexOfFirstItem,
-    indexOfLastItem
+    indexOfLastItem,
   );
 
   // Product Detail Modal Component
@@ -152,7 +153,7 @@ const CharityProductsDashboard = () => {
     const stockStatus = getStockStatus(product.stock_quantity);
     const progress = calculateProgress(
       product.current_donations,
-      product.donation_goal
+      product.donation_goal,
     );
     const expired = isExpired(product.charity_end_date);
 
@@ -263,7 +264,7 @@ const CharityProductsDashboard = () => {
                       <span className="font-medium">
                         Campaign {expired ? "Ended" : "Ends"}:{" "}
                         {new Date(
-                          product.charity_end_date
+                          product.charity_end_date,
                         ).toLocaleDateString()}
                       </span>
                     </div>
@@ -323,10 +324,8 @@ const CharityProductsDashboard = () => {
                 <h3 className="text-xl font-semibold text-gray-900">
                   Description
                 </h3>
-                <div
-                  className="prose max-w-none text-gray-600"
-                  dangerouslySetInnerHTML={{ __html: product.description }}
-                />
+
+                <RichContentRenderer content={product.description} />
               </div>
 
               {/* Variants */}
@@ -412,7 +411,7 @@ const CharityProductsDashboard = () => {
     const stockStatus = getStockStatus(product.stock_quantity);
     const progress = calculateProgress(
       product.current_donations,
-      product.donation_goal
+      product.donation_goal,
     );
 
     return (
@@ -872,12 +871,12 @@ const CharityProductsDashboard = () => {
                                 {pageNum}
                               </button>
                             );
-                          }
+                          },
                         )}
                         <button
                           onClick={() =>
                             setCurrentPage((prev) =>
-                              Math.min(prev + 1, totalPages)
+                              Math.min(prev + 1, totalPages),
                             )
                           }
                           disabled={currentPage === totalPages}

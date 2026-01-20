@@ -22,6 +22,7 @@ import { supabase } from "@/lib/supabase-client";
 import ProductForm from "@/components/inputs/ProductsForm";
 import { Tag, Calendar } from "lucide-react";
 import useUserStore from "@/lib/stores/useUserStore";
+import RichContentRenderer from "@/components/rich-text-renderer";
 
 const ProductDashboardClient = ({ initialError }) => {
   const { user, setUser } = useUserStore();
@@ -117,7 +118,7 @@ const ProductDashboardClient = ({ initialError }) => {
             id,
             name
           )
-          `
+          `,
         )
         .eq("supplier_id", user.id)
         .order("created_at", { ascending: false });
@@ -135,7 +136,7 @@ const ProductDashboardClient = ({ initialError }) => {
 
       const uniqueCategories = [
         ...new Set(
-          productsWithCategory.map((p) => p.category_name).filter(Boolean)
+          productsWithCategory.map((p) => p.category_name).filter(Boolean),
         ),
       ];
       setCategories(uniqueCategories);
@@ -163,7 +164,7 @@ const ProductDashboardClient = ({ initialError }) => {
           { event: "*", schema: "public", table: "products" },
           () => {
             fetchProducts();
-          }
+          },
         )
         .subscribe();
 
@@ -202,8 +203,8 @@ const ProductDashboardClient = ({ initialError }) => {
 
       setProducts(
         products.map((p) =>
-          p.id === productId ? { ...p, is_active: !currentStatus } : p
-        )
+          p.id === productId ? { ...p, is_active: !currentStatus } : p,
+        ),
       );
     } catch (error) {
       console.error("Error updating product status:", error);
@@ -231,7 +232,7 @@ const ProductDashboardClient = ({ initialError }) => {
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
   const currentItems = filteredProducts.slice(
     indexOfFirstItem,
-    indexOfLastItem
+    indexOfLastItem,
   );
 
   const formatPrice = (price) => {
@@ -424,7 +425,7 @@ const ProductDashboardClient = ({ initialError }) => {
                     </p>
                   )}
                   <p className="text-gray-600 leading-relaxed">
-                    {product.description}
+                    <RichContentRenderer content={product.description} />
                   </p>
                 </div>
               </div>
@@ -936,12 +937,12 @@ const ProductDashboardClient = ({ initialError }) => {
                               {pageNum}
                             </button>
                           );
-                        }
+                        },
                       )}
                       <button
                         onClick={() =>
                           setCurrentPage((prev) =>
-                            Math.min(prev + 1, totalPages)
+                            Math.min(prev + 1, totalPages),
                           )
                         }
                         disabled={currentPage === totalPages}

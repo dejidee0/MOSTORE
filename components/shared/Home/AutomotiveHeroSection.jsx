@@ -37,7 +37,7 @@ const AutomotiveHeroSection = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.2 }}
-              className="mb-6"
+              className="mb-2"
             >
               <span className="inline-flex items-center rounded-full bg-red-600 px-4 py-2 text-sm font-semibold text-white shadow-lg">
                 On Sale This Week
@@ -49,7 +49,7 @@ const AutomotiveHeroSection = () => {
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.4 }}
-              className="mb-4 text-2xl font-bold leading-tight text-white sm:text-3xl lg:text-4xl xl:text-5xl"
+              className="mb-4 text-2xl font-bold leading-tight text-white sm:text-3xl lg:text-3xl xl:text-4xl"
             >
               Get the Right Part at the Right Price for the Comfort of Your
               Vehicle

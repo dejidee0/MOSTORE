@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/drawer";
 import { useRouter } from "next/navigation";
 import useUserStore from "@/lib/stores/useUserStore";
-import { getAllCategories } from "@/lib/data/products";
+
 import {
   Search,
   User,
@@ -52,6 +52,8 @@ import { Tv } from "lucide-react";
 import { useUnreadCount } from "@/hooks/useChat";
 import { MessageSquare } from "lucide-react";
 import { Mail } from "lucide-react";
+import { useCategories } from "@/hooks/use-product";
+import { useCurrentUser, useCurrentVendor } from "@/hooks/use-auth";
 
 const MenuButton = ({ onClick, icon, label, className = "" }) => {
   return (
@@ -69,8 +71,7 @@ const MenuButton = ({ onClick, icon, label, className = "" }) => {
 
 const NavBar = () => {
   const router = useRouter();
-  const { user, loading, isAuthenticated, signOut, getUserEmail, initialized } =
-    useUserStore();
+  const { signOut } = useUserStore();
   const { totalItems: cartItemCount } = useCart();
   const [isClient, setIsClient] = useState(false);
   const { totalItems: wishlistCount } = useWishlist();
@@ -80,31 +81,37 @@ const NavBar = () => {
   const [isCategoryDropdownOpen, setIsCategoryDropdownOpen] = useState(false);
   const [isHelpDropdownOpen, setIsHelpDropdownOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [categories, setCategories] = useState([]);
-  const [categoriesLoading, setCategoriesLoading] = useState(true);
+
   const [searchFocused, setSearchFocused] = useState(false);
+
+  const {
+    data: user,
+    error: userError,
+    isLoading: userLoading,
+  } = useCurrentUser();
   const { data: unreadCount } = useUnreadCount(user?.id);
 
-  const role = user?.user_metadata?.role;
-  const realUser = user?.user_metadata;
+  const userId = user?.id;
+  const {
+    data: vendor,
+    error: vendorError,
+    isLoading: vendorLoading,
+  } = useCurrentVendor({ userId });
+  const {
+    data: categories,
+    error,
+    isLoading: categoriesLoading,
+  } = useCategories();
+  const role = vendor?.role;
 
   const userInfo = useMemo(() => {
     if (!user) return null;
-    const email = getUserEmail();
+    const email = vendor?.email;
     return {
-      email,
       initial: email?.charAt(0).toUpperCase() || "U",
       displayName: email?.split("@")[0] || "User",
     };
-  }, [user, getUserEmail]);
-
-  useEffect(() => {
-    loadCategories();
-  }, []);
-
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
+  }, [user]);
 
   useEffect(() => {
     const handleRouteChangeComplete = () => {
@@ -115,18 +122,6 @@ const NavBar = () => {
       router.events?.off("routeChangeComplete", handleRouteChangeComplete);
     };
   }, [router]);
-
-  const loadCategories = useCallback(async () => {
-    try {
-      setCategoriesLoading(true);
-      const categoriesData = await getAllCategories();
-      setCategories(categoriesData);
-    } catch (error) {
-      console.error("Error loading categories:", error);
-    } finally {
-      setCategoriesLoading(false);
-    }
-  }, []);
 
   const getIconForCategory = useCallback((categoryName) => {
     const name = categoryName.toLowerCase();
@@ -169,12 +164,12 @@ const NavBar = () => {
   }, []);
 
   const handleProfileClick = useCallback(() => {
-    if (!isAuthenticated()) {
+    if (!user) {
       router.push("/sign-in");
     } else {
       setIsProfileDropdownOpen(!isProfileDropdownOpen);
     }
-  }, [isAuthenticated, isProfileDropdownOpen, router]);
+  }, [isProfileDropdownOpen, router]);
 
   const navigateToDashboard = useCallback(
     (role) => {
@@ -289,8 +284,7 @@ const NavBar = () => {
     [user, role, unreadCount], // Add unreadCount to dependencies
   );
 
-  if (!isClient) return null;
-
+  if (userLoading || vendorLoading) return <p>Loading...</p>;
   return (
     <>
       <div className="bg-gradient-to-r from-orange-500 to-orange-600 text-white text-xs py-2 hidden lg:block shadow-sm">
@@ -594,22 +588,22 @@ const NavBar = () => {
                 <div className="relative profile-dropdown">
                   <button
                     onClick={handleProfileClick}
-                    disabled={loading && !initialized}
+                    disabled={userLoading}
                     className="relative p-3 text-white hover:text-orange-300 hover:bg-gray-700 rounded-xl transition-all duration-200 group disabled:opacity-50 disabled:cursor-not-allowed"
-                    title={isAuthenticated() ? "Account Menu" : "Sign In"}
+                    title={user ? "Account Menu" : "Sign In"}
                   >
                     <User className="w-5 h-5 group-hover:scale-110 transition-transform" />
-                    {isAuthenticated() && (
+                    {user && (
                       <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-500 border-2 border-gray-800 rounded-full shadow-sm"></div>
                     )}
-                    {loading && !initialized && (
+                    {userLoading && (
                       <div className="absolute -top-1 -right-1 w-3 h-3 border-2 border-orange-300 border-t-orange-600 rounded-full animate-spin"></div>
                     )}
                     <span className="absolute -bottom-10 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white text-xs px-3 py-2 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap shadow-lg">
-                      {isAuthenticated() ? "Account" : "Sign In"}
+                      {user ? "Account" : "Sign In"}
                     </span>
                   </button>
-                  {isProfileDropdownOpen && isAuthenticated() && (
+                  {isProfileDropdownOpen && user && (
                     <div className="absolute right-0 mt-3 w-80 bg-white rounded-2xl shadow-2xl border border-gray-100 py-4 z-50 animate-in slide-in-from-top-2 duration-200">
                       <div className="px-6 py-4 border-b border-gray-100">
                         <div className="flex items-center gap-4">
@@ -618,7 +612,7 @@ const NavBar = () => {
                           </div>
                           <div className="flex-1 min-w-0">
                             <p className="text-sm font-semibold text-gray-900 truncate">
-                              {realUser?.full_name}
+                              {vendor?.full_name}
                             </p>
                             {role !== "customer" && (
                               <p className="text-xs text-orange-600 font-medium bg-orange-50 px-2 py-1 rounded-full inline-block mt-1">

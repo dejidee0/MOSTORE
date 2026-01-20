@@ -3,36 +3,39 @@
 import { useState, useEffect } from "react";
 import { Sparkles, Heart, ArrowRight, Star, TrendingUp } from "lucide-react";
 import { useWishlist } from "@/hooks/useWishlist";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase-client";
 import Link from "next/link";
 import Image from "next/image";
 import { Megaphone } from "lucide-react";
+const fetchSponsoredProducts = async () => {
+  try {
+    const { data, error } = await supabase
+      .from("products")
+      .select("*")
+      .eq("product_type", "regular")
+      .eq("is_active", true)
+      .order("created_at", { ascending: false })
+      .limit(30);
+    return data;
+  } catch (error) {
+    console.error("Error fetching sponsored products", error);
+    throw new Error();
+  }
+};
 
 export default function SponsoredProductsSection() {
   const { isInWishlist, toggleItem } = useWishlist();
-  const [sponsoredProducts, setSponsoredProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchSponsoredProducts = async () => {
-      const { data, error } = await supabase
-        .from("products")
-        .select("*")
-        .eq("is_active", true)
-        .order("created_at", { ascending: false })
-        .limit(30);
-
-      if (error) {
-        console.error("Error fetching sponsored products:", error);
-        setLoading(false);
-        return;
-      }
-      setSponsoredProducts(data || []);
-      setLoading(false);
-    };
-
-    fetchSponsoredProducts();
-  }, []);
+  const {
+    data: sponsoredProducts,
+    error,
+    isLoading,
+  } = useQuery({
+    queryKey: ["featured-products"],
+    queryFn: fetchSponsoredProducts,
+    staleTime: 1000 * 6 * 5,
+  });
 
   const formatPrice = (price) => `€${parseFloat(price).toLocaleString()}`;
 
@@ -55,7 +58,7 @@ export default function SponsoredProductsSection() {
     await toggleItem(wishlistProduct);
   };
 
-  if (loading) {
+  if (isLoading) {
     return (
       <section className="w-full py-8 bg-gradient-to-b from-orange-50/30 to-white">
         <div className="max-w-7xl mx-auto px-3">
@@ -91,85 +94,83 @@ export default function SponsoredProductsSection() {
         {/* Infinite Slider */}
         <div className="relative overflow-hidden">
           <div className="slider-track flex w-max gap-3">
-            {[...sponsoredProducts, ...sponsoredProducts].map(
-              (product, index) => (
-                <Link
-                  key={`${product.id}-${index}`}
-                  href={`/products/${product.id}`}
-                  className="flex-shrink-0 w-[160px] sm:w-[200px] lg:w-[220px]"
-                >
-                  <div className="group bg-white rounded-lg border border-gray-200 hover:border-orange-300 hover:shadow-lg transition-all duration-300 overflow-hidden">
-                    {/* Product Image */}
-                    <div className="relative aspect-square bg-gray-50 overflow-hidden">
-                      {product.images?.[0] && (
-                        <Image
-                          src={product.images[0]}
-                          alt={product.name}
-                          fill
-                          className="object-cover group-hover:scale-105 transition-transform duration-300"
-                        />
-                      )}
+            {sponsoredProducts.map((product, index) => (
+              <Link
+                key={`${product.id}-${index}`}
+                href={`/products/${product.id}`}
+                className="flex-shrink-0 w-[160px] sm:w-[200px] lg:w-[220px]"
+              >
+                <div className="group bg-white rounded-lg border border-gray-200 hover:border-orange-300 hover:shadow-lg transition-all duration-300 overflow-hidden">
+                  {/* Product Image */}
+                  <div className="relative aspect-square bg-gray-50 overflow-hidden">
+                    {product.images?.[0] && (
+                      <Image
+                        src={product.images[0]}
+                        alt={product.name}
+                        fill
+                        className="object-cover group-hover:scale-105 transition-transform duration-300"
+                      />
+                    )}
 
-                      {/* Sponsored Badge */}
-                      <div className="absolute top-2 left-2">
-                        <div className="bg-gradient-to-r from-orange-500 to-amber-500 text-white text-[10px] font-semibold px-2 py-0.5 rounded flex items-center gap-1">
-                          <Megaphone className="w-2.5 h-2.5" />
-                          Ad
-                        </div>
+                    {/* Sponsored Badge */}
+                    <div className="absolute top-2 left-2">
+                      <div className="bg-gradient-to-r from-orange-500 to-amber-500 text-white text-[10px] font-semibold px-2 py-0.5 rounded flex items-center gap-1">
+                        <Megaphone className="w-2.5 h-2.5" />
+                        Ad
                       </div>
-
-                      {/* Wishlist */}
-                      <button
-                        onClick={(e) => handleWishlistClick(product, e)}
-                        className="absolute bottom-2 right-2 p-1.5 bg-white/90 rounded-full opacity-0 group-hover:opacity-100 transition"
-                      >
-                        <Heart
-                          className={`w-3.5 h-3.5 ${
-                            isInWishlist(product.id)
-                              ? "fill-red-500 text-red-500"
-                              : "text-gray-600"
-                          }`}
-                        />
-                      </button>
                     </div>
 
-                    {/* Info */}
-                    <div className="p-2.5 space-y-1 border-t border-gray-300">
-                      <h3 className="text-xs font-medium line-clamp-2">
-                        {product.name}
-                      </h3>
-
-                      <span className="text-sm font-bold">
-                        {formatPrice(product.price)}
-                      </span>
-                      {product.location && (
-                        <div className="flex items-center gap-1 text-[10px] text-gray-500">
-                          <svg
-                            className="w-3 h-3 text-gray-400"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              d="M12 11.5a2.5 2.5 0 100-5 2.5 2.5 0 000 5z"
-                            />
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              d="M19 11.5c0 5-7 10-7 10s-7-5-7-10a7 7 0 1114 0z"
-                            />
-                          </svg>
-                          <span className="truncate">{product.location}</span>
-                        </div>
-                      )}
-                    </div>
+                    {/* Wishlist */}
+                    <button
+                      onClick={(e) => handleWishlistClick(product, e)}
+                      className="absolute bottom-2 right-2 p-1.5 bg-white/90 rounded-full opacity-0 group-hover:opacity-100 transition"
+                    >
+                      <Heart
+                        className={`w-3.5 h-3.5 ${
+                          isInWishlist(product.id)
+                            ? "fill-red-500 text-red-500"
+                            : "text-gray-600"
+                        }`}
+                      />
+                    </button>
                   </div>
-                </Link>
-              ),
-            )}
+
+                  {/* Info */}
+                  <div className="p-2.5 space-y-1 border-t border-gray-300">
+                    <h3 className="text-xs font-medium line-clamp-2">
+                      {product.name}
+                    </h3>
+
+                    <span className="text-sm font-bold">
+                      {formatPrice(product.price)}
+                    </span>
+                    {product.location && (
+                      <div className="flex items-center gap-1 text-[10px] text-gray-500">
+                        <svg
+                          className="w-3 h-3 text-gray-400"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M12 11.5a2.5 2.5 0 100-5 2.5 2.5 0 000 5z"
+                          />
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M19 11.5c0 5-7 10-7 10s-7-5-7-10a7 7 0 1114 0z"
+                          />
+                        </svg>
+                        <span className="truncate">{product.location}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </Link>
+            ))}
           </div>
         </div>
       </div>

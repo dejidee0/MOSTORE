@@ -7,15 +7,18 @@ import { supabase } from "@/lib/supabase-client";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import logo from "../../public/assets/Mostore logo 2.png";
+import { Mail } from "lucide-react";
 
 const navLinks = [
   { label: "Dashboard", icon: Package, route: "/supplier/dashboard" },
   { label: "Products", icon: Package, route: "/supplier/dashboard/products" },
+
   {
     label: "Charity Products",
     icon: Package,
     route: "/supplier/dashboard/charity-products",
   },
+  { label: "Messages", icon: Mail, route: "/supplier/dashboard/messages" },
   { label: "Orders", icon: Package, route: "/supplier/dashboard/orders" },
   { label: "My Profile", icon: User, route: "/supplier/dashboard/my-account" },
 ];

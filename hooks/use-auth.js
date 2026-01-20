@@ -1,4 +1,9 @@
-import { getCurrentAdmin, getCurrentUser, getCurrentVendor } from "@/lib/auth";
+import {
+  getCurrentAdmin,
+  getCurrentCustomer,
+  getCurrentUser,
+  getCurrentVendor,
+} from "@/lib/auth";
 import { useQuery } from "@tanstack/react-query";
 export const useCurrentUser = () => {
   return useQuery({
@@ -8,11 +13,19 @@ export const useCurrentUser = () => {
     retry: false,
   });
 };
+export const useCurrentCustomer = ({ userId }) => {
+  return useQuery({
+    queryKey: ["customer", userId],
+    queryFn: () => getCurrentCustomer({ userId }),
+    enabled: !!userId,
+    staleTime: 1000 * 60 * 5,
+  });
+};
 export const useCurrentVendor = ({ userId }) => {
   return useQuery({
     queryKey: ["vendor", userId],
     queryFn: () => getCurrentVendor({ userId }),
-    enabled: !!userId, // prevents running before auth loads
+    enabled: !!userId,
     staleTime: 1000 * 60 * 5,
   });
 };

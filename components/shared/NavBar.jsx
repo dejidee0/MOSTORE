@@ -53,7 +53,11 @@ import { useUnreadCount } from "@/hooks/useChat";
 import { MessageSquare } from "lucide-react";
 import { Mail } from "lucide-react";
 import { useCategories } from "@/hooks/use-product";
-import { useCurrentUser, useCurrentVendor } from "@/hooks/use-auth";
+import {
+  useCurrentCustomer,
+  useCurrentUser,
+  useCurrentVendor,
+} from "@/hooks/use-auth";
 
 const MenuButton = memo(({ onClick, icon, label, className = "" }) => {
   return (
@@ -108,39 +112,58 @@ const NavBar = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchFocused, setSearchFocused] = useState(false);
 
+  // Get current user first
   const {
     data: user,
     error: userError,
     isLoading: userLoading,
   } = useCurrentUser();
+
   const { data: unreadCount } = useUnreadCount(user?.id);
 
   const userId = user?.id;
+  const role = user?.user_metadata?.role;
+
+  // Call all hooks unconditionally, but only use the data that matches the role
+  const {
+    data: customer,
+    isLoading: customerLoading,
+    error: customerError,
+  } = useCurrentCustomer({ userId });
+
   const {
     data: vendor,
     error: vendorError,
     isLoading: vendorLoading,
   } = useCurrentVendor({ userId });
+
+  // Get the appropriate profile based on role
+  const profile = useMemo(() => {
+    if (!user) return null;
+    if (role === "vendor" || role === "supplier") return vendor;
+    if (role === "customer") return customer;
+    // For admin, you'd need to add useCurrentAdmin hook
+    return customer; // fallback
+  }, [user, role, vendor, customer]);
+
   const {
     data: categories = [],
     error,
     isLoading: categoriesLoading,
   } = useCategories();
-  const role = vendor?.role;
 
   const userInfo = useMemo(() => {
-    if (!user || !vendor?.email) return null;
+    if (!user || !profile?.email) return null;
     return {
-      initial: vendor.email.charAt(0).toUpperCase(),
-      displayName: vendor.email.split("@")[0],
+      initial: profile.email.charAt(0).toUpperCase(),
+      displayName: profile.email.split("@")[0],
     };
-  }, [user, vendor?.email]);
+  }, [user, profile?.email]);
 
   // Close drawer on route change
   useEffect(() => {
     setIsDrawerOpen(false);
     setIsSearchOpen(false);
-    // Close all dropdowns on navigation
     setIsProfileDropdownOpen(false);
     setIsCategoryDropdownOpen(false);
     setIsHelpDropdownOpen(false);
@@ -189,7 +212,7 @@ const NavBar = () => {
 
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []); // Empty dependency array is correct here
+  }, []);
 
   // Close dropdowns on Escape key
   useEffect(() => {
@@ -310,7 +333,10 @@ const NavBar = () => {
   }, [user, role, unreadCount]);
 
   // Show loading skeleton instead of blocking render
-  const isLoading = userLoading || vendorLoading;
+  const isLoading =
+    userLoading ||
+    (role === "vendor" && vendorLoading) ||
+    (role === "customer" && customerLoading);
 
   return (
     <>
@@ -669,7 +695,7 @@ const NavBar = () => {
                           </div>
                           <div className="flex-1 min-w-0">
                             <p className="text-sm font-semibold text-gray-900 truncate">
-                              {vendor?.full_name || "User"}
+                              {profile?.full_name || profile?.email || "User"}
                             </p>
                             {role && role !== "customer" && (
                               <p className="text-xs text-orange-600 font-medium bg-orange-50 px-2 py-1 rounded-full inline-block mt-1 capitalize">
@@ -907,13 +933,13 @@ const NavBar = () => {
                         </span>
                         <ul className="mt-2 pl-2 space-y-2">
                           <li className="py-1">
-                            <article
+                            <Link
                               href="/help"
                               onClick={() => setIsDrawerOpen(false)}
                               className="hover:text-orange-600"
                             >
                               Need Help?
-                            </article>
+                            </Link>
                           </li>
                           <li className="py-1">
                             <a

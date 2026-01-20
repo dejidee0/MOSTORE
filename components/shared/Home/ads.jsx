@@ -20,7 +20,7 @@ export default function SponsoredProductsSection() {
         .select("*")
         .eq("is_active", true)
         .order("created_at", { ascending: false })
-        .limit(6);
+        .limit(30);
 
       if (error) {
         console.error("Error fetching sponsored products:", error);
@@ -168,7 +168,7 @@ export default function SponsoredProductsSection() {
                     </div>
                   </div>
                 </Link>
-              )
+              ),
             )}
           </div>
         </div>

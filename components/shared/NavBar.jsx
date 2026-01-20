@@ -441,7 +441,11 @@ const NavBar = () => {
             <div className="flex items-center space-x-2 lg:space-x-4">
               <Link
                 href={
-                  !user ? "/supplier-sign" : role ? `/${role}/dashboard` : "/"
+                  !user
+                    ? "/supplier-sign"
+                    : role
+                      ? `/${role}/dashboard/products`
+                      : "/"
                 }
               >
                 <button className="hidden lg:flex items-center text-white font-medium hover:text-orange-300 transition-colors duration-200 ml-2">

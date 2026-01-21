@@ -9,7 +9,7 @@ import {
   DrawerTitle,
 } from "@/components/ui/drawer";
 import { useRouter, usePathname } from "next/navigation";
-import useUserStore from "@/lib/stores/useUserStore";
+import { createClient, supabase } from "@/lib/supabase-client";
 
 import {
   Search,
@@ -63,11 +63,9 @@ const MenuButton = memo(({ onClick, icon, label, className = "" }) => {
   return (
     <button
       onClick={onClick}
-      className={`w-full flex items-center gap-3 px-6 py-3 text-left hover:bg-orange-50 transition-all duration-200 text-gray-700 ${className}`}
+      className={`w-full flex items-center gap-3 px-4 py-0.5 text-left hover:bg-orange-50 transition-all duration-200 text-gray-700 ${className}`}
     >
-      <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center">
-        {icon}
-      </div>
+      <div className="w-8 h-8 rounded-lg flex items-center">{icon}</div>
       <span className="font-semibold text-sm">{label}</span>
     </button>
   );
@@ -101,7 +99,6 @@ CategoryItem.displayName = "CategoryItem";
 const NavBar = () => {
   const router = useRouter();
   const pathname = usePathname();
-  const { signOut } = useUserStore();
   const { totalItems: cartItemCount } = useCart();
   const { totalItems: wishlistCount } = useWishlist();
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -250,13 +247,14 @@ const NavBar = () => {
 
   const handleSignOut = useCallback(async () => {
     try {
-      await signOut();
+      await supabase.auth.signOut();
       setIsProfileDropdownOpen(false);
-      router.push("/");
+      router.push("/sign-in");
+      router.refresh(); // Refresh to update auth state
     } catch (error) {
       console.error("Sign out error:", error);
     }
-  }, [signOut, router]);
+  }, [router]);
 
   const navigateToProfile = useCallback(() => {
     setIsProfileDropdownOpen(false);
@@ -687,10 +685,10 @@ const NavBar = () => {
                     </span>
                   </button>
                   {isProfileDropdownOpen && user && (
-                    <div className="absolute right-0 mt-3 w-80 bg-white rounded-2xl shadow-2xl border border-gray-100 py-4 z-50 animate-in slide-in-from-top-2 duration-200">
-                      <div className="px-6 py-4 border-b border-gray-100">
-                        <div className="flex items-center gap-4">
-                          <div className="w-12 h-12 bg-gradient-to-r from-orange-400 to-orange-600 rounded-full flex items-center justify-center text-white font-bold text-lg shadow-lg">
+                    <div className="absolute right-0 mt-3 w-80 bg-white shadow-2xl border border-gray-100 py-1.5 z-50 animate-in slide-in-from-top-2 duration-200">
+                      <div className="px-4 py-1 border-b border-gray-100">
+                        <div className="flex items-center gap-2">
+                          <div className="w-8 h-8 bg-gradient-to-r from-orange-400 to-orange-600 rounded-full flex items-center justify-center text-white font-bold text-base shadow-lg">
                             {userInfo?.initial || "U"}
                           </div>
                           <div className="flex-1 min-w-0">
@@ -698,7 +696,7 @@ const NavBar = () => {
                               {profile?.full_name || profile?.email || "User"}
                             </p>
                             {role && role !== "customer" && (
-                              <p className="text-xs text-orange-600 font-medium bg-orange-50 px-2 py-1 rounded-full inline-block mt-1 capitalize">
+                              <p className="text-xs text-orange-600 font-medium px-2 py-1 rounded-full inline-block mt-1 capitalize">
                                 {role} Account
                               </p>
                             )}
@@ -709,31 +707,29 @@ const NavBar = () => {
                         {role !== "admin" && role !== "supplier" && (
                           <MenuButton
                             onClick={navigateToOrders}
-                            icon={
-                              <Package className="w-5 h-5 text-orange-600" />
-                            }
+                            icon={<Package className="w-5 h-5 text-black" />}
                             label="My Orders"
                           />
                         )}
                         {(role === "supplier" || role === "admin") && (
                           <MenuButton
                             onClick={() => navigateToDashboard(role)}
-                            icon={<Home className="w-5 h-5 text-orange-600" />}
-                            label="Dashboard"
+                            icon={<Home className="w-5 h-5 text-black" />}
+                            label="My Account"
                           />
                         )}
                         {role !== "supplier" && role !== "admin" && (
                           <MenuButton
                             onClick={() => router.push("/my-account")}
-                            icon={<Home className="w-5 h-5 text-orange-600" />}
+                            icon={<Home className="w-5 h-5 text-black" />}
                             label="My Account"
                           />
                         )}
                       </div>
-                      <div className="border-t border-gray-100 pt-2">
+                      <div className="border-t border-gray-200 pt-0.5">
                         <MenuButton
                           onClick={handleSignOut}
-                          icon={<LogOut className="w-5 h-5 text-red-600" />}
+                          icon={<LogOut className="w-5 h-5 text-black" />}
                           label="Sign Out"
                           className="text-red-600 hover:bg-red-50"
                         />

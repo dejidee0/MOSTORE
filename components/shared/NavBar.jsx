@@ -318,7 +318,7 @@ const NavBar = () => {
       } else if (role) {
         links.push({
           label: "My Account",
-          href: `/${role}/dashboard${role === "supplier" ? "/products" : ""}`,
+          href: `/${role}/dashboard/`,
         });
         links.push({
           label: "Sell Now",
@@ -335,7 +335,7 @@ const NavBar = () => {
     userLoading ||
     (role === "vendor" && vendorLoading) ||
     (role === "customer" && customerLoading);
-
+  if (user && !role) return;
   return (
     <>
       {/* Top Banner */}
@@ -851,7 +851,7 @@ const NavBar = () => {
                             key={link.label}
                             href={link.href}
                             onClick={() => setIsDrawerOpen(false)}
-                            className="py-2 hover:text-blue-600 flex items-center justify-between"
+                            className="py-2 hover:text-orange-600 text-black font-bold flex items-center justify-between"
                           >
                             <span>{link.label}</span>
                             {link.badge && (

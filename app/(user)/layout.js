@@ -82,7 +82,7 @@ export default function UserLayout({ children }) {
                 <NavBar />
                 <main className="flex-1">{children}</main>
                 <Footer />
-                <ChristmasPopup />
+                {/* <ChristmasPopup /> */}
                 {/* </MessageNotificationProvider> */}
               </ToastProvider>
             </CartProvider>

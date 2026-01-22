@@ -58,6 +58,7 @@ import {
   useCurrentUser,
   useCurrentVendor,
 } from "@/hooks/use-auth";
+import { User2 } from "lucide-react";
 
 const MenuButton = memo(({ onClick, icon, label, className = "" }) => {
   return (
@@ -156,8 +157,6 @@ const NavBar = () => {
       displayName: profile.username[0],
     };
   }, [user, profile?.email]);
-  console.log("profile is", profile);
-  console.log("user Info is", userInfo);
 
   // Close drawer on route change
   useEffect(() => {
@@ -686,7 +685,7 @@ const NavBar = () => {
                     </span>
                   </button>
                   {isProfileDropdownOpen && user && (
-                    <div className="absolute right-0 mt-3 w-80 bg-white shadow-2xl border border-gray-100 py-1.5 z-50 animate-in slide-in-from-top-2 duration-200">
+                    <div className="absolute right-0 mt-3.5 w-52 bg-white shadow-2xl border border-gray-100 py-1.5 z-50 animate-in slide-in-from-top-2 duration-200">
                       <div className="px-4 py-1 border-b border-gray-100">
                         <div className="flex items-center gap-2">
                           <div className="w-8 h-8 bg-gradient-to-r from-orange-400 to-orange-600 rounded-full flex items-center justify-center text-white font-bold text-base shadow-lg">
@@ -705,25 +704,25 @@ const NavBar = () => {
                         </div>
                       </div>
                       <div className="py-2">
-                        {role !== "admin" && role !== "supplier" && (
-                          <MenuButton
-                            onClick={navigateToOrders}
-                            icon={<Package className="w-5 h-5 text-black" />}
-                            label="My Orders"
-                          />
-                        )}
                         {(role === "supplier" || role === "admin") && (
                           <MenuButton
                             onClick={() => navigateToDashboard(role)}
-                            icon={<Home className="w-5 h-5 text-black" />}
+                            icon={<User2 className="w-5 h-5 text-black" />}
                             label="My Account"
                           />
                         )}
                         {role !== "supplier" && role !== "admin" && (
                           <MenuButton
                             onClick={() => router.push("/my-account")}
-                            icon={<Home className="w-5 h-5 text-black" />}
+                            icon={<User2 className="w-5 h-5 text-black" />}
                             label="My Account"
+                          />
+                        )}
+                        {role !== "admin" && role !== "supplier" && (
+                          <MenuButton
+                            onClick={navigateToOrders}
+                            icon={<Package className="w-5 h-5 text-black" />}
+                            label="My Orders"
                           />
                         )}
                       </div>

@@ -18,10 +18,11 @@ import {
   Search,
   Filter,
 } from "lucide-react";
+import { supabase } from "@/lib/supabase-client";
 
-const OrderHistory = ({ user, supabase }) => {
+const OrderHistory = ({ user }) => {
   const [orders, setOrders] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [expandedOrders, setExpandedOrders] = useState(new Set());
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -30,6 +31,7 @@ const OrderHistory = ({ user, supabase }) => {
 
   // Fetch user's orders
   const fetchOrders = async () => {
+    if (!user) return;
     try {
       setLoading(true);
 
@@ -37,13 +39,8 @@ const OrderHistory = ({ user, supabase }) => {
       let query = supabase
         .from("orders")
         .select("*")
+        .eq("customer_id", user.id)
         .order("created_at", { ascending: false });
-
-      if (user?.id) {
-        query = query.eq("customer_id", user.id);
-      } else if (user?.email) {
-        query = query.eq("customer_email", user.email);
-      }
 
       const { data, error } = await query;
 
@@ -77,7 +74,7 @@ const OrderHistory = ({ user, supabase }) => {
             images,
             sku
           )
-        `
+        `,
         )
         .eq("order_id", orderId);
 
@@ -97,11 +94,7 @@ const OrderHistory = ({ user, supabase }) => {
     }
   };
 
-  useEffect(() => {
-    if (user && supabase) {
-      fetchOrders();
-    }
-  }, [user, supabase]);
+  fetchOrders();
 
   // Filter orders based on search and status
   const filteredOrders = orders.filter((order) => {
@@ -438,7 +431,7 @@ const OrderHistory = ({ user, supabase }) => {
                           {orderItems[order.id || order.order_number].map(
                             (item) => (
                               <OrderItem key={item.id} item={item} />
-                            )
+                            ),
                           )}
                         </div>
                       ) : (

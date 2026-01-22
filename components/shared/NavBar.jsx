@@ -150,12 +150,14 @@ const NavBar = () => {
   } = useCategories();
 
   const userInfo = useMemo(() => {
-    if (!user || !profile?.email) return null;
+    if (!user || !profile) return null;
     return {
-      initial: profile.email.charAt(0).toUpperCase(),
-      displayName: profile.email.split("@")[0],
+      initial: profile.username.charAt(0).toUpperCase(),
+      displayName: profile.username[0],
     };
   }, [user, profile?.email]);
+  console.log("profile is", profile);
+  console.log("user Info is", userInfo);
 
   // Close drawer on route change
   useEffect(() => {
@@ -306,7 +308,6 @@ const NavBar = () => {
   );
 
   const navigationLinks = useMemo(() => {
-    if (!role) return;
     const links = [];
 
     if (!user) {
@@ -505,7 +506,7 @@ const NavBar = () => {
               {/* Sell Now Link */}
               <Link
                 href={
-                  !user
+                  !user || role === "customer"
                     ? "/supplier-sign"
                     : role
                       ? `/${role}/dashboard/products`

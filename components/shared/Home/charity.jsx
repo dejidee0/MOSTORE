@@ -23,7 +23,7 @@ export default function CharityProductsSection() {
         .eq("is_active", true)
         .eq("product_type", "charity")
         .order("created_at", { ascending: false })
-        .limit(6);
+        .limit(100);
 
       if (error) {
         console.error("Error fetching charity products:", error);
@@ -169,7 +169,7 @@ export default function CharityProductsSection() {
                     </div>
                   </div>
                 </Link>
-              )
+              ),
             )}
           </div>
         </div>

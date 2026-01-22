@@ -17,7 +17,7 @@ const fetchProducts = async () => {
       .eq("is_active", true)
       .eq("product_type", "regular")
       .order("created_at", { ascending: false })
-      .limit(8);
+      .limit(16);
 
     return data;
   } catch (error) {

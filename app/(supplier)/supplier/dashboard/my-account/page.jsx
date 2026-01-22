@@ -1,29 +1,15 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Lock, Eye, EyeOff, CheckCircle, AlertCircle } from "lucide-react";
 import AccountEdit from "../../../../../components/supplierDashboard/SupAccountEdit";
 import BankDetailsEdit from "../../../../../components/supplierDashboard/BankDetailsEdit";
-import useUserStore from "@/lib/stores/useUserStore";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase-client";
+import { useCurrentUser, useCurrentVendor } from "@/hooks/use-auth";
 
 const MyAccountPage = () => {
-  const { user } = useUserStore();
-
-  // Profile state
-  const [profile, setProfile] = useState({
-    fullName: "",
-    username: "",
-    email: "",
-    phone: "",
-    gender: "",
-    dateOfBirth: "",
-    address: "",
-    bankName: "",
-    accountNumber: "",
-    SwiftCode: "",
-    bankAddress: "",
-  });
+  const queryClient = useQueryClient();
 
   // Modal states
   const [isPersonalModalOpen, setIsPersonalModalOpen] = useState(false);
@@ -46,58 +32,103 @@ const MyAccountPage = () => {
     type: "",
     text: "",
   });
-  const [isChangingPassword, setIsChangingPassword] = useState(false);
 
-  const [error, setError] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [loading, setLoading] = useState(true);
+  // Get user and vendor data
+  const { data: user, isLoading: userLoading } = useCurrentUser();
+  const userId = user?.id;
 
-  // Fetch profile data
-  useEffect(() => {
-    const fetchProfile = async () => {
-      if (!user?.id) return;
+  const { data: profile, isLoading: vendorLoading } = useCurrentVendor({
+    userId,
+  });
 
-      try {
-        setLoading(true);
-        const { data, error } = await supabase
-          .from("profiles")
-          .select("*")
-          .eq("id", user.id)
-          .single();
+  // Profile update mutation with optimistic updates
+  const profileMutation = useMutation({
+    mutationFn: async (profileData) => {
+      if (!userId) throw new Error("User ID not found");
 
-        if (error) throw error;
+      const { error } = await supabase
+        .from("profiles")
+        .update(profileData)
+        .eq("id", userId);
 
-        if (data) {
-          setProfile({
-            fullName: data.full_name || "",
-            username: data.username || "",
-            email: user.email || data.email || "",
-            phone: data.phone || "",
-            gender: data.gender || "",
-            address: data.address || "",
-            bankName: data.bank_name || "",
-            accountNumber: data.bank_account_number || "",
-            SwiftCode: data.bic_swiftCode || "",
-            dateOfBirth: data.dateOfBirth || "",
-            bankAddress: data.bank_address || "",
-          });
-        }
-      } catch (err) {
-        console.error("Error fetching profile:", err);
-        setError("Failed to load profile data");
-      } finally {
-        setLoading(false);
+      if (error) throw error;
+
+      // Fetch updated data
+      const { data, error: fetchError } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", userId)
+        .single();
+
+      if (fetchError) throw fetchError;
+      return data;
+    },
+    onMutate: async (newData) => {
+      // Cancel outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ["vendor", userId] });
+
+      // Snapshot previous value
+      const previousProfile = queryClient.getQueryData(["vendor", userId]);
+
+      // Optimistically update
+      queryClient.setQueryData(["vendor", userId], (old) => ({
+        ...old,
+        ...newData,
+      }));
+
+      return { previousProfile };
+    },
+    onError: (err, newData, context) => {
+      // Rollback on error
+      if (context?.previousProfile) {
+        queryClient.setQueryData(["vendor", userId], context.previousProfile);
       }
-    };
+    },
+    onSuccess: () => {
+      // Invalidate to ensure fresh data
+      queryClient.invalidateQueries({ queryKey: ["vendor", userId] });
+    },
+  });
 
-    fetchProfile();
-  }, [user]);
+  // Password change mutation
+  const passwordMutation = useMutation({
+    mutationFn: async ({ currentPassword, newPassword }) => {
+      if (!user?.email) throw new Error("User email not found");
 
-  // Handle profile changes
-  const handleProfileChange = (e) => {
-    const { name, value } = e.target;
-    setProfile((prev) => ({ ...prev, [name]: value }));
-  };
+      // Verify current password
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: user.email,
+        password: currentPassword,
+      });
+
+      if (signInError) throw new Error("Current password is incorrect");
+
+      // Update to new password
+      const { error: updateError } = await supabase.auth.updateUser({
+        password: newPassword,
+      });
+
+      if (updateError) throw updateError;
+    },
+  });
+
+  // Account deletion mutation
+  const deleteMutation = useMutation({
+    mutationFn: async () => {
+      if (!userId) throw new Error("User ID not found");
+
+      const { error } = await supabase
+        .from("profiles")
+        .delete()
+        .eq("id", userId);
+      if (error) throw error;
+
+      await supabase.auth.signOut();
+    },
+    onSuccess: () => {
+      window.location.href = "/";
+    },
+  });
 
   // Handle password input changes
   const handlePasswordChange = (e) => {
@@ -151,61 +182,39 @@ const MyAccountPage = () => {
   const handlePasswordSubmit = async (e) => {
     e.preventDefault();
 
-    if (!validatePasswordForm()) {
-      return;
-    }
+    if (!validatePasswordForm()) return;
 
-    setIsChangingPassword(true);
     setPasswordMessage({ type: "", text: "" });
 
     try {
-      // First, verify the current password by attempting to sign in
-      const { error: signInError } = await supabase.auth.signInWithPassword({
-        email: user.email,
-        password: passwordForm.currentPassword,
+      await passwordMutation.mutateAsync({
+        currentPassword: passwordForm.currentPassword,
+        newPassword: passwordForm.newPassword,
       });
 
-      if (signInError) {
-        setPasswordMessage({
-          type: "error",
-          text: "Current password is incorrect",
-        });
-        setIsChangingPassword(false);
-        return;
-      }
-
-      // If current password is correct, update to new password
-      const { error: updateError } = await supabase.auth.updateUser({
-        password: passwordForm.newPassword,
+      setPasswordMessage({
+        type: "success",
+        text: "Password changed successfully!",
       });
 
-      if (updateError) {
-        setPasswordMessage({ type: "error", text: updateError.message });
-      } else {
-        setPasswordMessage({
-          type: "success",
-          text: "Password changed successfully!",
-        });
-        // Clear the password form
-        setPasswordForm({
-          currentPassword: "",
-          newPassword: "",
-          confirmPassword: "",
-        });
-        // Close modal after 2 seconds
-        setTimeout(() => {
-          setIsPasswordModalOpen(false);
-          setPasswordMessage({ type: "", text: "" });
-        }, 2000);
-      }
+      // Clear form
+      setPasswordForm({
+        currentPassword: "",
+        newPassword: "",
+        confirmPassword: "",
+      });
+
+      // Close modal after 2 seconds
+      setTimeout(() => {
+        setIsPasswordModalOpen(false);
+        setPasswordMessage({ type: "", text: "" });
+      }, 2000);
     } catch (error) {
       setPasswordMessage({
         type: "error",
-        text: "An error occurred while changing password",
+        text: error.message || "An error occurred while changing password",
       });
     }
-
-    setIsChangingPassword(false);
   };
 
   // Reset password form
@@ -220,95 +229,32 @@ const MyAccountPage = () => {
 
   // Handle profile submission
   const handleProfileSubmit = async (profileData) => {
-    if (!user?.id) return;
-
-    try {
-      setIsSubmitting(true);
-      setError("");
-
-      const { error } = await supabase
-        .from("profiles")
-        .update(profileData)
-        .eq("id", user.id);
-
-      if (error) throw error;
-
-      // Refetch profile to update state
-      const { data } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", user.id)
-        .single();
-
-      if (data) {
-        setProfile({
-          fullName: data.full_name || "",
-          username: data.username || "",
-          email: user.email || data.email || "",
-          phone: data.phone || "",
-          gender: data.gender || "",
-          address: data.address || "",
-          bankName: data.bank_name || "",
-          accountNumber: data.bank_account_number || "",
-          SwiftCode: data.bic_swiftCode || "",
-          dateOfBirth: data.dateOfBirth || "",
-          bankAddress: data.bank_address || "",
-        });
-      }
-
-      setIsPersonalModalOpen(false);
-      setIsBankModalOpen(false);
-    } catch (err) {
-      console.error("Error updating profile:", err);
-      setError(err.message || "Failed to update profile");
-      throw err;
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  // Reset form
-  const resetForm = () => {
-    setError("");
+    await profileMutation.mutateAsync(profileData);
+    setIsPersonalModalOpen(false);
+    setIsBankModalOpen(false);
   };
 
   // Handle account deletion
   const handleDeleteAccount = async () => {
-    if (!user?.id) return;
-
     if (
       !window.confirm(
-        "Are you sure you want to delete your account? This action cannot be undone."
+        "Are you sure you want to delete your account? This action cannot be undone.",
       )
     ) {
       return;
     }
 
     try {
-      setIsSubmitting(true);
-
-      // Delete profile
-      const { error } = await supabase
-        .from("profiles")
-        .delete()
-        .eq("id", user.id);
-
-      if (error) throw error;
-
-      // Sign out user
-      await supabase.auth.signOut();
-
-      // Redirect to home or login page
-      window.location.href = "/";
+      await deleteMutation.mutateAsync();
     } catch (err) {
       console.error("Error deleting account:", err);
-      setError(err.message || "Failed to delete account");
-    } finally {
-      setIsSubmitting(false);
+      alert(err.message || "Failed to delete account");
     }
   };
 
-  if (loading) {
+  const isLoading = userLoading || vendorLoading;
+
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-gray-600">Loading...</div>
@@ -357,7 +303,7 @@ const MyAccountPage = () => {
           <div className="space-y-3">
             <div>
               <p className="font-medium text-gray-900">
-                {profile?.fullName || "John Doe"}
+                {profile?.full_name || "John Doe"}
               </p>
               <p className="font-medium text-gray-900">
                 {profile?.username || "Mostore"}
@@ -425,36 +371,36 @@ const MyAccountPage = () => {
             </motion.button>
           </div>
           <div className="space-y-3">
-            {profile?.bankName ||
-            profile?.accountNumber ||
-            profile?.SwiftCode ||
-            profile?.bankAddress ? (
+            {profile?.bank_name ||
+            profile?.bank_account_number ||
+            profile?.bic_swiftcode ||
+            profile?.bank_address ? (
               <>
                 <div>
                   <p className="text-sm text-gray-500">Bank Name</p>
                   <p className="text-gray-900">
-                    {profile.bankName || "Set your Bank Name"}
+                    {profile.bank_name || "Set your Bank Name"}
                   </p>
                 </div>
 
                 <div>
                   <p className="text-sm text-gray-500">Account Number / IBAN</p>
                   <p className="text-gray-900 font-mono">
-                    {profile.accountNumber || "Set your account number"}
+                    {profile.bank_account_number || "Set your account number"}
                   </p>
                 </div>
 
                 <div>
                   <p className="text-sm text-gray-500">SWIFT/BIC Code</p>
                   <p className="text-gray-900 font-mono">
-                    {profile.SwiftCode || "Set your SWIFT/BIC code"}
+                    {profile.bic_swiftcode || "Set your SWIFT/BIC code"}
                   </p>
                 </div>
 
                 <div>
                   <p className="text-sm text-gray-500">Bank Address</p>
                   <p className="text-gray-900">
-                    {profile.bankAddress || "Set your Bank Address"}
+                    {profile.bank_address || "Set your Bank Address"}
                   </p>
                 </div>
               </>
@@ -517,19 +463,20 @@ const MyAccountPage = () => {
           </p>
           <button
             onClick={() => setIsDeleteModalOpen(true)}
-            className="px-4 py-2 bg-red-50 text-red-600 rounded-lg text-sm font-medium hover:bg-red-100 transition border border-red-200"
+            disabled={deleteMutation.isPending}
+            className="px-4 py-2 bg-red-50 text-red-600 rounded-lg text-sm font-medium hover:bg-red-100 transition border border-red-200 disabled:opacity-50"
           >
             Delete account
           </button>
         </motion.div>
 
-        {error && (
+        {profileMutation.isError && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             className="text-red-600 text-sm mt-4 text-center bg-red-50 p-3 rounded-lg"
           >
-            {error}
+            {profileMutation.error?.message || "An error occurred"}
           </motion.div>
         )}
 
@@ -537,12 +484,9 @@ const MyAccountPage = () => {
         <AnimatePresence>
           {isPersonalModalOpen && (
             <AccountEdit
-              profileForm={profile}
-              handleProfileChange={handleProfileChange}
+              profile={profile}
               handleProfileSubmit={handleProfileSubmit}
-              resetForm={resetForm}
-              isSubmitting={isSubmitting}
-              message={{ type: "", text: "" }}
+              isSubmitting={profileMutation.isPending}
               setIsEditing={setIsPersonalModalOpen}
             />
           )}
@@ -552,12 +496,9 @@ const MyAccountPage = () => {
         <AnimatePresence>
           {isBankModalOpen && (
             <BankDetailsEdit
-              profileForm={profile}
-              handleProfileChange={handleProfileChange}
+              profile={profile}
               handleProfileSubmit={handleProfileSubmit}
-              resetForm={resetForm}
-              isSubmitting={isSubmitting}
-              message={{ type: "", text: "" }}
+              isSubmitting={profileMutation.isPending}
               setIsEditing={setIsBankModalOpen}
             />
           )}
@@ -621,7 +562,7 @@ const MyAccountPage = () => {
                         value={passwordForm.currentPassword}
                         onChange={handlePasswordChange}
                         className="w-full border border-gray-300 rounded-lg px-4 py-2 pr-10 focus:outline-none focus:ring-2 focus:ring-orange-500 transition-all duration-200"
-                        disabled={isChangingPassword}
+                        disabled={passwordMutation.isPending}
                         placeholder="Enter current password"
                       />
                       <button
@@ -649,7 +590,7 @@ const MyAccountPage = () => {
                         value={passwordForm.newPassword}
                         onChange={handlePasswordChange}
                         className="w-full border border-gray-300 rounded-lg px-4 py-2 pr-10 focus:outline-none focus:ring-2 focus:ring-orange-500 transition-all duration-200"
-                        disabled={isChangingPassword}
+                        disabled={passwordMutation.isPending}
                         placeholder="Enter new password"
                       />
                       <button
@@ -677,7 +618,7 @@ const MyAccountPage = () => {
                         value={passwordForm.confirmPassword}
                         onChange={handlePasswordChange}
                         className="w-full border border-gray-300 rounded-lg px-4 py-2 pr-10 focus:outline-none focus:ring-2 focus:ring-orange-500 transition-all duration-200"
-                        disabled={isChangingPassword}
+                        disabled={passwordMutation.isPending}
                         placeholder="Confirm new password"
                       />
                       <button
@@ -712,17 +653,19 @@ const MyAccountPage = () => {
                         resetPasswordForm();
                       }}
                       className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition"
-                      disabled={isChangingPassword}
+                      disabled={passwordMutation.isPending}
                     >
                       Cancel
                     </button>
                     <button
                       type="submit"
                       className="flex-1 px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition disabled:opacity-50 flex items-center justify-center gap-2"
-                      disabled={isChangingPassword}
+                      disabled={passwordMutation.isPending}
                     >
                       <Lock className="w-4 h-4" />
-                      {isChangingPassword ? "Changing..." : "Change Password"}
+                      {passwordMutation.isPending
+                        ? "Changing..."
+                        : "Change Password"}
                     </button>
                   </div>
                 </form>
@@ -739,12 +682,14 @@ const MyAccountPage = () => {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+              onClick={() => setIsDeleteModalOpen(false)}
             >
               <motion.div
                 initial={{ scale: 0.9, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 exit={{ scale: 0.9, opacity: 0 }}
                 className="bg-white rounded-lg p-6 w-full max-w-md mx-auto shadow-2xl"
+                onClick={(e) => e.stopPropagation()}
               >
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">
                   Delete Account
@@ -758,16 +703,18 @@ const MyAccountPage = () => {
                   <button
                     onClick={() => setIsDeleteModalOpen(false)}
                     className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition"
-                    disabled={isSubmitting}
+                    disabled={deleteMutation.isPending}
                   >
                     Cancel
                   </button>
                   <button
                     onClick={handleDeleteAccount}
                     className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition disabled:opacity-50"
-                    disabled={isSubmitting}
+                    disabled={deleteMutation.isPending}
                   >
-                    {isSubmitting ? "Deleting..." : "Delete Account"}
+                    {deleteMutation.isPending
+                      ? "Deleting..."
+                      : "Delete Account"}
                   </button>
                 </div>
               </motion.div>

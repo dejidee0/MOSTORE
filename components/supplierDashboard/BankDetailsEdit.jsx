@@ -3,34 +3,42 @@ import { motion } from "framer-motion";
 import { X } from "lucide-react";
 
 const BankDetailsEdit = ({
-  profileForm,
-  handleProfileChange,
+  profile,
   handleProfileSubmit,
-  resetForm,
   isSubmitting,
-  message,
   setIsEditing,
 }) => {
   const [error, setError] = useState("");
+  const [formData, setFormData] = useState({
+    bankName: profile?.bank_name || "",
+    accountNumber: profile?.bank_account_number || "",
+    swiftCode: profile?.bic_swiftcode || "",
+    bankAddress: profile?.bank_address || "",
+  });
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
 
   const validateForm = () => {
-    if (!profileForm.bankName) {
+    if (!formData.bankName) {
       setError("Bank name is required");
       return false;
     }
-    if (!profileForm.accountNumber) {
+    if (!formData.accountNumber) {
       setError("Account number is required");
       return false;
     }
-    if (!profileForm.SwiftCode) {
+    if (!formData.swiftCode) {
       setError("SWIFT/BIC code is required");
       return false;
     }
     // Basic SWIFT code validation (8 or 11 characters)
     if (
-      profileForm.SwiftCode &&
+      formData.swiftCode &&
       !/^[A-Z]{6}[A-Z0-9]{2}([A-Z0-9]{3})?$/.test(
-        profileForm.SwiftCode.toUpperCase()
+        formData.swiftCode.toUpperCase(),
       )
     ) {
       setError("Please enter a valid SWIFT/BIC code (8 or 11 characters)");
@@ -47,17 +55,14 @@ const BankDetailsEdit = ({
 
     try {
       const bankData = {
-        bank_name: profileForm.bankName,
-        bank_account_number: profileForm.accountNumber,
-        bic_swiftCode: profileForm.SwiftCode.toUpperCase(),
-        bank_address: profileForm.bankAddress,
+        bank_name: formData.bankName,
+        bank_account_number: formData.accountNumber,
+        bic_swiftcode: formData.swiftCode.toUpperCase(),
+        bank_address: formData.bankAddress,
       };
 
-      console.log("Submitting bank details:", bankData);
       await handleProfileSubmit(bankData);
-      setIsEditing(false);
     } catch (err) {
-      console.error("Error saving bank details:", err);
       setError(err.message || "Failed to save bank details");
     }
   };
@@ -68,6 +73,7 @@ const BankDetailsEdit = ({
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       className="fixed inset-0 bg-black/50 flex items-end justify-center z-50 p-4"
+      onClick={() => setIsEditing(false)}
     >
       <motion.div
         initial={{ y: "100%", opacity: 0 }}
@@ -75,17 +81,14 @@ const BankDetailsEdit = ({
         exit={{ y: "100%", opacity: 0 }}
         transition={{ type: "spring", damping: 20, stiffness: 100 }}
         className="bg-white max-h-[85vh] overflow-y-auto rounded-t-2xl p-6 w-full max-w-md mx-auto shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
       >
         <div className="flex justify-between items-center mb-6 border-b border-gray-200 pb-4">
           <h3 className="text-lg font-semibold text-gray-900">
             Edit Bank Details
           </h3>
           <button
-            onClick={() => {
-              resetForm();
-              setIsEditing(false);
-              setError("");
-            }}
+            onClick={() => setIsEditing(false)}
             className="text-gray-500 hover:text-gray-700"
           >
             <X size={20} />
@@ -108,8 +111,8 @@ const BankDetailsEdit = ({
             <input
               type="text"
               name="bankName"
-              value={profileForm.bankName}
-              onChange={handleProfileChange}
+              value={formData.bankName}
+              onChange={handleChange}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
               placeholder="Enter your bank's name"
               required
@@ -118,13 +121,13 @@ const BankDetailsEdit = ({
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Account Number /IBAN*
+              Account Number / IBAN *
             </label>
             <input
               type="text"
               name="accountNumber"
-              value={profileForm.accountNumber}
-              onChange={handleProfileChange}
+              value={formData.accountNumber}
+              onChange={handleChange}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 font-mono"
               placeholder="Enter your account number"
               required
@@ -137,11 +140,11 @@ const BankDetailsEdit = ({
             </label>
             <input
               type="text"
-              name="SwiftCode"
-              value={profileForm.SwiftCode}
-              onChange={handleProfileChange}
+              name="swiftCode"
+              value={formData.swiftCode}
+              onChange={handleChange}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 font-mono uppercase"
-              placeholder=""
+              placeholder="AAAABBCC or AAAABBCCXXX"
               maxLength="11"
               required
             />
@@ -154,8 +157,8 @@ const BankDetailsEdit = ({
             </label>
             <textarea
               name="bankAddress"
-              value={profileForm.bankAddress}
-              onChange={handleProfileChange}
+              value={formData.bankAddress}
+              onChange={handleChange}
               rows="3"
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 resize-none"
               placeholder="Enter your bank's branch address"
@@ -169,26 +172,6 @@ const BankDetailsEdit = ({
               className="text-red-600 text-sm text-center bg-red-50 p-2 rounded"
             >
               {error}
-            </motion.div>
-          )}
-
-          {message.text && message.type === "error" && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="text-red-600 text-sm text-center bg-red-50 p-2 rounded"
-            >
-              {message.text}
-            </motion.div>
-          )}
-
-          {message.text && message.type === "success" && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="text-green-600 text-sm text-center bg-green-50 p-2 rounded"
-            >
-              {message.text}
             </motion.div>
           )}
 

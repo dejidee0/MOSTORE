@@ -35,7 +35,6 @@ const OrderHistory = ({ user }) => {
     try {
       setLoading(true);
 
-      // Query orders by customer_id (if logged in) or customer_email
       let query = supabase
         .from("orders")
         .select("*")
@@ -57,7 +56,6 @@ const OrderHistory = ({ user }) => {
     }
   };
 
-  // Fetch order items for a specific order
   const fetchOrderItems = async (orderId) => {
     if (orderItems[orderId] || loadingItems[orderId]) return;
 

@@ -239,9 +239,7 @@ const NavBar = () => {
   const navigateToDashboard = useCallback(
     (role) => {
       setIsProfileDropdownOpen(false);
-      router.push(
-        `/${role}/dashboard${role === "supplier" ? "/products" : ""}`,
-      );
+      router.push(`/${role}/dashboard`);
     },
     [router],
   );
@@ -950,14 +948,7 @@ const NavBar = () => {
                       </div>
 
                       {/* Blog & Logout */}
-                      <div className="mb-2 flex justify-between items-center">
-                        <a
-                          href="/blog"
-                          onClick={() => setIsDrawerOpen(false)}
-                          className="block text-black font-bold hover:text-orange-600"
-                        >
-                          Blog
-                        </a>
+                      <div className="mb-2 flex justify-end items-center">
                         {user && (
                           <motion.button
                             onClick={() => {

@@ -54,6 +54,7 @@ import { MessageSquare } from "lucide-react";
 import { Mail } from "lucide-react";
 import { useCategories } from "@/hooks/use-product";
 import {
+  useCurrentAdmin,
   useCurrentCustomer,
   useCurrentUser,
   useCurrentVendor,
@@ -134,15 +135,21 @@ const NavBar = () => {
     error: vendorError,
     isLoading: vendorLoading,
   } = useCurrentVendor({ userId });
+  const {
+    data: admin,
+    error: adminError,
+    isLoading: adminLoading,
+  } = useCurrentAdmin({ userId });
 
   // Get the appropriate profile based on role
   const profile = useMemo(() => {
     if (!user) return null;
     if (role === "vendor" || role === "supplier") return vendor;
     if (role === "customer") return customer;
+    if (role === "admin") return admin;
     // For admin, you'd need to add useCurrentAdmin hook
     return customer; // fallback
-  }, [user, role, vendor, customer]);
+  }, [user, role, vendor, customer, admin]);
 
   const {
     data: categories = [],
@@ -153,7 +160,7 @@ const NavBar = () => {
   const userInfo = useMemo(() => {
     if (!user || !profile) return null;
     return {
-      initial: profile.username.charAt(0).toUpperCase(),
+      initial: profile.full_name.charAt(0).toUpperCase(),
       displayName: profile.username[0],
     };
   }, [user, profile?.email]);
@@ -332,8 +339,10 @@ const NavBar = () => {
   const isLoading =
     userLoading ||
     (role === "vendor" && vendorLoading) ||
+    (role === "admin" && adminLoading) ||
     (role === "customer" && customerLoading);
   if (user && !role) return;
+  console.log(admin);
   return (
     <>
       {/* Top Banner */}
@@ -691,7 +700,7 @@ const NavBar = () => {
                           </div>
                           <div className="flex-1 min-w-0">
                             <p className="text-sm font-semibold text-gray-900 truncate">
-                              {profile?.full_name || profile?.email || "User"}
+                              {profile?.full_name || "User"}
                             </p>
                             {role && role !== "customer" && (
                               <p className="text-xs text-orange-600 font-medium px-2 py-1 rounded-full inline-block mt-1 capitalize">

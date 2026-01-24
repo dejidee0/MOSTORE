@@ -30,9 +30,9 @@ import {
   useCharityProductsSubscription,
 } from "@/lib/queries/charityQueries";
 import RichContentRenderer from "@/components/rich-text-renderer";
+import { useCurrentAdmin, useCurrentUser } from "@/hooks/use-auth";
 
 const CharityProductsDashboard = () => {
-  const { user } = useUserStore();
   const [showForm, setShowForm] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
   const [selectedProduct, setSelectedProduct] = useState(null);
@@ -44,17 +44,36 @@ const CharityProductsDashboard = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
 
+  const {
+    data: user,
+    isLoading: userLoading,
+    error: userError,
+  } = useCurrentUser();
+
+  const userId = user?.id;
+
+  const {
+    data: vendor,
+    isLoading: vendorLoading,
+    error: vendorError,
+  } = useCurrentAdmin({ userId });
+
+  const vendorId = vendor?.id;
+
   // React Query hooks
   const {
     data: products = [],
     isLoading,
     error,
     refetch,
-  } = useCharityProducts({
-    searchTerm,
-    category_id: filterCategory,
-    condition: filterCondition,
-  });
+  } = useCharityProducts(
+    {
+      searchTerm,
+      category_id: filterCategory,
+      condition: filterCondition,
+    },
+    vendorId,
+  );
 
   const deleteProductMutation = useDeleteCharityProduct();
 
@@ -67,7 +86,10 @@ const CharityProductsDashboard = () => {
 
     try {
       await deleteProductMutation.mutateAsync(productId);
+      // Show success message
+      alert("Charity product deleted successfully!");
     } catch (err) {
+      console.error("Delete error:", err);
       alert("Failed to delete product: " + err.message);
     }
   };
@@ -497,6 +519,7 @@ const CharityProductsDashboard = () => {
               onClick={() => handleDelete(product.id)}
               className="p-1 text-red-600 hover:text-red-900"
               title="Delete"
+              disabled={deleteProductMutation.isPending}
             >
               <Trash2 size={18} />
             </button>
@@ -703,7 +726,7 @@ const CharityProductsDashboard = () => {
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="text-sm text-gray-900">
-                              {product.profiles.username || "No vendor"}
+                              {product.profiles?.username || "No vendor"}
                             </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
@@ -764,9 +787,10 @@ const CharityProductsDashboard = () => {
                                 <Edit size={18} />
                               </button>
                               <button
-                                onClick={() => deleteProduct(product.id)}
-                                className="text-red-600 hover:text-red-900"
+                                onClick={() => handleDelete(product.id)}
+                                className="text-red-600 hover:text-red-900 disabled:opacity-50 disabled:cursor-not-allowed"
                                 title="Delete"
+                                disabled={deleteProductMutation.isPending}
                               >
                                 <Trash2 size={18} />
                               </button>

@@ -9,6 +9,7 @@ const Breadcrumbs = ({ activeTab }) => {
   const tabDisplayNames = {
     welcome: "Dashboard",
     account: "Profile",
+    orders: "Orders",
   };
 
   const tabs = Object.keys(tabDisplayNames);

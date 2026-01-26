@@ -13,6 +13,7 @@ import { useRouter } from "next/navigation";
 import { ShoppingBag, Antenna, MessageCircle } from "lucide-react";
 import RichContentRenderer from "@/components/rich-text-renderer";
 import { chatApi } from "@/lib/chat/api";
+import { useCurrentUser } from "@/hooks/use-auth";
 
 export default function ProductDetailsClient({ productId }) {
   const router = useRouter();
@@ -36,11 +37,12 @@ export default function ProductDetailsClient({ productId }) {
 
   const { addItem } = useCart();
   const { addToast } = useToast();
+  const { isInWishlist, toggleItem: toggleWishlist } = useWishlist();
   const {
-    isInWishlist,
-    toggleItem: toggleWishlist,
-    isAuthenticated,
-  } = useWishlist();
+    data: user,
+    isLoading: userLoading,
+    error: userError,
+  } = useCurrentUser();
 
   // Check if product is charity
   const isCharity = product?.product_type === "charity";
@@ -265,7 +267,7 @@ export default function ProductDetailsClient({ productId }) {
   };
 
   const handleRequestItem = async () => {
-    if (!isAuthenticated) {
+    if (!user) {
       addToast("Please sign in to request charity items", "error");
       router.push("/sign-in");
       return;
@@ -276,7 +278,7 @@ export default function ProductDetailsClient({ productId }) {
   };
 
   const handleWishlist = async () => {
-    if (!isAuthenticated) {
+    if (!user) {
       addToast("Please sign in to add items to wishlist", "error");
       return;
     }

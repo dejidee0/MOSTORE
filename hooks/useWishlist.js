@@ -1,10 +1,17 @@
 import { useEffect, useCallback, useMemo } from "react";
-import useUserStore from "@/lib/stores/useUserStore";
 import { toast } from "react-hot-toast";
 import useWishlistStore from "@/lib/stores/wishList-store";
+import { useCurrentUser } from "./use-auth";
 
 export const useWishlist = () => {
-  const { user, isAuthenticated } = useUserStore();
+  // Get user from React Query hook
+  const {
+    data: user,
+    isLoading: userLoading,
+    error: userError,
+  } = useCurrentUser();
+
+  // Get wishlist store state and actions
   const {
     items,
     loading,
@@ -20,15 +27,14 @@ export const useWishlist = () => {
     reset,
   } = useWishlistStore();
 
-  // FIXED: Memoize userId to prevent unnecessary re-renders
-  const userId = useMemo(() => user?.id, [user?.id]);
+  // Memoized userId to prevent unnecessary re-renders
+  const userId = useMemo(() => user?.id || null, [user?.id]);
 
-  // FIXED: Stable isAuth value
-  const isAuth = useMemo(() => isAuthenticated(), [isAuthenticated]);
+  // Stable authentication check
+  const isAuthenticated = useMemo(() => Boolean(user?.id), [user?.id]);
 
   // ==========================================
   // INITIALIZE WISHLIST
-  // FIXED: Proper dependency array and prevent infinite loops
   // ==========================================
   useEffect(() => {
     let mounted = true;
@@ -36,29 +42,34 @@ export const useWishlist = () => {
     const initWishlist = async () => {
       if (!mounted) return;
 
-      if (isAuth && userId && !initialized) {
+      // Initialize wishlist if authenticated and not yet initialized
+      if (isAuthenticated && userId && !initialized) {
         await initialize(userId);
-      } else if (!isAuth && initialized) {
+      }
+      // Reset wishlist if user logs out
+      else if (!isAuthenticated && initialized) {
         reset();
       }
     };
 
-    initWishlist();
+    // Only run if not currently loading user data
+    if (!userLoading) {
+      initWishlist();
+    }
 
-    // Cleanup function to prevent state updates on unmounted component
     return () => {
       mounted = false;
     };
-  }, [isAuth, userId, initialized, initialize, reset]);
+  }, [isAuthenticated, userId, initialized, userLoading, initialize, reset]);
 
   // ==========================================
-  // MEMOIZED ACTIONS
-  // FIXED: Stable callback references
+  // WISHLIST ACTIONS
   // ==========================================
 
   const addItem = useCallback(
     async (product) => {
-      if (!isAuth) {
+      // Check authentication
+      if (!isAuthenticated || !userId) {
         toast.error("Please sign in to add items to wishlist", {
           duration: 3000,
           style: {
@@ -72,22 +83,67 @@ export const useWishlist = () => {
         return false;
       }
 
+      // Validate product
       if (!product || !product.id) {
-        toast.error("Invalid product");
+        toast.error("Invalid product", {
+          duration: 2000,
+          style: {
+            background: "#EF4444",
+            color: "#fff",
+          },
+        });
         return false;
       }
 
-      return await addToWishlist(userId, product);
+      try {
+        const result = await addToWishlist(userId, product);
+        if (result) {
+          toast.success("Added to wishlist", {
+            duration: 2000,
+            style: {
+              background: "#10B981",
+              color: "#fff",
+            },
+          });
+        }
+        return result;
+      } catch (error) {
+        console.error("Error adding to wishlist:", error);
+        toast.error("Failed to add to wishlist");
+        return false;
+      }
     },
-    [isAuth, userId, addToWishlist]
+    [isAuthenticated, userId, addToWishlist],
   );
 
   const removeItem = useCallback(
     async (productId) => {
-      if (!isAuth || !userId) return false;
-      return await removeFromWishlist(userId, productId);
+      if (!isAuthenticated || !userId) return false;
+
+      if (!productId) {
+        toast.error("Invalid product ID");
+        return false;
+      }
+
+      try {
+        const result = await removeFromWishlist(userId, productId);
+        if (result) {
+          toast.success("Removed from wishlist", {
+            duration: 2000,
+            style: {
+              background: "#10B981",
+              color: "#fff",
+            },
+          });
+        }
+        return result;
+      } catch (error) {
+        console.error("Error removing from wishlist:", error);
+        toast.error("Failed to remove from wishlist");
+        return false;
+      }
     },
-    [isAuth, userId, removeFromWishlist]
+    [isAuthenticated, userId, removeFromWishlist],
   );
 
   const toggleItem = useCallback(
@@ -105,40 +161,61 @@ export const useWishlist = () => {
         return await addItem(product);
       }
     },
-    [addItem, removeItem, isInWishlist]
+    [addItem, removeItem, isInWishlist],
   );
 
   const clearAll = useCallback(async () => {
-    if (!isAuth || !userId) return false;
-    return await clearWishlist(userId);
-  }, [isAuth, userId, clearWishlist]);
+    if (!isAuthenticated || !userId) {
+      toast.error("Please sign in first");
+      return false;
+    }
+
+    try {
+      const result = await clearWishlist(userId);
+      if (result) {
+        toast.success("Wishlist cleared", {
+          duration: 2000,
+          style: {
+            background: "#10B981",
+            color: "#fff",
+          },
+        });
+      }
+      return result;
+    } catch (error) {
+      console.error("Error clearing wishlist:", error);
+      toast.error("Failed to clear wishlist");
+      return false;
+    }
+  }, [isAuthenticated, userId, clearWishlist]);
 
   const checkIsInWishlist = useCallback(
     (productId) => {
+      if (!productId) return false;
       return isInWishlist(productId);
     },
-    [isInWishlist]
+    [isInWishlist],
   );
 
   const getItem = useCallback(
     (productId) => {
+      if (!productId) return null;
       return getWishlistItem(productId);
     },
-    [getWishlistItem]
+    [getWishlistItem],
   );
 
   // ==========================================
   // MEMOIZED VALUES
-  // FIXED: Prevent unnecessary re-calculations
   // ==========================================
   const totalItems = useMemo(() => getWishlistCount(), [items]);
 
   const hasItems = useMemo(() => items.length > 0, [items.length]);
 
-  // FIXED: Safe product access
+  // Safe product access with proper validation
   const safeItems = useMemo(() => {
     return items
-      .filter((item) => item.product && item.product.id)
+      .filter((item) => item?.product && item?.product?.id)
       .map((item) => ({
         ...item,
         product: {
@@ -146,13 +223,15 @@ export const useWishlist = () => {
           name: item.product.name || "Unknown Product",
           slug: item.product.slug || item.product.id,
           price: item.product.price || 0,
-          originalprice: item.product.originalprice,
+          originalprice: item.product.originalprice || null,
           images: Array.isArray(item.product.images) ? item.product.images : [],
           rating: item.product.rating || 0,
           stock_quantity: item.product.stock_quantity || 0,
           discount: item.product.discount || 0,
-          brand: item.product.brand,
+          brand: item.product.brand || null,
           condition: item.product.condition || "new",
+          category_name: item.product.category_name || null,
+          is_active: item.product.is_active ?? true,
         },
       }));
   }, [items]);
@@ -163,12 +242,13 @@ export const useWishlist = () => {
   return {
     // Data
     items: safeItems,
-    loading,
+    loading: loading || userLoading,
     hasItems,
     totalItems,
 
     // Auth state
-    isAuthenticated: isAuth,
+    isAuthenticated,
+    userId,
 
     // Actions
     addItem,

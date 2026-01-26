@@ -23,7 +23,6 @@ import {
   User,
 } from "lucide-react";
 import CharityProductForm from "@/components/inputs/CharityProductForm";
-import useUserStore from "@/lib/stores/useUserStore";
 import {
   useCharityProducts,
   useDeleteCharityProduct,
@@ -42,24 +41,25 @@ const CharityProductsDashboard = () => {
   const [showFilters, setShowFilters] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
+  // Auth hooks
   const {
     data: user,
     isLoading: userLoading,
     error: userError,
   } = useCurrentUser();
 
-  const userId = user?.id;
-
   const {
     data: vendor,
     isLoading: vendorLoading,
     error: vendorError,
-  } = useCurrentVendor({ userId });
+  } = useCurrentVendor({ userId: user?.id });
 
-  const vendorId = vendor?.id;
+  // Determine if user is admin (you'll need to adjust this based on your actual admin logic)
+  const isAdmin = vendor?.role === "admin" || false;
 
-  // React Query hooks
+  // React Query hooks - CORRECT PARAMETER ORDER: filters, admin, vendorId
   const {
     data: products = [],
     isLoading,
@@ -72,27 +72,27 @@ const CharityProductsDashboard = () => {
       category_id: filterCategory,
       condition: filterCondition,
     },
-    vendorId,
+    isAdmin, // admin parameter
+    vendor?.id, // vendorId parameter
   );
+
+  const deleteProductMutation = useDeleteCharityProduct();
+
+  // Subscribe to real-time updates
+  useCharityProductsSubscription();
+
   const handleRefresh = async () => {
     setIsRefreshing(true);
     try {
       await refetch();
-      // Optional: Show success toast/notification here
     } catch (err) {
       console.error("Refresh failed:", err);
-      // Optional: Show error toast/notification here
     } finally {
-      // Add a small delay for better UX feedback
       setTimeout(() => {
         setIsRefreshing(false);
       }, 500);
     }
   };
-  const deleteProductMutation = useDeleteCharityProduct();
-
-  // Subscribe to real-time updates
-  useCharityProductsSubscription();
 
   const handleDelete = async (productId) => {
     if (!confirm("Are you sure you want to delete this charity product?"))
@@ -541,6 +541,15 @@ const CharityProductsDashboard = () => {
     );
   };
 
+  // Loading state
+  if (userLoading || vendorLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center">
+        <div className="animate-pulse text-gray-400">Loading...</div>
+      </div>
+    );
+  }
+
   return (
     <>
       <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-4 md:p-8">
@@ -554,6 +563,11 @@ const CharityProductsDashboard = () => {
               </h1>
               <p className="text-gray-600 mt-2">
                 Manage charity items ({products.length} products)
+                {isAdmin && (
+                  <span className="ml-2 text-orange-600 font-medium">
+                    (Admin View - All Products)
+                  </span>
+                )}
               </p>
             </div>
             <div className="flex gap-3">
@@ -563,7 +577,7 @@ const CharityProductsDashboard = () => {
                 className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-200 font-medium ${
                   isRefreshing || isFetching
                     ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                    : "bg-gray-200 hover:bg-gray-300 text-gray-700 hover:shadow-md "
+                    : "bg-gray-200 hover:bg-gray-300 text-gray-700 hover:shadow-md"
                 }`}
               >
                 <svg
@@ -706,7 +720,6 @@ const CharityProductsDashboard = () => {
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           Condition
                         </th>
-
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           Stock
                         </th>
@@ -747,7 +760,6 @@ const CharityProductsDashboard = () => {
                               </div>
                             </div>
                           </td>
-
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="text-sm text-gray-900">
                               {product.category_name || "Uncategorized"}
@@ -755,7 +767,7 @@ const CharityProductsDashboard = () => {
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="text-sm text-gray-900">
-                              {product.profiles.username || "No vendor"}
+                              {product.profiles?.username || "No vendor"}
                             </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
@@ -769,7 +781,6 @@ const CharityProductsDashboard = () => {
                               {product.condition === "new" ? "New" : "Used"}
                             </span>
                           </td>
-
                           <td className="px-6 py-4 whitespace-nowrap">
                             <span
                               className={
@@ -816,7 +827,7 @@ const CharityProductsDashboard = () => {
                                 <Edit size={18} />
                               </button>
                               <button
-                                onClick={() => deleteProduct(product.id)}
+                                onClick={() => handleDelete(product.id)}
                                 className="text-red-600 hover:text-red-900"
                                 title="Delete"
                               >

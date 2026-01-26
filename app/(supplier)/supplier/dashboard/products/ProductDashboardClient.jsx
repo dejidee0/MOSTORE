@@ -1,4 +1,5 @@
 "use client";
+
 import React, { useState, useEffect } from "react";
 import {
   Search,
@@ -21,13 +22,17 @@ import {
 import { supabase } from "@/lib/supabase-client";
 import ProductForm from "@/components/inputs/ProductsForm";
 import { Tag, Calendar } from "lucide-react";
-import useUserStore from "@/lib/stores/useUserStore";
 import RichContentRenderer from "@/components/rich-text-renderer";
+import { useCurrentUser, useCurrentVendor } from "@/hooks/use-auth";
 
 const ProductDashboardClient = ({ initialError }) => {
-  const { user, setUser } = useUserStore();
-  const [realUser, setRealUser] = useState();
-  const [userLoading, setUserLoading] = useState(true);
+  // Auth hooks
+  const { data: user, isLoading: userLoading } = useCurrentUser();
+  const { data: vendor, isLoading: vendorLoading } = useCurrentVendor({
+    userId: user?.id,
+  });
+
+  // UI State
   const [prodUpload, setProdUpload] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [editingProduct, setEditingProduct] = useState(null);
@@ -35,6 +40,8 @@ const ProductDashboardClient = ({ initialError }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterCategory, setFilterCategory] = useState("");
   const [showFilters, setShowFilters] = useState(false);
+
+  // Data State
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -44,67 +51,16 @@ const ProductDashboardClient = ({ initialError }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
 
-  useEffect(() => {
-    const fetchUserInfo = async () => {
-      if (user && user?.id) {
-        try {
-          setUserLoading(true);
-          console.log("fetching...");
-          const { data, error } = await supabase
-            .from("profiles")
-            .select("*")
-            .eq("id", user.id)
-            .single();
-
-          if (error) {
-            console.error("Error fetching user session:", error);
-            setError("Failed to authenticate user");
-            setUserLoading(false);
-            return;
-          }
-
-          if (data) {
-            console.log(`data is`, data);
-            setRealUser(data);
-          } else {
-            setError("User not authenticated");
-          }
-        } catch (err) {
-          console.error("Client-side auth error:", err);
-          setError("Failed to authenticate user");
-        } finally {
-          setUserLoading(false);
-        }
-      } else if (!user) {
-        setUserLoading(false);
-      }
-    };
-
-    fetchUserInfo();
-  }, [user, user?.id]);
-
   // Fetch products from Supabase
   const fetchProducts = async () => {
+    if (!user?.id || !vendor?.is_approved) return;
+
     try {
       setLoading(true);
       setError(null);
 
-      if (!user) {
-        throw new Error("User is not authenticated. Please log in.");
-      }
-
-      // Check if the user is an approved supplier
-      const { data: profile, error: profileError } = await supabase
-        .from("profiles")
-        .select("role, is_approved")
-        .eq("id", user.id)
-        .single();
-
-      if (profileError) {
-        throw profileError;
-      }
-
-      if (profile.role !== "supplier" || !profile.is_approved) {
+      // Verify user is an approved supplier
+      if (vendor.role !== "supplier" || !vendor.is_approved) {
         throw new Error("You must be an approved supplier to view products.");
       }
 
@@ -118,14 +74,12 @@ const ProductDashboardClient = ({ initialError }) => {
             id,
             name
           )
-          `,
+        `,
         )
         .eq("supplier_id", user.id)
         .order("created_at", { ascending: false });
 
-      if (error) {
-        throw error;
-      }
+      if (error) throw error;
 
       const productsWithCategory = data.map((product) => ({
         ...product,
@@ -134,6 +88,7 @@ const ProductDashboardClient = ({ initialError }) => {
 
       setProducts(productsWithCategory);
 
+      // Extract unique categories
       const uniqueCategories = [
         ...new Set(
           productsWithCategory.map((p) => p.category_name).filter(Boolean),
@@ -148,32 +103,34 @@ const ProductDashboardClient = ({ initialError }) => {
     }
   };
 
+  // Fetch products when vendor is loaded and approved
   useEffect(() => {
-    if (user && realUser?.is_approved) {
+    if (vendor?.is_approved && user?.id) {
       fetchProducts();
     }
-  }, [realUser?.is_approved, user]);
+  }, [vendor?.is_approved, user?.id]);
 
-  // Real-time subscription
+  // Real-time subscription for product changes
   useEffect(() => {
-    if (realUser?.is_approved && user) {
-      const subscription = supabase
-        .channel("products-changes")
-        .on(
-          "postgres_changes",
-          { event: "*", schema: "public", table: "products" },
-          () => {
-            fetchProducts();
-          },
-        )
-        .subscribe();
+    if (!vendor?.is_approved || !user?.id) return;
 
-      return () => {
-        subscription.unsubscribe();
-      };
-    }
-  }, [realUser?.is_approved, user]);
+    const subscription = supabase
+      .channel("products-changes")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "products" },
+        () => {
+          fetchProducts();
+        },
+      )
+      .subscribe();
 
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [vendor?.is_approved, user?.id]);
+
+  // Delete product handler
   const deleteProduct = async (productId) => {
     if (!confirm("Are you sure you want to delete this product?")) return;
 
@@ -192,6 +149,7 @@ const ProductDashboardClient = ({ initialError }) => {
     }
   };
 
+  // Toggle product status handler
   const toggleProductStatus = async (productId, currentStatus) => {
     try {
       const { error } = await supabase
@@ -235,6 +193,7 @@ const ProductDashboardClient = ({ initialError }) => {
     indexOfLastItem,
   );
 
+  // Utility functions
   const formatPrice = (price) => {
     return new Intl.NumberFormat("en-US", {
       style: "currency",
@@ -269,6 +228,7 @@ const ProductDashboardClient = ({ initialError }) => {
     setProdUpload(true);
   };
 
+  // Product Detail Modal Component
   const ProductDetailModal = ({ product, isOpen, onClose }) => {
     if (!isOpen || !product) return null;
 
@@ -282,6 +242,7 @@ const ProductDashboardClient = ({ initialError }) => {
         />
         <div className="flex min-h-full items-center justify-center p-4">
           <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+            {/* Modal Header */}
             <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 rounded-t-2xl">
               <div className="flex items-center justify-between">
                 <h2 className="text-2xl font-bold text-gray-900">
@@ -295,8 +256,12 @@ const ProductDashboardClient = ({ initialError }) => {
                 </button>
               </div>
             </div>
+
+            {/* Modal Content */}
             <div className="p-6 space-y-8">
+              {/* Product Images and Main Info */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                {/* Images */}
                 <div className="space-y-4">
                   <div className="aspect-square rounded-2xl overflow-hidden bg-gray-100">
                     {product.images && product.images.length > 0 ? (
@@ -328,6 +293,8 @@ const ProductDashboardClient = ({ initialError }) => {
                     </div>
                   )}
                 </div>
+
+                {/* Product Info */}
                 <div className="space-y-6">
                   <div>
                     <h1 className="text-3xl font-bold text-gray-900 mb-2">
@@ -337,6 +304,8 @@ const ProductDashboardClient = ({ initialError }) => {
                       <p className="text-lg text-gray-600">{product.brand}</p>
                     )}
                   </div>
+
+                  {/* Price */}
                   <div className="flex items-center gap-4">
                     <span className="text-4xl font-bold text-gray-900">
                       {formatPrice(product.price)}
@@ -353,6 +322,8 @@ const ProductDashboardClient = ({ initialError }) => {
                       </span>
                     )}
                   </div>
+
+                  {/* Rating */}
                   {product.rating && (
                     <div className="flex items-center gap-4">
                       <div className="flex items-center gap-1">
@@ -374,6 +345,8 @@ const ProductDashboardClient = ({ initialError }) => {
                       </span>
                     </div>
                   )}
+
+                  {/* Stock Status */}
                   <div className="flex items-center gap-4">
                     <span className={stockStatus.class}>
                       {stockStatus.text}
@@ -382,6 +355,8 @@ const ProductDashboardClient = ({ initialError }) => {
                       {product.stock_quantity} units available
                     </span>
                   </div>
+
+                  {/* Product Meta */}
                   <div className="space-y-2">
                     <div className="flex items-center gap-2">
                       <Tag className="text-gray-400" size={16} />
@@ -414,6 +389,8 @@ const ProductDashboardClient = ({ initialError }) => {
                   </div>
                 </div>
               </div>
+
+              {/* Description */}
               <div className="space-y-4">
                 <h3 className="text-xl font-semibold text-gray-900">
                   Description
@@ -424,11 +401,13 @@ const ProductDashboardClient = ({ initialError }) => {
                       {product.short_description}
                     </p>
                   )}
-                  <p className="text-gray-600 leading-relaxed">
+                  <div className="text-gray-600 leading-relaxed">
                     <RichContentRenderer content={product.description} />
-                  </p>
+                  </div>
                 </div>
               </div>
+
+              {/* Colors and Sizes */}
               {(product.colors?.length > 0 || product.sizes?.length > 0) && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {product.colors?.length > 0 && (
@@ -467,6 +446,8 @@ const ProductDashboardClient = ({ initialError }) => {
                   )}
                 </div>
               )}
+
+              {/* Status Badges */}
               <div className="flex flex-wrap gap-3">
                 <span
                   className={`px-3 py-1 rounded-lg text-sm font-medium ${
@@ -490,6 +471,7 @@ const ProductDashboardClient = ({ initialError }) => {
     );
   };
 
+  // Mobile Product Card Component
   const MobileProductCard = ({ product }) => {
     const stockStatus = getStockStatus(product.stock_quantity);
 
@@ -536,11 +518,7 @@ const ProductDashboardClient = ({ initialError }) => {
             </button>
             <button
               onClick={() => editProduct(product)}
-              className={`p-1 ${
-                product.is_active
-                  ? "text-yellow-600 hover:text-yellow-900"
-                  : "text-green-600 hover:text-green-900"
-              }`}
+              className="p-1 text-blue-600 hover:text-blue-900"
               title="Edit"
             >
               <Edit size={18} />
@@ -558,8 +536,8 @@ const ProductDashboardClient = ({ initialError }) => {
     );
   };
 
-  // Show loading state while fetching user data
-  if (userLoading) {
+  // Loading state
+  if (userLoading || vendorLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-orange-50 to-orange-100 flex items-center justify-center p-4">
         <div className="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full text-center">
@@ -571,7 +549,7 @@ const ProductDashboardClient = ({ initialError }) => {
   }
 
   // Access denied UI for unapproved suppliers or unauthenticated users
-  if (!realUser?.is_approved) {
+  if (!vendor?.is_approved) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-orange-50 to-orange-100 flex items-center justify-center p-4">
         <div className="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full text-center border border-orange-200">
@@ -597,6 +575,7 @@ const ProductDashboardClient = ({ initialError }) => {
   return (
     <>
       <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-4 md:p-8">
+        {/* Header */}
         <div className="mb-8">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
@@ -628,11 +607,15 @@ const ProductDashboardClient = ({ initialError }) => {
             </div>
           </div>
         </div>
+
+        {/* Error Message */}
         {error && (
           <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
             <p className="text-red-700">Error: {error}</p>
           </div>
         )}
+
+        {/* Search and Filters */}
         <div className="mb-8 space-y-4">
           <div className="relative">
             <Search
@@ -647,6 +630,7 @@ const ProductDashboardClient = ({ initialError }) => {
               className="w-full pl-12 pr-4 py-3 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent shadow-sm"
             />
           </div>
+
           <div className={`${showFilters ? "block" : "hidden"} sm:block`}>
             <div className="flex flex-col sm:flex-row gap-4">
               <select
@@ -684,6 +668,8 @@ const ProductDashboardClient = ({ initialError }) => {
             </div>
           </div>
         </div>
+
+        {/* Products Table/List */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
           {loading ? (
             <div className="p-8 flex justify-center">
@@ -705,44 +691,27 @@ const ProductDashboardClient = ({ initialError }) => {
             </div>
           ) : (
             <>
+              {/* Desktop Table */}
               <div className="hidden md:block overflow-x-auto">
                 <table className="min-w-full divide-y divide-gray-200">
                   <thead className="bg-gray-50">
                     <tr>
-                      <th
-                        scope="col"
-                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                      >
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Product
                       </th>
-                      <th
-                        scope="col"
-                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                      >
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Category
                       </th>
-                      <th
-                        scope="col"
-                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                      >
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Price
                       </th>
-                      <th
-                        scope="col"
-                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                      >
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Stock
                       </th>
-                      <th
-                        scope="col"
-                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                      >
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Status
                       </th>
-                      <th
-                        scope="col"
-                        className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider"
-                      >
+                      <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Actions
                       </th>
                     </tr>
@@ -847,19 +816,24 @@ const ProductDashboardClient = ({ initialError }) => {
                   </tbody>
                 </table>
               </div>
+
+              {/* Mobile Cards */}
               <div className="md:hidden p-4">
                 {currentItems.map((product) => (
                   <MobileProductCard key={product.id} product={product} />
                 ))}
               </div>
+
+              {/* Pagination */}
               <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
+                {/* Mobile Pagination */}
                 <div className="flex-1 flex justify-between sm:hidden">
                   <button
                     onClick={() =>
                       setCurrentPage((prev) => Math.max(prev - 1, 1))
                     }
                     disabled={currentPage === 1}
-                    className="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+                    className="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     Previous
                   </button>
@@ -868,11 +842,13 @@ const ProductDashboardClient = ({ initialError }) => {
                       setCurrentPage((prev) => Math.min(prev + 1, totalPages))
                     }
                     disabled={currentPage === totalPages}
-                    className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+                    className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     Next
                   </button>
                 </div>
+
+                {/* Desktop Pagination */}
                 <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
                   <div>
                     <p className="text-sm text-gray-700">
@@ -889,10 +865,7 @@ const ProductDashboardClient = ({ initialError }) => {
                     </p>
                   </div>
                   <div>
-                    <nav
-                      className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px"
-                      aria-label="Pagination"
-                    >
+                    <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
                       <button
                         onClick={() => setCurrentPage(1)}
                         disabled={currentPage === 1}
@@ -911,6 +884,8 @@ const ProductDashboardClient = ({ initialError }) => {
                         <span className="sr-only">Previous</span>
                         <ChevronLeft size={16} />
                       </button>
+
+                      {/* Page Numbers */}
                       {Array.from(
                         { length: Math.min(5, totalPages) },
                         (_, i) => {
@@ -939,6 +914,7 @@ const ProductDashboardClient = ({ initialError }) => {
                           );
                         },
                       )}
+
                       <button
                         onClick={() =>
                           setCurrentPage((prev) =>
@@ -967,11 +943,14 @@ const ProductDashboardClient = ({ initialError }) => {
           )}
         </div>
       </div>
+
+      {/* Modals */}
       <ProductDetailModal
         product={selectedProduct}
         isOpen={showProductModal}
         onClose={() => setShowProductModal(false)}
       />
+
       {prodUpload && (
         <ProductForm
           user={user}

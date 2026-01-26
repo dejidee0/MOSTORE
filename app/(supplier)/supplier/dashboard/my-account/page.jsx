@@ -78,7 +78,7 @@ const MyAccountPage = () => {
 
       return { previousProfile };
     },
-    onError: (err, newData, context) => {
+    onError: (context) => {
       // Rollback on error
       if (context?.previousProfile) {
         queryClient.setQueryData(["vendor", userId], context.previousProfile);

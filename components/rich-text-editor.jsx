@@ -114,7 +114,7 @@ const MenuBar = ({ editor }) => {
           .chain()
           .focus()
           .insertContent(
-            `<a href="${webLinkUrl}" target="_blank" rel="noopener noreferrer">${webLinkText}</a> `
+            `<a href="${webLinkUrl}" target="_blank" rel="noopener noreferrer">${webLinkText}</a> `,
           )
           .run();
       } else {
@@ -122,7 +122,7 @@ const MenuBar = ({ editor }) => {
           .chain()
           .focus()
           .insertContent(
-            `<a href="${webLinkUrl}" target="_blank" rel="noopener noreferrer">${webLinkUrl}</a> `
+            `<a href="${webLinkUrl}" target="_blank" rel="noopener noreferrer">${webLinkUrl}</a> `,
           )
           .run();
       }
@@ -710,7 +710,11 @@ export default function RichTextEditor({
       }`}
     >
       <MenuBar editor={editor} />
-      <div style={{ minHeight }} className="overflow-y-auto relative">
+      <div
+        style={{ minHeight }}
+        className="overflow-y-auto relative cursor-text"
+        onClick={() => !disabled && editor?.commands.focus()}
+      >
         <EditorContent editor={editor} />
       </div>
 

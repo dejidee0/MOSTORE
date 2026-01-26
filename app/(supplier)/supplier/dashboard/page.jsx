@@ -4,14 +4,29 @@ import { motion } from "framer-motion";
 import { LogOut, Package, Calendar } from "lucide-react";
 import useUserStore from "@/lib/stores/useUserStore";
 import { supabase } from "@/lib/supabase-client";
+import { useCurrentUser, useCurrentVendor } from "@/hooks/use-auth";
 
 const WelcomePage = () => {
-  const { user, signOut } = useUserStore();
+  const { signOut } = useUserStore();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const fullName = user?.user_metadata?.full_name || "Guest";
+  const {
+    data: fetchedUser,
+    isLoading: userLoading,
+    error: userError,
+  } = useCurrentUser();
+
+  const userId = fetchedUser?.id;
+
+  const {
+    data: user,
+    isLoading: vendorLoading,
+    error: vendorError,
+  } = useCurrentVendor({ userId });
+
+  const fullName = user?.full_name;
   const joinDate = user?.created_at
     ? new Date(user.created_at).toLocaleDateString("en-US", {
         year: "numeric",
@@ -46,13 +61,13 @@ const WelcomePage = () => {
     fetchOrders();
   }, [user?.id]);
 
-  const handleLogout = async () => {
-    const { error } = await signOut();
-    if (error) {
-      console.error("Logout failed:", error);
-    }
-  };
-
+  if (userLoading || vendorLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        Welcome To Your Vendor Dashboard
+      </div>
+    );
+  }
   return (
     <div className="min-h-screen bg-gradient-to-br from-white via-orange-50/20 to-white p-4 md:p-8">
       <motion.div

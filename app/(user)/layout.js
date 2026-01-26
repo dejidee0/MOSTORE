@@ -75,18 +75,16 @@ export default function UserLayout({ children }) {
         className={`${raleway.variable} font-raleway antialiased bg-white min-h-[calc(100vh-4rem)] flex flex-col`}
       >
         <QueryProvider>
-          <AuthProvider>
-            <CartProvider>
-              <ToastProvider>
-                {/* <MessageNotificationProvider> */}
-                <NavBar />
-                <main className="flex-1">{children}</main>
-                <Footer />
-                {/* <ChristmasPopup /> */}
-                {/* </MessageNotificationProvider> */}
-              </ToastProvider>
-            </CartProvider>
-          </AuthProvider>
+          <CartProvider>
+            <ToastProvider>
+              {/* <MessageNotificationProvider> */}
+              <NavBar />
+              <main className="flex-1">{children}</main>
+              <Footer />
+              {/* <ChristmasPopup /> */}
+              {/* </MessageNotificationProvider> */}
+            </ToastProvider>
+          </CartProvider>
         </QueryProvider>
       </body>
     </html>

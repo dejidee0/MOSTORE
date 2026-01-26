@@ -11,11 +11,9 @@ export default function AdminLayout({ children }) {
       <body className="font-raleway antialiased">
         <ToastProvider>
           <QueryProvider>
-            <AuthInitializer>
-              <ProtectedRoute allowedRoles={["admin"]}>
-                <Layout>{children}</Layout>
-              </ProtectedRoute>
-            </AuthInitializer>
+            <ProtectedRoute allowedRoles={["admin"]}>
+              <Layout>{children}</Layout>
+            </ProtectedRoute>
           </QueryProvider>
         </ToastProvider>
       </body>

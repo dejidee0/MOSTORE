@@ -14,7 +14,7 @@ export default function MessageInput({ isVendor, onShowOffer, onSendMessage }) {
       textareaRef.current.style.height = "auto";
       textareaRef.current.style.height = `${Math.min(
         textareaRef.current.scrollHeight,
-        120
+        120,
       )}px`;
     }
   }, [messageText]);
@@ -34,7 +34,7 @@ export default function MessageInput({ isVendor, onShowOffer, onSendMessage }) {
             textareaRef.current.style.height = "auto";
           }
         },
-      }
+      },
     );
   };
 
@@ -48,17 +48,6 @@ export default function MessageInput({ isVendor, onShowOffer, onSendMessage }) {
   return (
     <div className="bg-white border-t shadow-lg">
       {/* Make Offer Button - Only for customers */}
-      {!isVendor && (
-        <div className="px-3 pt-2">
-          <button
-            onClick={onShowOffer}
-            className="w-full bg-orange-100 text-orange-600 px-4 py-2 rounded-full hover:bg-orange-200 transition-colors flex items-center justify-center gap-2 font-medium text-sm"
-          >
-            <DollarSign size={18} />
-            Make an Offer
-          </button>
-        </div>
-      )}
 
       {/* Message Input Area */}
       <form onSubmit={handleSubmit} className="p-3">

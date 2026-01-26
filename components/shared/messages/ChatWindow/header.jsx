@@ -80,7 +80,7 @@ function ProductInfoBar({ product }) {
           </span>
         </div>
         <a
-          href={`/product/${product?.slug || product?.id}`}
+          href={`/products/${product?.id}`}
           className="text-orange-600 hover:text-orange-700 font-medium flex-shrink-0 ml-2 transition-colors"
         >
           View →

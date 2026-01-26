@@ -272,7 +272,7 @@ export default function CharityProductForm({
 
         if (parsed.images && parsed.images.length > 0) {
           setSuccess(
-            `Draft restored from ${savedTime.toLocaleString()}. Please re-upload images.`
+            `Draft restored from ${savedTime.toLocaleString()}. Please re-upload images.`,
           );
         }
         setLastSaved(savedTime);
@@ -440,25 +440,25 @@ export default function CharityProductForm({
       setColorVariants(
         Array.isArray(productToEdit.color_variants)
           ? productToEdit.color_variants
-          : []
+          : [],
       );
       setSizeVariants(
         Array.isArray(productToEdit.size_variants)
           ? productToEdit.size_variants
-          : []
+          : [],
       );
       setStorageOptions(
         Array.isArray(productToEdit.storage_options)
           ? productToEdit.storage_options
-          : []
+          : [],
       );
       setMemoryOptions(
         Array.isArray(productToEdit.memory_options)
           ? productToEdit.memory_options
-          : []
+          : [],
       );
       setSimTypes(
-        Array.isArray(productToEdit.sim_types) ? productToEdit.sim_types : []
+        Array.isArray(productToEdit.sim_types) ? productToEdit.sim_types : [],
       );
 
       setExistingImages(
@@ -467,7 +467,7 @@ export default function CharityProductForm({
           url,
           name: `Image ${index + 1}`,
           isNew: false,
-        }))
+        })),
       );
     } else {
       setIsEditMode(false);
@@ -499,7 +499,7 @@ export default function CharityProductForm({
             setCategories(data);
             if (productToEdit?.category_id) {
               const category = data.find(
-                (c) => c.id === productToEdit.category_id
+                (c) => c.id === productToEdit.category_id,
               );
               setSelectedCategory(category);
             }
@@ -621,7 +621,7 @@ export default function CharityProductForm({
           ) {
             URL.revokeObjectURL(imageToRemove.preview);
             imagePreviewURLs.current = imagePreviewURLs.current.filter(
-              (url) => url !== imageToRemove.preview
+              (url) => url !== imageToRemove.preview,
             );
           }
         }
@@ -781,7 +781,7 @@ export default function CharityProductForm({
 
       const newCategory = data[0];
       setCategories((prev) =>
-        [...prev, newCategory].sort((a, b) => a.name.localeCompare(b.name))
+        [...prev, newCategory].sort((a, b) => a.name.localeCompare(b.name)),
       );
       setFormData((prev) => ({ ...prev, category_id: newCategory.id }));
       setSelectedCategory(newCategory);
@@ -953,7 +953,7 @@ export default function CharityProductForm({
       }
 
       setSuccess(
-        `Charity product ${isEditMode ? "updated" : "added"} successfully!`
+        `Charity product ${isEditMode ? "updated" : "added"} successfully!`,
       );
 
       setTimeout(() => {
@@ -964,7 +964,7 @@ export default function CharityProductForm({
       console.error("💥 Submit error:", err);
       setError(
         err.message ||
-          `Failed to ${isEditMode ? "update" : "add"} charity product`
+          `Failed to ${isEditMode ? "update" : "add"} charity product`,
       );
     } finally {
       setIsLoading(false);
@@ -1294,7 +1294,7 @@ export default function CharityProductForm({
 • Explain benefits
 • Include specifications
 • Mention what's included"
-                    minHeight="300px"
+                    minHeight="200px"
                     disabled={isLoading}
                     showWordCount={true}
                   />

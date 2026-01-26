@@ -1,9 +1,16 @@
 // src/components/messages/ChatWindow/MessageBubble.jsx
 "use client";
 
-import { useMemo } from "react";
-import { DollarSign, Check, X, Clock } from "lucide-react";
-import { useRespondToOffer } from "@/hooks/useChat";
+import { useMemo, useState } from "react";
+import {
+  DollarSign,
+  Check,
+  X,
+  Clock,
+  Trash2,
+  MoreVertical,
+} from "lucide-react";
+import { useRespondToOffer, useDeleteMessage } from "@/hooks/useChat";
 import { useToast } from "@/lib/toast";
 
 export default function MessageBubble({
@@ -15,6 +22,9 @@ export default function MessageBubble({
 }) {
   const { addToast } = useToast();
   const respondToOffer = useRespondToOffer();
+  const deleteMessage = useDeleteMessage();
+  const [showMenu, setShowMenu] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const isSender = message.sender_id === currentUserId;
   const isOffer = message.message_type === "offer";
@@ -41,13 +51,33 @@ export default function MessageBubble({
         onSuccess: () => {
           addToast(
             accept ? "Offer accepted!" : "Offer rejected",
-            accept ? "success" : "info"
+            accept ? "success" : "info",
           );
         },
         onError: (error) => {
           addToast(error.message || "Failed to respond to offer", "error");
         },
-      }
+      },
+    );
+  };
+
+  const handleDeleteMessage = async () => {
+    if (!confirm("Are you sure you want to delete this message?")) return;
+
+    setIsDeleting(true);
+    setShowMenu(false);
+
+    deleteMessage.mutate(
+      { messageId: message.id, conversationId: message.conversation_id },
+      {
+        onSuccess: () => {
+          addToast("Message deleted", "success");
+        },
+        onError: (error) => {
+          addToast(error.message || "Failed to delete message", "error");
+          setIsDeleting(false);
+        },
+      },
     );
   };
 
@@ -65,6 +95,10 @@ export default function MessageBubble({
           formatPrice={formatPrice}
           formatTime={formatTime}
           handleRespondToOffer={handleRespondToOffer}
+          handleDeleteMessage={handleDeleteMessage}
+          showMenu={showMenu}
+          setShowMenu={setShowMenu}
+          isDeleting={isDeleting}
         />
       </>
     );
@@ -81,6 +115,10 @@ export default function MessageBubble({
       formatPrice={formatPrice}
       formatTime={formatTime}
       handleRespondToOffer={handleRespondToOffer}
+      handleDeleteMessage={handleDeleteMessage}
+      showMenu={showMenu}
+      setShowMenu={setShowMenu}
+      isDeleting={isDeleting}
     />
   );
 }
@@ -114,8 +152,6 @@ function DateSeparator({ date }) {
   );
 }
 
-// src/components/messages/ChatWindow/MessageBubble.jsx
-
 function MessageContent({
   message,
   isSender,
@@ -126,6 +162,10 @@ function MessageContent({
   formatPrice,
   formatTime,
   handleRespondToOffer,
+  handleDeleteMessage,
+  showMenu,
+  setShowMenu,
+  isDeleting,
 }) {
   if (isSystem) {
     return (
@@ -137,22 +177,86 @@ function MessageContent({
     );
   }
 
-  // **FIX**: Safely extract offer from array or object
   const offerData = useMemo(() => {
     if (!message.offer) return null;
-
-    // If it's an array, get the first item
     if (Array.isArray(message.offer)) {
       return message.offer.length > 0 ? message.offer[0] : null;
     }
-
-    // If it's already an object, use it
     return message.offer;
   }, [message.offer]);
 
   return (
-    <div className={`flex ${isSender ? "justify-end" : "justify-start"} mb-1`}>
-      <div className="max-w-[85%] sm:max-w-md">
+    <div
+      className={`flex ${isSender ? "justify-end" : "justify-start"} mb-1 group relative ${
+        isDeleting ? "opacity-50 pointer-events-none" : ""
+      }`}
+    >
+      <div className="max-w-[85%] sm:max-w-md relative">
+        {/* Delete button - only show for sender's messages */}
+        {isSender && !isDeleting && (
+          <div className="absolute -top-2 -right-2 z-10">
+            <button
+              onClick={() => setShowMenu(!showMenu)}
+              className="opacity-0 group-hover:opacity-100 bg-gray-800 text-white p-1.5 rounded-full shadow-lg hover:bg-gray-700 transition-all duration-200"
+              title="Message options"
+            >
+              <MoreVertical size={14} />
+            </button>
+
+            {/* Dropdown Menu */}
+            {showMenu && (
+              <>
+                {/* Backdrop to close menu */}
+                <div
+                  className="fixed inset-0 z-20"
+                  onClick={() => setShowMenu(false)}
+                />
+
+                {/* Menu */}
+                <div className="absolute right-0 top-8 bg-white rounded-lg shadow-xl border border-gray-200 py-1 min-w-[140px] z-30 animate-in fade-in slide-in-from-top-2 duration-200">
+                  <button
+                    onClick={handleDeleteMessage}
+                    className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2 transition-colors"
+                  >
+                    <Trash2 size={14} />
+                    Delete Message
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        )}
+
+        {/* Deleting indicator */}
+        {isDeleting && (
+          <div className="absolute inset-0 flex items-center justify-center bg-black/10 rounded-lg z-10">
+            <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-full shadow-lg">
+              <svg
+                className="animate-spin h-4 w-4 text-orange-600"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                />
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                />
+              </svg>
+              <span className="text-xs text-gray-700 font-medium">
+                Deleting...
+              </span>
+            </div>
+          </div>
+        )}
+
         {isOffer && offerData ? (
           <OfferBubble
             message={message}
@@ -277,8 +381,8 @@ function OfferBubble({
                 isSender
                   ? "text-white"
                   : isDiscount
-                  ? "text-green-600"
-                  : "text-orange-600"
+                    ? "text-green-600"
+                    : "text-orange-600"
               }`}
             >
               {isDiscount ? "-" : "+"}
@@ -327,15 +431,15 @@ function OfferBubble({
                 isSender
                   ? "text-white/90"
                   : offer.status === "accepted"
-                  ? "text-green-600"
-                  : "text-red-600"
+                    ? "text-green-600"
+                    : "text-red-600"
               }`}
             >
               {offer.status === "accepted"
                 ? "✓ Offer Accepted"
                 : offer.status === "rejected"
-                ? "✗ Offer Declined"
-                : "Offer Expired"}
+                  ? "✗ Offer Declined"
+                  : "Offer Expired"}
             </span>
             {offer.responded_at && (
               <span

@@ -43,6 +43,7 @@ const CharityProductsDashboard = () => {
   const [showFilters, setShowFilters] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [isRefreshing, setIsRefreshing] = useState(false); // Add this state
 
   const {
     data: user,
@@ -59,12 +60,14 @@ const CharityProductsDashboard = () => {
   } = useCurrentAdmin({ userId });
 
   const vendorId = vendor?.id;
+  const admin = true;
 
   // React Query hooks
   const {
     data: products = [],
     isLoading,
     error,
+    isFetching,
     refetch,
   } = useCharityProducts(
     {
@@ -72,8 +75,25 @@ const CharityProductsDashboard = () => {
       category_id: filterCategory,
       condition: filterCondition,
     },
+    admin,
     vendorId,
   );
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    try {
+      await refetch();
+      // Optional: Show success toast/notification here
+    } catch (err) {
+      console.error("Refresh failed:", err);
+      // Optional: Show error toast/notification here
+    } finally {
+      // Add a small delay for better UX feedback
+      setTimeout(() => {
+        setIsRefreshing(false);
+      }, 500);
+    }
+  };
 
   const deleteProductMutation = useDeleteCharityProduct();
 
@@ -546,11 +566,28 @@ const CharityProductsDashboard = () => {
             </div>
             <div className="flex gap-3">
               <button
-                onClick={() => refetch()}
-                className="flex items-center gap-2 bg-gray-200 hover:bg-gray-300 text-gray-700 px-4 py-2 rounded-lg transition-colors font-medium"
-                disabled={isLoading}
+                onClick={handleRefresh}
+                disabled={isRefreshing || isFetching}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-200 font-medium ${
+                  isRefreshing || isFetching
+                    ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                    : "bg-gray-200 hover:bg-gray-300 text-gray-700 hover:shadow-md "
+                }`}
               >
-                {isLoading ? "Loading..." : "Refresh"}
+                <svg
+                  className={`w-4 h-4 ${isRefreshing || isFetching ? "animate-spin" : ""}`}
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                  />
+                </svg>
+                {isRefreshing || isFetching ? "Refreshing..." : "Refresh"}
               </button>
               <button
                 onClick={() => {

@@ -827,7 +827,7 @@ export default function ProductDetailsClient({ productId }) {
                   <button
                     onClick={handleMessageVendor}
                     disabled={isLoadingChat}
-                    className="w-full mt-3 border border-gray-300 px-6 text-white py-3 rounded-lg font-medium flex items-center justify-center gap-2 hover:bg-orange-600 bg-orange-500"
+                    className="w-full mt-3 border border-gray-300 px-6 text-white py-3 rounded-lg font-medium flex items-center justify-center gap-2 hover:bg-gray-800 bg-gray-900"
                   >
                     <MessageCircle size={20} />
                     {isLoadingChat ? "Opening chat..." : "Message Seller"}

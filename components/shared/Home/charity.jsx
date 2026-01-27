@@ -100,77 +100,75 @@ export default function CharityProductsSection() {
         {/* Infinite Slider */}
         <div className="relative overflow-hidden">
           <div className="slider-track flex w-max gap-3">
-            {[...chartityProducts, ...chartityProducts].map(
-              (product, index) => (
-                <Link
-                  key={`${product.id}-${index}`}
-                  href={`/products/${product.id}`}
-                  className="flex-shrink-0 w-[160px] sm:w-[200px] lg:w-[220px]"
-                >
-                  <div className="group bg-white rounded-lg border border-gray-200 hover:border-orange-300 hover:shadow-lg transition-all duration-300 overflow-hidden">
-                    {/* Product Image */}
-                    <div className="relative aspect-square bg-gray-50 overflow-hidden">
-                      {product.images?.[0] && (
-                        <Image
-                          src={product.images[0]}
-                          alt={product.name}
-                          fill
-                          className="object-cover group-hover:scale-105 transition-transform duration-300"
-                        />
-                      )}
+            {[...chartityProducts].map((product, index) => (
+              <Link
+                key={`${product.id}-${index}`}
+                href={`/products/${product.id}`}
+                className="flex-shrink-0 w-[160px] sm:w-[200px] lg:w-[220px]"
+              >
+                <div className="group bg-white rounded-lg border border-gray-200 hover:border-orange-300 hover:shadow-lg transition-all duration-300 overflow-hidden">
+                  {/* Product Image */}
+                  <div className="relative aspect-square bg-gray-50 overflow-hidden">
+                    {product.images?.[0] && (
+                      <Image
+                        src={product.images[0]}
+                        alt={product.name}
+                        fill
+                        className="object-cover group-hover:scale-105 transition-transform duration-300"
+                      />
+                    )}
 
-                      {/* Wishlist */}
-                      <button
-                        onClick={(e) => handleWishlistClick(product, e)}
-                        className="absolute bottom-2 right-2 p-1.5 bg-white/90 rounded-full opacity-0 group-hover:opacity-100 transition"
-                      >
-                        <Heart
-                          className={`w-3.5 h-3.5 ${
-                            isInWishlist(product.id)
-                              ? "fill-red-500 text-red-500"
-                              : "text-gray-600"
-                          }`}
-                        />
-                      </button>
-                    </div>
-
-                    {/* Info */}
-                    <div className="p-2.5 space-y-1 border-t border-gray-300">
-                      <h3 className="text-xs font-medium line-clamp-2">
-                        {product.name}
-                      </h3>
-
-                      <span className="text-sm font-bold text-green-600">
-                        Free
-                      </span>
-                      {product.location && (
-                        <div className="flex items-center gap-1 text-[10px] text-gray-500">
-                          <svg
-                            className="w-3 h-3 text-gray-400"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              d="M12 11.5a2.5 2.5 0 100-5 2.5 2.5 0 000 5z"
-                            />
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              d="M19 11.5c0 5-7 10-7 10s-7-5-7-10a7 7 0 1114 0z"
-                            />
-                          </svg>
-                          <span className="truncate">{product.location}</span>
-                        </div>
-                      )}
-                    </div>
+                    {/* Wishlist */}
+                    <button
+                      onClick={(e) => handleWishlistClick(product, e)}
+                      className="absolute bottom-2 right-2 p-1.5 bg-white/90 rounded-full opacity-0 group-hover:opacity-100 transition"
+                    >
+                      <Heart
+                        className={`w-3.5 h-3.5 ${
+                          isInWishlist(product.id)
+                            ? "fill-red-500 text-red-500"
+                            : "text-gray-600"
+                        }`}
+                      />
+                    </button>
                   </div>
-                </Link>
-              ),
-            )}
+
+                  {/* Info */}
+                  <div className="p-2.5 space-y-1 border-t border-gray-300">
+                    <h3 className="text-xs font-medium line-clamp-2">
+                      {product.name}
+                    </h3>
+
+                    <span className="text-sm font-bold text-green-600">
+                      Free
+                    </span>
+                    {product.location && (
+                      <div className="flex items-center gap-1 text-[10px] text-gray-500">
+                        <svg
+                          className="w-3 h-3 text-gray-400"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M12 11.5a2.5 2.5 0 100-5 2.5 2.5 0 000 5z"
+                          />
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M19 11.5c0 5-7 10-7 10s-7-5-7-10a7 7 0 1114 0z"
+                          />
+                        </svg>
+                        <span className="truncate">{product.location}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </Link>
+            ))}
           </div>
         </div>
       </div>

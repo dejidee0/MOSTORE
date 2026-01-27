@@ -822,6 +822,16 @@ export default function ProductDetailsClient({ productId }) {
                       />
                     </button>
                   </div>
+
+                  {/* Message Vendor */}
+                  <button
+                    onClick={handleMessageVendor}
+                    disabled={isLoadingChat}
+                    className="w-full mt-3 border border-gray-300 px-6 text-white py-3 rounded-lg font-medium flex items-center justify-center gap-2 hover:bg-orange-600 bg-orange-500"
+                  >
+                    <MessageCircle size={20} />
+                    {isLoadingChat ? "Opening chat..." : "Message Seller"}
+                  </button>
                   <div className="border border-gray-200 rounded-lg p-4">
                     <h4 className="font-semibold text-gray-800 mb-3">
                       Product Details
@@ -909,16 +919,6 @@ export default function ProductDetailsClient({ productId }) {
                       )}
                     </div>
                   </div>
-
-                  {/* Message Vendor */}
-                  <button
-                    onClick={handleMessageVendor}
-                    disabled={isLoadingChat}
-                    className="w-full mt-3 border border-gray-300 px-6 py-3 rounded-lg font-medium flex items-center justify-center gap-2 hover:bg-gray-50"
-                  >
-                    <MessageCircle size={20} />
-                    {isLoadingChat ? "Opening chat..." : "Message Seller"}
-                  </button>
                 </>
               )}
             </div>
@@ -935,6 +935,54 @@ export default function ProductDetailsClient({ productId }) {
             Product Description
           </h2>
           <RichContentRenderer content={product.description} />
+        </div>
+        <div className="border border-gray-200 rounded-lg p-4 space-y-3 mt-2 ">
+          <div className="flex items-start gap-3">
+            <svg
+              className="w-5 h-5 text-gray-600 mt-1"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"
+              />
+            </svg>
+            <div>
+              <h4 className="font-semibold text-gray-800">Free Delivery</h4>
+              <p className="text-sm text-gray-600">
+                Delivery is free within your region. Orders delivered outside
+                this region will attract an additional delivery fee.
+              </p>
+            </div>
+          </div>
+          <div className="flex items-start gap-3">
+            <svg
+              className="w-5 h-5 text-gray-600 mt-1"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"
+              />
+            </svg>
+            <div>
+              <h4 className="font-semibold text-gray-800">Return Delivery</h4>
+              <p className="text-sm text-gray-600">
+                Free 30-days Delivery Returns{" "}
+                <Link href="#" className="text-blue-500 underline">
+                  Details
+                </Link>
+              </p>
+            </div>
+          </div>
         </div>
 
         {!isCharity && (

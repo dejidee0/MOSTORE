@@ -77,6 +77,7 @@ const ProductDashboardClient = ({ initialError }) => {
         `,
         )
         .eq("supplier_id", user.id)
+        .eq("product_type", "regular")
         .order("created_at", { ascending: false });
 
       if (error) throw error;

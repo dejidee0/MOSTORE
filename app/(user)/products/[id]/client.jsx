@@ -276,6 +276,22 @@ export default function ProductDetailsClient({ productId }) {
     // Open chat with seller for charity item request
     handleMessageVendor();
   };
+  function formatUploadedTime(createdAt) {
+    if (!createdAt) return "";
+
+    const createdDate = new Date(createdAt); // timestamptz-safe
+    const now = new Date();
+
+    const diffMs = now - createdDate;
+    const diffMinutes = Math.floor(diffMs / (1000 * 60));
+
+    if (diffMinutes < 60) {
+      return `${diffMinutes} min${diffMinutes !== 1 ? "s" : ""} ago`;
+    }
+
+    const diffDays = Math.floor(diffMinutes / (60 * 24));
+    return `${diffDays} day${diffDays !== 1 ? "s" : ""} ago`;
+  }
 
   const handleWishlist = async () => {
     if (!user) {
@@ -914,6 +930,19 @@ export default function ProductDetailsClient({ productId }) {
                           <span className="font-medium">Uploaded By:</span>
                           <span className="font-semibold">
                             {product.profiles.full_name}
+                          </span>
+                        </motion.div>
+                      )}
+                      {product.created_at && (
+                        <motion.div
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ duration: 0.3, delay: 0.6 }}
+                          className="flex items-center justify-between py-2"
+                        >
+                          <span className="font-medium">Uploaded:</span>
+                          <span className="text-gray-700 font-semibold">
+                            {formatUploadedTime(product.created_at)}
                           </span>
                         </motion.div>
                       )}

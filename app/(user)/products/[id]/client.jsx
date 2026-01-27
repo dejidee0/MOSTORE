@@ -926,7 +926,7 @@ export default function ProductDetailsClient({ productId }) {
         </div>
 
         {/* Mobile Description */}
-        <div className="mt-10 md:hidden bg-white p-4 rounded-lg border">
+        <div className="mt-4 md:mt-10 md:hidden bg-white p-4 rounded-lg border">
           <h2
             className={`font-bold text-xl mb-3 ${
               isCharity ? "text-green-600" : "text-gray-800"

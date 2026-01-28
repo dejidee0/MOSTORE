@@ -227,7 +227,7 @@ export default function Footer() {
         <div className="pt-2 border-t border-gray-600">
           <div className="text-center">
             <div className="text-gray-400 text-xs leading-tight">
-              © 2025{" "}
+              © 2026{" "}
               <span className="text-orange-400 font-semibold">MOSTORE</span>.
               All Rights Reserved | Terms & Conditions Apply | Local Store
               Prices May Vary | Inventory Levels Not Guaranteed

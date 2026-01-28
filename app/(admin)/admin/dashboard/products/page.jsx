@@ -1,4 +1,5 @@
 "use client";
+
 import React, { useState, useEffect } from "react";
 import {
   Search,
@@ -18,15 +19,21 @@ import {
   X as XIcon,
   Tag,
   Calendar,
+  User,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase-client";
 import ProductForm from "@/components/inputs/ProductsForm";
-import useUserStore from "@/lib/stores/useUserStore";
-import { User } from "lucide-react";
 import RichContentRenderer from "@/components/rich-text-renderer";
+import { useCurrentUser, useCurrentAdmin } from "@/hooks/use-auth";
 
 const ProductDashboard = () => {
-  const { user } = useUserStore();
+  // Auth hooks
+  const { data: user, isLoading: userLoading } = useCurrentUser();
+  const { data: admin, isLoading: adminLoading } = useCurrentAdmin({
+    userId: user?.id,
+  });
+
+  // UI State
   const [prodUpload, setProdUpload] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [editingProduct, setEditingProduct] = useState(null);
@@ -35,21 +42,26 @@ const ProductDashboard = () => {
   const [filterCategory, setFilterCategory] = useState("");
   const [filterCondition, setFilterCondition] = useState("");
   const [showFilters, setShowFilters] = useState(false);
+
+  // Data State
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // Pagination State
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
+
+  // Fetch products when admin is loaded
   useEffect(() => {
-    if (user?.id) {
+    if (admin?.id) {
       fetchProducts();
     }
-  }, [user?.id]); // Add user.id as dependency
+  }, [admin?.id]);
 
   const fetchProducts = async () => {
-    if (!user?.id) {
+    if (!admin?.id) {
       setLoading(false);
       return;
     }
@@ -62,23 +74,22 @@ const ProductDashboard = () => {
         .from("products")
         .select(
           `
-        *,
-        categories (
-          id,
-          name
-        ), profiles (
-        id,
-        username
-        )
-      `,
+          *,
+          categories (
+            id,
+            name
+          ),
+          profiles (
+            id,
+            username
+          )
+        `,
         )
         .eq("is_active", true)
         .eq("product_type", "regular")
         .order("created_at", { ascending: false });
 
-      if (error) {
-        throw error;
-      }
+      if (error) throw error;
 
       const productsWithCategory = data.map((product) => ({
         ...product,
@@ -87,6 +98,7 @@ const ProductDashboard = () => {
 
       setProducts(productsWithCategory);
 
+      // Extract unique categories
       const uniqueCategories = [
         ...new Set(
           productsWithCategory.map((p) => p.category_name).filter(Boolean),
@@ -101,17 +113,16 @@ const ProductDashboard = () => {
     }
   };
 
+  // Real-time subscription for product changes
   useEffect(() => {
-    fetchProducts();
-  }, []);
+    if (!admin?.id) return;
 
-  useEffect(() => {
     const subscription = supabase
       .channel("products-changes")
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "products" },
-        (payload) => {
+        () => {
           fetchProducts();
         },
       )
@@ -120,7 +131,7 @@ const ProductDashboard = () => {
     return () => {
       subscription.unsubscribe();
     };
-  }, []);
+  }, [admin?.id]);
 
   const deleteProduct = async (productId) => {
     if (!confirm("Are you sure you want to delete this product?")) return;
@@ -167,6 +178,7 @@ const ProductDashboard = () => {
     }
   };
 
+  // Filter products
   const filteredProducts = products.filter((product) => {
     const matchesSearch =
       product?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -181,6 +193,7 @@ const ProductDashboard = () => {
     return matchesSearch && matchesCategory && matchesCondition;
   });
 
+  // Pagination logic
   const totalItems = filteredProducts.length;
   const totalPages = Math.ceil(totalItems / itemsPerPage);
   const indexOfLastItem = currentPage * itemsPerPage;
@@ -190,6 +203,7 @@ const ProductDashboard = () => {
     indexOfLastItem,
   );
 
+  // Utility functions
   const formatPrice = (price) => {
     return new Intl.NumberFormat("fr-FR", {
       style: "currency",
@@ -226,6 +240,7 @@ const ProductDashboard = () => {
     setProdUpload(true);
   };
 
+  // Product Detail Modal Component
   const ProductDetailModal = ({ product, isOpen, onClose }) => {
     if (!isOpen || !product) return null;
 
@@ -239,7 +254,8 @@ const ProductDashboard = () => {
         />
         <div className="flex min-h-full items-center justify-center p-4">
           <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
-            <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 rounded-t-2xl">
+            {/* Modal Header */}
+            <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 rounded-t-2xl z-10">
               <div className="flex items-center justify-between">
                 <h2 className="text-2xl font-bold text-gray-900">
                   Product Details
@@ -252,8 +268,11 @@ const ProductDashboard = () => {
                 </button>
               </div>
             </div>
+
+            {/* Modal Content */}
             <div className="p-6 space-y-8">
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                {/* Images */}
                 <div className="space-y-4">
                   <div className="aspect-square rounded-2xl overflow-hidden bg-gray-100">
                     {product.images && product.images.length > 0 ? (
@@ -286,6 +305,7 @@ const ProductDashboard = () => {
                   )}
                 </div>
 
+                {/* Product Info */}
                 <div className="space-y-6">
                   <div>
                     <h1 className="text-3xl font-bold text-gray-900 mb-2">
@@ -296,6 +316,7 @@ const ProductDashboard = () => {
                     )}
                   </div>
 
+                  {/* Price */}
                   <div className="flex items-center gap-4">
                     <span className="text-4xl font-bold text-gray-900">
                       €{product.price.toFixed(2)}
@@ -303,7 +324,7 @@ const ProductDashboard = () => {
                     {product.originalprice &&
                       product.originalprice > product.price && (
                         <span className="text-xl text-gray-500 line-through">
-                          € {product.originalprice.toFixed(2)}
+                          €{product.originalprice.toFixed(2)}
                         </span>
                       )}
                     {product.discount && (
@@ -313,6 +334,7 @@ const ProductDashboard = () => {
                     )}
                   </div>
 
+                  {/* Rating */}
                   {product.rating && (
                     <div className="flex items-center gap-4">
                       <div className="flex items-center gap-1">
@@ -335,6 +357,7 @@ const ProductDashboard = () => {
                     </div>
                   )}
 
+                  {/* Stock Status */}
                   <div className="flex items-center gap-4">
                     <span className={stockStatus.class}>
                       {stockStatus.text}
@@ -344,133 +367,134 @@ const ProductDashboard = () => {
                     </span>
                   </div>
 
+                  {/* Product Meta */}
                   <div className="space-y-2">
                     <div className="flex items-center gap-2">
                       <Tag className="text-gray-400" size={16} />
                       <span className="text-gray-600">SKU: {product.sku}</span>
                     </div>
-
-                    <div className="space-y-2">
-                      <div className="flex items-center gap-2">
-                        <User className="text-gray-400" size={16} />
-                        <span className="text-gray-600">
-                          Vendor: {product.profiles.username}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Package className="text-gray-400" size={16} />
-                        <span className="text-gray-600">
-                          Category: {product.category_name || "Uncategorized"}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Package className="text-gray-400" size={16} />
-                        <span className="text-gray-600">
-                          Condition:{" "}
-                          <span
-                            className={`font-medium ${
-                              product.condition === "new"
-                                ? "text-green-600"
-                                : "text-blue-600"
-                            }`}
-                          >
-                            {product.condition === "new" ? "New" : "Used"}
-                          </span>
-                        </span>
-                      </div>
-                      {product.created_at && (
-                        <div className="flex items-center gap-2">
-                          <Calendar className="text-gray-400" size={16} />
-                          <span className="text-gray-600">
-                            Added:{" "}
-                            {new Date(product.created_at).toLocaleDateString()}
-                          </span>
-                        </div>
-                      )}
+                    <div className="flex items-center gap-2">
+                      <User className="text-gray-400" size={16} />
+                      <span className="text-gray-600">
+                        Vendor: {product.profiles?.username || "Unknown"}
+                      </span>
                     </div>
+                    <div className="flex items-center gap-2">
+                      <Package className="text-gray-400" size={16} />
+                      <span className="text-gray-600">
+                        Category: {product.category_name || "Uncategorized"}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Package className="text-gray-400" size={16} />
+                      <span className="text-gray-600">
+                        Condition:{" "}
+                        <span
+                          className={`font-medium ${
+                            product.condition === "new"
+                              ? "text-green-600"
+                              : "text-blue-600"
+                          }`}
+                        >
+                          {product.condition === "new" ? "New" : "Used"}
+                        </span>
+                      </span>
+                    </div>
+                    {product.created_at && (
+                      <div className="flex items-center gap-2">
+                        <Calendar className="text-gray-400" size={16} />
+                        <span className="text-gray-600">
+                          Added:{" "}
+                          {new Date(product.created_at).toLocaleDateString()}
+                        </span>
+                      </div>
+                    )}
                   </div>
                 </div>
+              </div>
 
-                <div className="space-y-4">
-                  <h3 className="text-xl font-semibold text-gray-900">
-                    Description
-                  </h3>
-                  <div className="space-y-3">
-                    {product.short_description && (
-                      <p className="text-lg text-gray-700 bg-gray-50 p-4 rounded-lg">
-                        {product.short_description}
-                      </p>
-                    )}
-                    <p className="text-gray-600 leading-relaxed">
-                      <RichContentRenderer content={product.description} />
+              {/* Description */}
+              <div className="space-y-4">
+                <h3 className="text-xl font-semibold text-gray-900">
+                  Description
+                </h3>
+                <div className="space-y-3">
+                  {product.short_description && (
+                    <p className="text-lg text-gray-700 bg-gray-50 p-4 rounded-lg">
+                      {product.short_description}
                     </p>
-                  </div>
-                </div>
-
-                {(product.colors?.length > 0 || product.sizes?.length > 0) && (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {product.colors?.length > 0 && (
-                      <div>
-                        <h4 className="font-semibold text-gray-900 mb-3">
-                          Available Colors
-                        </h4>
-                        <div className="flex flex-wrap gap-2">
-                          {product.colors.map((color, index) => (
-                            <span
-                              key={index}
-                              className="px-3 py-2 bg-gray-100 text-gray-700 rounded-lg"
-                            >
-                              {color}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                    {product.sizes?.length > 0 && (
-                      <div>
-                        <h4 className="font-semibold text-gray-900 mb-3">
-                          Available Sizes
-                        </h4>
-                        <div className="flex flex-wrap gap-2">
-                          {product.sizes.map((size, index) => (
-                            <span
-                              key={index}
-                              className="px-3 py-2 bg-gray-100 text-gray-700 rounded-lg"
-                            >
-                              {size}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                <div className="flex flex-wrap gap-3">
-                  <span
-                    className={`px-3 py-1 rounded-lg text-sm font-medium ${
-                      product.is_active
-                        ? "bg-green-100 text-green-700"
-                        : "bg-red-100 text-red-700"
-                    }`}
-                  >
-                    {product.is_active ? "Active" : "Inactive"}
-                  </span>
-                  {product.is_featured && (
-                    <span className="px-3 py-1 bg-orange-100 text-orange-700 rounded-lg text-sm font-medium">
-                      Featured Product
-                    </span>
                   )}
-                  <span
-                    className={`px-3 py-1 rounded-lg text-sm font-medium ${
-                      product.condition === "new"
-                        ? "bg-green-100 text-green-700"
-                        : "bg-blue-100 text-blue-700"
-                    }`}
-                  >
-                    {product.condition === "new" ? "Brand New" : "Pre-Owned"}
-                  </span>
+                  <div className="text-gray-600 leading-relaxed">
+                    <RichContentRenderer content={product.description} />
+                  </div>
                 </div>
+              </div>
+
+              {/* Variants */}
+              {(product.colors?.length > 0 || product.sizes?.length > 0) && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {product.colors?.length > 0 && (
+                    <div>
+                      <h4 className="font-semibold text-gray-900 mb-3">
+                        Available Colors
+                      </h4>
+                      <div className="flex flex-wrap gap-2">
+                        {product.colors.map((color, index) => (
+                          <span
+                            key={index}
+                            className="px-3 py-2 bg-gray-100 text-gray-700 rounded-lg"
+                          >
+                            {color}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {product.sizes?.length > 0 && (
+                    <div>
+                      <h4 className="font-semibold text-gray-900 mb-3">
+                        Available Sizes
+                      </h4>
+                      <div className="flex flex-wrap gap-2">
+                        {product.sizes.map((size, index) => (
+                          <span
+                            key={index}
+                            className="px-3 py-2 bg-gray-100 text-gray-700 rounded-lg"
+                          >
+                            {size}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Status Badges */}
+              <div className="flex flex-wrap gap-3">
+                <span
+                  className={`px-3 py-1 rounded-lg text-sm font-medium ${
+                    product.is_active
+                      ? "bg-green-100 text-green-700"
+                      : "bg-red-100 text-red-700"
+                  }`}
+                >
+                  {product.is_active ? "Active" : "Inactive"}
+                </span>
+                {product.is_featured && (
+                  <span className="px-3 py-1 bg-orange-100 text-orange-700 rounded-lg text-sm font-medium">
+                    Featured Product
+                  </span>
+                )}
+                <span
+                  className={`px-3 py-1 rounded-lg text-sm font-medium ${
+                    product.condition === "new"
+                      ? "bg-green-100 text-green-700"
+                      : "bg-blue-100 text-blue-700"
+                  }`}
+                >
+                  {product.condition === "new" ? "Brand New" : "Pre-Owned"}
+                </span>
               </div>
             </div>
           </div>
@@ -479,6 +503,7 @@ const ProductDashboard = () => {
     );
   };
 
+  // Mobile Product Card Component
   const MobileProductCard = ({ product }) => {
     const stockStatus = getStockStatus(product.stock_quantity);
 
@@ -498,9 +523,9 @@ const ProductDashboard = () => {
           </div>
           <div className="flex-1">
             <h3 className="font-medium text-gray-900">{product.name}</h3>
-            <h3 className="font-medium text-gray-900">
-              {product.profiles.username}
-            </h3>
+            <p className="text-sm text-gray-500">
+              {product.profiles?.username || "Unknown"}
+            </p>
             <p className="text-sm text-gray-500">{product.sku}</p>
             <div className="mt-1 flex items-center gap-2">
               <span
@@ -557,17 +582,43 @@ const ProductDashboard = () => {
     );
   };
 
+  // Loading state
+  if (userLoading || adminLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center">
+        <div className="animate-pulse text-gray-400">Loading...</div>
+      </div>
+    );
+  }
+
+  // Not admin
+  if (!admin) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center p-4">
+        <div className="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full text-center">
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">
+            Access Denied
+          </h1>
+          <p className="text-gray-600">
+            You must be an administrator to access this page.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <>
       <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-4 md:p-8">
-        <div className="">
+        {/* Header */}
+        <div className="mb-8">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
               <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-orange-500 to-orange-600 bg-clip-text text-transparent">
-                Products Dashboard
+                Products Dashboard (Admin)
               </h1>
               <p className="text-gray-600 mt-2">
-                Manage your product catalog ({products.length} products)
+                Manage product catalog ({products.length} products)
               </p>
             </div>
             <div className="flex gap-3">
@@ -592,12 +643,14 @@ const ProductDashboard = () => {
           </div>
         </div>
 
+        {/* Error Display */}
         {error && (
           <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
             <p className="text-red-700">Error: {error}</p>
           </div>
         )}
 
+        {/* Search and Filters */}
         <div className="mb-8 space-y-4">
           <div className="relative">
             <Search
@@ -663,6 +716,7 @@ const ProductDashboard = () => {
           </div>
         </div>
 
+        {/* Products Table/Grid */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
           {loading ? (
             <div className="p-8 flex justify-center">
@@ -684,56 +738,33 @@ const ProductDashboard = () => {
             </div>
           ) : (
             <>
+              {/* Desktop Table */}
               <div className="hidden md:block overflow-x-auto">
                 <table className="min-w-full divide-y divide-gray-200">
                   <thead className="bg-gray-50">
                     <tr>
-                      <th
-                        scope="col"
-                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                      >
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Product
                       </th>
-                      <th
-                        scope="col"
-                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                      >
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Category
                       </th>
-                      <th
-                        scope="col"
-                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                      >
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Vendor
                       </th>
-                      <th
-                        scope="col"
-                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                      >
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Condition
                       </th>
-                      <th
-                        scope="col"
-                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                      >
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Price
                       </th>
-                      <th
-                        scope="col"
-                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                      >
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Stock
                       </th>
-                      <th
-                        scope="col"
-                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                      >
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Status
                       </th>
-                      <th
-                        scope="col"
-                        className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider"
-                      >
+                      <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Actions
                       </th>
                     </tr>
@@ -764,7 +795,6 @@ const ProductDashboard = () => {
                             </div>
                           </div>
                         </td>
-
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="text-sm text-gray-900">
                             {product.category_name || "Uncategorized"}
@@ -772,7 +802,7 @@ const ProductDashboard = () => {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="text-sm text-gray-900">
-                            {product.profiles.username || "No vendor"}
+                            {product.profiles?.username || "No vendor"}
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
@@ -856,20 +886,23 @@ const ProductDashboard = () => {
                 </table>
               </div>
 
+              {/* Mobile Cards */}
               <div className="md:hidden p-4">
                 {currentItems.map((product) => (
                   <MobileProductCard key={product.id} product={product} />
                 ))}
               </div>
 
+              {/* Pagination */}
               <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
+                {/* Mobile Pagination */}
                 <div className="flex-1 flex justify-between sm:hidden">
                   <button
                     onClick={() =>
                       setCurrentPage((prev) => Math.max(prev - 1, 1))
                     }
                     disabled={currentPage === 1}
-                    className="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+                    className="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     Previous
                   </button>
@@ -878,11 +911,13 @@ const ProductDashboard = () => {
                       setCurrentPage((prev) => Math.min(prev + 1, totalPages))
                     }
                     disabled={currentPage === totalPages}
-                    className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+                    className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     Next
                   </button>
                 </div>
+
+                {/* Desktop Pagination */}
                 <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
                   <div>
                     <p className="text-sm text-gray-700">
@@ -899,10 +934,7 @@ const ProductDashboard = () => {
                     </p>
                   </div>
                   <div>
-                    <nav
-                      className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px"
-                      aria-label="Pagination"
-                    >
+                    <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
                       <button
                         onClick={() => setCurrentPage(1)}
                         disabled={currentPage === 1}
@@ -921,6 +953,8 @@ const ProductDashboard = () => {
                         <span className="sr-only">Previous</span>
                         <ChevronLeft size={16} />
                       </button>
+
+                      {/* Page Numbers */}
                       {Array.from(
                         { length: Math.min(5, totalPages) },
                         (_, i) => {
@@ -949,6 +983,7 @@ const ProductDashboard = () => {
                           );
                         },
                       )}
+
                       <button
                         onClick={() =>
                           setCurrentPage((prev) =>
@@ -978,6 +1013,7 @@ const ProductDashboard = () => {
         </div>
       </div>
 
+      {/* Modals */}
       <ProductDetailModal
         product={selectedProduct}
         isOpen={showProductModal}

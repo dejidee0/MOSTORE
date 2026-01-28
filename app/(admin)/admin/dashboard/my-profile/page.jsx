@@ -12,13 +12,16 @@ import {
   EyeOff,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import useUserStore from "@/lib/stores/useUserStore";
 import { supabase } from "@/lib/supabase-client";
+import { useCurrentUser } from "@/hooks/use-auth";
 
 const MyProfile = () => {
   const router = useRouter();
-  const { user, loading, isAuthenticated, updateProfile, initialized } =
-    useUserStore();
+
+  // Auth hook
+  const { data: user, isLoading: userLoading } = useCurrentUser();
+
+  // Profile State
   const [profileForm, setProfileForm] = useState({
     full_name: "",
     username: "",
@@ -27,16 +30,21 @@ const MyProfile = () => {
     bank_account_number: "",
     bank_name: "",
   });
+
+  // Password State
   const [passwordForm, setPasswordForm] = useState({
     currentPassword: "",
     newPassword: "",
     confirmPassword: "",
   });
+
   const [showPasswords, setShowPasswords] = useState({
     current: false,
     new: false,
     confirm: false,
   });
+
+  // UI State
   const [originalProfile, setOriginalProfile] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isChangingPassword, setIsChangingPassword] = useState(false);
@@ -46,48 +54,50 @@ const MyProfile = () => {
     text: "",
   });
 
+  // Fetch profile data when user is available
   useEffect(() => {
-    console.log("useEffect triggered, user:", user);
-    if (user) {
-      (async () => {
-        try {
-          console.log("Fetching profile for user ID:", user.id);
-          const { data, error } = await supabase
-            .from("profiles")
-            .select(
-              "full_name,username,phone,address,bank_account_number,bank_name"
-            )
-            .eq("id", user.id)
-            .single();
-          console.log("Fetch response:", { data, error });
-          if (error) throw error;
-          if (data) {
-            setOriginalProfile(data);
-            setProfileForm({
-              full_name: data.full_name || "",
-              username: data.username,
-              phone: data.phone || "",
-              address: data.address || "",
-              bank_account_number: data.bank_account_number || "",
-              bank_name: data.bank_name || "",
-            });
-          }
-        } catch (err) {
-          console.error("Profile fetch error:", err.message);
-        }
-      })();
-    } else {
-      console.log("User is not available, skipping profile fetch");
-    }
-  }, [user]);
+    const fetchProfile = async () => {
+      if (!user?.id) return;
 
+      try {
+        const { data, error } = await supabase
+          .from("profiles")
+          .select(
+            "full_name,username,phone,address,bank_account_number,bank_name",
+          )
+          .eq("id", user.id)
+          .single();
+
+        if (error) throw error;
+
+        if (data) {
+          setOriginalProfile(data);
+          setProfileForm({
+            full_name: data.full_name || "",
+            username: data.username || "",
+            phone: data.phone || "",
+            address: data.address || "",
+            bank_account_number: data.bank_account_number || "",
+            bank_name: data.bank_name || "",
+          });
+        }
+      } catch (err) {
+        console.error("Profile fetch error:", err.message);
+        setMessage({ type: "error", text: "Failed to load profile data" });
+      }
+    };
+
+    fetchProfile();
+  }, [user?.id]);
+
+  // Redirect if not authenticated
   useEffect(() => {
-    if (initialized && !loading && !isAuthenticated()) {
-      console.log("Redirecting to sign-in due to unauthenticated state");
+    if (!userLoading && !user) {
       router.push("/sign-in");
     }
-  }, [initialized, loading, isAuthenticated, router]);
+  }, [user, userLoading, router]);
 
+  // Form handlers
   const handleChange = (e) => {
     const { name, value } = e.target;
     setProfileForm((prev) => ({ ...prev, [name]: value }));
@@ -102,6 +112,7 @@ const MyProfile = () => {
     setShowPasswords((prev) => ({ ...prev, [field]: !prev[field] }));
   };
 
+  // Validation
   const validatePasswordForm = () => {
     if (!passwordForm.currentPassword) {
       setPasswordMessage({
@@ -138,32 +149,54 @@ const MyProfile = () => {
     return true;
   };
 
+  // Profile submission handler
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (!user?.id) {
+      setMessage({ type: "error", text: "User not authenticated" });
+      return;
+    }
+
     setIsSubmitting(true);
     setMessage({ type: "", text: "" });
 
-    const updatedProfile = {
-      ...profileForm,
-    };
+    try {
+      const { error } = await supabase
+        .from("profiles")
+        .update(profileForm)
+        .eq("id", user.id);
 
-    const { error } = await supabase
-      .from("profiles")
-      .update(updatedProfile)
-      .eq("id", user.id);
-    if (error) {
-      setMessage({ type: "error", text: error.message });
-    } else {
+      if (error) throw error;
+
       setMessage({ type: "success", text: "Profile updated successfully!" });
-      setOriginalProfile({ ...originalProfile, ...updatedProfile });
+      setOriginalProfile({ ...profileForm });
+
+      // Clear success message after 5 seconds
+      setTimeout(() => {
+        setMessage({ type: "", text: "" });
+      }, 5000);
+    } catch (error) {
+      console.error("Profile update error:", error);
+      setMessage({ type: "error", text: error.message });
+    } finally {
+      setIsSubmitting(false);
     }
-    setIsSubmitting(false);
   };
 
+  // Password submission handler
   const handlePasswordSubmit = async (e) => {
     e.preventDefault();
 
     if (!validatePasswordForm()) {
+      return;
+    }
+
+    if (!user?.email) {
+      setPasswordMessage({
+        type: "error",
+        text: "User email not available",
+      });
       return;
     }
 
@@ -182,7 +215,6 @@ const MyProfile = () => {
           type: "error",
           text: "Current password is incorrect",
         });
-        setIsChangingPassword(false);
         return;
       }
 
@@ -198,32 +230,43 @@ const MyProfile = () => {
           type: "success",
           text: "Password changed successfully!",
         });
+
         // Clear the password form
         setPasswordForm({
           currentPassword: "",
           newPassword: "",
           confirmPassword: "",
         });
+
+        // Reset password visibility
+        setShowPasswords({
+          current: false,
+          new: false,
+          confirm: false,
+        });
+
         // Clear success message after 5 seconds
         setTimeout(() => {
           setPasswordMessage({ type: "", text: "" });
         }, 5000);
       }
     } catch (error) {
+      console.error("Password change error:", error);
       setPasswordMessage({
         type: "error",
         text: "An error occurred while changing password",
       });
+    } finally {
+      setIsChangingPassword(false);
     }
-
-    setIsChangingPassword(false);
   };
 
+  // Reset handlers
   const resetForm = () => {
-    if (user && originalProfile) {
+    if (originalProfile) {
       setProfileForm({
         full_name: originalProfile.full_name || "",
-        username: originalProfile.username,
+        username: originalProfile.username || "",
         phone: originalProfile.phone || "",
         address: originalProfile.address || "",
         bank_account_number: originalProfile.bank_account_number || "",
@@ -242,7 +285,8 @@ const MyProfile = () => {
     setPasswordMessage({ type: "", text: "" });
   };
 
-  if (!initialized || (loading && !user)) {
+  // Loading state
+  if (userLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-100 to-white">
         <motion.div
@@ -255,7 +299,11 @@ const MyProfile = () => {
       </div>
     );
   }
-  if (!isAuthenticated()) return null;
+
+  // Not authenticated
+  if (!user) {
+    return null;
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-100 to-white flex items-center justify-center p-4">
@@ -265,6 +313,7 @@ const MyProfile = () => {
         transition={{ duration: 0.5 }}
         className="bg-white shadow-lg rounded-2xl p-6 w-full max-w-6xl overflow-hidden"
       >
+        {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div>
             <h2 className="text-3xl font-bold text-gray-800">My Profile</h2>
@@ -296,7 +345,7 @@ const MyProfile = () => {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-          {/* Original Profile */}
+          {/* Original Profile Display */}
           {originalProfile && (
             <motion.div
               initial={{ opacity: 0, x: -20 }}
@@ -314,7 +363,7 @@ const MyProfile = () => {
                 </p>
                 <p>
                   <span className="font-medium">Username:</span>{" "}
-                  {originalProfile.username}
+                  {originalProfile.username || "-"}
                 </p>
                 <p>
                   <span className="font-medium">Phone:</span>{" "}
@@ -336,7 +385,7 @@ const MyProfile = () => {
             </motion.div>
           )}
 
-          {/* Editable Form */}
+          {/* Editable Profile Form */}
           <motion.div
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
@@ -346,6 +395,7 @@ const MyProfile = () => {
             <h3 className="text-xl font-semibold text-gray-700 mb-4">
               Update Profile
             </h3>
+
             <AnimatePresence>
               {message.text && (
                 <motion.div
@@ -367,6 +417,7 @@ const MyProfile = () => {
                 </motion.div>
               )}
             </AnimatePresence>
+
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -381,6 +432,7 @@ const MyProfile = () => {
                   disabled={isSubmitting}
                 />
               </div>
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Username
@@ -394,6 +446,7 @@ const MyProfile = () => {
                   disabled={isSubmitting}
                 />
               </div>
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Phone
@@ -407,6 +460,7 @@ const MyProfile = () => {
                   disabled={isSubmitting}
                 />
               </div>
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Address
@@ -420,6 +474,7 @@ const MyProfile = () => {
                   disabled={isSubmitting}
                 />
               </div>
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Bank Account Number
@@ -433,6 +488,7 @@ const MyProfile = () => {
                   disabled={isSubmitting}
                 />
               </div>
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Bank Name
@@ -446,6 +502,7 @@ const MyProfile = () => {
                   disabled={isSubmitting}
                 />
               </div>
+
               <div className="flex gap-4 justify-end">
                 <motion.button
                   whileHover={{ scale: 1.05 }}
@@ -462,7 +519,7 @@ const MyProfile = () => {
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   type="submit"
-                  className="flex items-center gap-2 px-6 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-lg transition-all duration-200"
+                  className="flex items-center gap-2 px-6 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                   disabled={isSubmitting}
                 >
                   <Save className="w-5 h-5" />
@@ -612,7 +669,7 @@ const MyProfile = () => {
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 type="submit"
-                className="flex items-center gap-2 px-6 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-lg transition-all duration-200"
+                className="flex items-center gap-2 px-6 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                 disabled={isChangingPassword}
               >
                 <Lock className="w-5 h-5" />
